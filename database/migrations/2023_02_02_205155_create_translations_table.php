@@ -1,0 +1,45 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+class CreateTranslationsTable extends Migration
+{
+    /**
+     * Run the migrations.
+     *
+     * @return void
+     */
+    public function up(): void
+    {
+        Schema::create(config('languages.table_translations'), function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->unsignedBigInteger('language_id');
+            $table->foreign('language_id')->references('id')
+                ->on(config('languages.table_languages'))->cascadeOnDelete();
+            $table->string('language_code');
+            $table->string('relative_path');
+            $table->string('relative_pathname');
+            $table->string('shared_identifier');
+            $table->string('file');
+            $table->enum('type', ['json', 'php']);
+            $table->text('key');
+            $table->text('value')->nullable();
+            $table->boolean('approved')->default(true);
+            $table->boolean('needs_translation');
+            $table->boolean('updated_translation')->default(false);
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     *
+     * @return void
+     */
+    public function down()
+    {
+        Schema::dropIfExists(config('languages.table_translations'));
+    }
+}
