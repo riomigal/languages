@@ -4,7 +4,7 @@ namespace Riomigal\Languages\Services;
 
 use Illuminate\Bus\Batch;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Riomigal\Languages\Exceptions\ImportTranslationsException;
@@ -43,12 +43,10 @@ class ImportTranslationService
         $languages = Language::query()->get();
 
         // Imports app translations
-        $root = base_path(config('languages.language_folder_folder_directory'));
-        $this->importFromRoot(base_path(config('languages.language_folder_folder_directory')), $languages);
+        $this->importFromRoot(App::langPath(), $languages);
 
         // Imports vendor translations if language exists in db
-        $vendorPath = $root . '/' . config('languages.language_vendor_folder_directory');
-        foreach (File::directories($vendorPath) as $directory) {
+        foreach (File::directories(App::langPath('vendor')) as $directory) {
             $this->importFromRoot($directory, $languages);
         };
 
@@ -68,8 +66,8 @@ class ImportTranslationService
 
         foreach ($languages as $language) {
 
-            if (!file_exists($root . '/' . $language->code)) {
-                mkdir($root . '/' . $language->code);
+            if (!File::exists($root . '/' . $language->code)) {
+                File::makeDirectory($root . '/' . $language->code);
             }
             // Handles JSON Language file in root directory
             if (isset($rootJsonFiles[$language->code . '.json'])) {
@@ -92,7 +90,7 @@ class ImportTranslationService
     protected function generateContent(\SplFileInfo $file, Language $language): void
     {
         try {
-            $relativePathname = str_replace(base_path(config('languages.language_folder_folder_directory')), '', $file->getRealPath());
+            $relativePathname = str_replace(App::langPath(), '', $file->getRealPath());
             $relativePath = File::dirname($relativePathname);
             $type = $file->getExtension();
             if (!in_array($type, ['json', 'php'])) {
@@ -100,7 +98,7 @@ class ImportTranslationService
             }
 
             if ($type == 'json') {
-                $content = json_decode(file_get_contents($file->getRealPath()), true);
+                $content = json_decode(File::get($file->getRealPath()), true);
                 $sharedRelativePathname = str_replace($language->code . '.json', $this->languagePlaceholder . '.json', $relativePathname);
             } else {
                 $content = require($file->getRealPath());

@@ -4,6 +4,7 @@ namespace Riomigal\Languages\Services;
 
 
 use Illuminate\Bus\Batch;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\File;
 use Riomigal\Languages\Exceptions\ExportTranslationException;
 use Riomigal\Languages\Jobs\ExportUpdatedTranslation;
@@ -56,10 +57,10 @@ class ExportTranslationService
         if ($batch) {
             $this->batch = $batch;
         }
-        $tempDirectory = base_path(config('languages.language_folder_folder_directory')) . '/' . $this->tempLangFolder;
+        $tempDirectory = App::langPath($this->tempLangFolder);
         $tempLangDirectory = $tempDirectory . '/' . $language->code;
-        $languageDirectory = base_path(config('languages.language_folder_folder_directory')) . '/' . $language->code;
-        File::copyDirectory(base_path(config('languages.language_folder_folder_directory')) . '/' . $language->code, $tempLangDirectory);
+        $languageDirectory = App::langPath($language->code);
+        File::copyDirectory($languageDirectory, $tempLangDirectory);
         try {
             Translation::query()
                 ->select('relative_pathname', 'type')

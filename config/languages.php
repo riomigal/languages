@@ -47,23 +47,6 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Path
-    |--------------------------------------------------------------------------
-    |
-    | Language folder Paths.
-    | language_folder_folder_directory: is set to default ./lang path
-    | language_vendor_folder_directory: is always in parent language directory ./lang/vendor
-    |
-    | Change only if really necessary!
-    |
-    */
-
-    'language_folder_folder_directory' => 'lang',
-
-    'language_vendor_folder_directory' => 'vendor',
-
-    /*
-    |--------------------------------------------------------------------------
     | Queue Languages
     |--------------------------------------------------------------------------
     |

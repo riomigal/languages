@@ -2,6 +2,7 @@
 
 namespace Riomigal\Languages\Services;
 
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Riomigal\Languages\Models\Language;
@@ -16,7 +17,7 @@ class ImportLanguageService
     public function importLanguages(): void
     {
         DB::transaction(function () {
-            $directories = array_map('basename', File::directories(base_path(config('languages.language_folder_folder_directory'))));
+            $directories = array_map('basename', File::directories(App::langPath()));
             $directories = array_diff($directories, Language::pluck('code')->all());
             if ($directories) {
                 $languageArray = collect(Language::LANGUAGES)->whereIn('code', $directories)->toArray();

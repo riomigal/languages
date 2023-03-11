@@ -2,6 +2,8 @@
 
 namespace Riomigal\Languages\Services\Traits;
 
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Riomigal\Languages\Exceptions\ExportFileException;
 use Riomigal\Languages\Exceptions\ExportTranslationException;
@@ -25,7 +27,7 @@ trait CanExportTranslation
                 ->pluck('value', 'key')->all();
 
 
-            $this->updateFileContent($translations, base_path(config('languages.language_folder_folder_directory') . '/' . $relativePathname), $type);
+            $this->updateFileContent($translations, App::langPath($relativePathname), $type);
 
 
             Translation::where('language_id', $languageId)
@@ -53,18 +55,19 @@ trait CanExportTranslation
             Log::error('Invalid file extension. Extension must be php or json. ' . $type . ' given. Please check your language folder and rename the extension of this file ' . $fullPath . '.');
         }
 
-        if (!file_exists($fullPath)) {
+
+        if (!File::exists($fullPath)) {
             $content = [];
-            $directory = dirname($fullPath);
-            if (!is_dir($directory)) {
-                mkdir($directory, 0755, true);
+            $directory = File::dirname($fullPath);
+            if (!File::isDirectory($directory)) {
+                File::makeDirectory($directory, 0755, true);
             }
-            file_put_contents($fullPath, " ");
+            File::put($fullPath, " ");
         } else {
             if ($type == 'php') {
-                $content = require($fullPath);
+                $content = File::getRequire($fullPath);
             } else {
-                $content = json_decode(file_get_contents($fullPath), true);
+                $content = json_decode(File::get($fullPath), true);
             }
         }
 
@@ -81,6 +84,6 @@ trait CanExportTranslation
             $content = json_encode($content);
         }
 
-        file_put_contents($fullPath, $content);
+        File::put($fullPath, $content);
     }
 }
