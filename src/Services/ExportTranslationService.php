@@ -35,7 +35,7 @@ class ExportTranslationService
      * @return void
      * @throws ExportTranslationException
      */
-    public function exportAllTranslations($languages, null|Batch $batch): void
+    public function exportAllTranslations($languages, null|Batch $batch = null): void
     {
         $this->batch = $batch;
         $languages->each(function ($language) {
@@ -74,7 +74,7 @@ class ExportTranslationService
                         if ($this->batch) {
                             $this->batch->add([new ExportUpdatedTranslation($translation->relative_pathname, $translation->type, $language->id)]);
                         } else {
-                            ExportUpdatedTranslation::dispatch($translation->relative_pathname, $translation->type, $language->id);
+                            $this->updateTranslation($translation->relative_pathname, $translation->type, $language->id);
                         }
                     }
                 });
@@ -82,7 +82,7 @@ class ExportTranslationService
             File::deleteDirectory($languageDirectory);
             File::copyDirectory($tempLangDirectory, $languageDirectory);
             File::deleteDirectory($tempDirectory);
-            throw new ExportTranslationException($e->getMessage(), __('languages::exceptions.export_language_error', ['language' => $language->native_name]), 0, $e);
+            throw new ExportTranslationException($e->getMessage(), __('languages::exceptions.export_language_error', ['language' => $language->native_name]), 0);
         }
         File::deleteDirectory($tempDirectory);
     }

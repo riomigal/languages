@@ -34,7 +34,7 @@ class ImportTranslationService
      * @return void
      * @throws ImportTranslationsException
      */
-    public function importTranslations(null|Batch $batch): void
+    public function importTranslations(null|Batch $batch = null): void
     {
         if ($batch) {
             $this->batch = $batch;
@@ -118,11 +118,11 @@ class ImportTranslationService
                 if ($this->batch) {
                     $this->batch->add(new MassCreateTranslationsJob($content, $relativePath, $relativePathname, $sharedRelativePathname, $type, $language->id, $language->code));
                 } else {
-                    MassCreateTranslationsJob::dispatch($content, $relativePath, $relativePathname, $sharedRelativePathname, $type, $language->id, $language->code);
+                    $this->massCreateTranslations($content, $relativePath, $relativePathname, $sharedRelativePathname, $type, $language->id, $language->code);
                 }
             }
         } catch (\Throwable $e) {
-            throw new ImportTranslationsException($e->getMessage(), __('languages::exceptions.invalid_file_error', ['relativePathname' => $relativePathname]), 0, $e);
+            throw new ImportTranslationsException($e->getMessage(), __('languages::exceptions.invalid_file_error', ['relativePathname' => $relativePathname]), 0);
         }
     }
 

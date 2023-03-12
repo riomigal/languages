@@ -69,7 +69,7 @@
                        __('languages::translations.table.head.content')
                        ],
                        'tbody' => ['relative_path', 'file','approved', 'needs_translation', 'updated_translation', 'key', 'value'],
-                       'action' => ['translate', 'approve_translation'],
+                       'action' => ['translate', 'approve_translation', 'needs_translation'],
                   ])
         <div>
             @include('languages::vendor.livewire.tailwind', ['data' => $data])

@@ -36,6 +36,12 @@
                     <td
                             class="responsive px-4 py-3 flex items-center justify-end">
                         <ul class="flex flex-wrap py-1 text-sm text-gray-700 dark:text-gray-200">
+                            @if(isset($action['needs_translation']) && !$item->needs_translation && $isAdministrator)
+                                <li>
+                                    <a wire:click.prevent="requestTranslation({{$item->id}})"
+                                       class="block cursor-pointer py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">{{__('languages::translations.table.action.needs_translation')}}</a>
+                                </li>
+                            @endif
                             @if(isset($action['translate']))
                                 <li>
                                     <a wire:click.prevent="showTranslateModal({{$item->id}})"

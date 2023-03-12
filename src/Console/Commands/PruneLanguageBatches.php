@@ -13,7 +13,7 @@ class PruneLanguageBatches extends Command
      *
      * @var string
      */
-    protected $signature = 'prune:language-batches';
+    protected $signature = 'languages:prune-batches';
 
     /**
      * The console command description.

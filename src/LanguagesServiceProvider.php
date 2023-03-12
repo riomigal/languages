@@ -6,6 +6,10 @@ use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
+use Riomigal\Languages\Console\Commands\ExportTranslations;
+use Riomigal\Languages\Console\Commands\FindMissingTranslations;
+use Riomigal\Languages\Console\Commands\ImportLanguages;
+use Riomigal\Languages\Console\Commands\ImportTranslations;
 use Riomigal\Languages\Console\Commands\PruneLanguageBatches;
 use Riomigal\Languages\Helpers\LanguageHelper;
 use Riomigal\Languages\Livewire\BatchExecution;
@@ -43,7 +47,7 @@ class LanguagesServiceProvider extends ServiceProvider
         // Delete Batches
         $this->app->booted(function () {
             $schedule = $this->app->make(Schedule::class);
-            $schedule->command('prune:language-batches')->everyMinute();
+            $schedule->command('languages:prune-batches')->everyMinute();
         });
     }
 
@@ -176,6 +180,10 @@ class LanguagesServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 PruneLanguageBatches::class,
+                ImportLanguages::class,
+                ImportTranslations::class,
+                FindMissingTranslations::class,
+                ExportTranslations::class
             ]);
         }
     }

@@ -4,12 +4,8 @@ namespace Riomigal\Languages\Livewire;
 
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Contracts\View\View;
-use Illuminate\Support\Facades\Log;
-use Riomigal\Languages\Exceptions\ExportTranslationException;
 use Riomigal\Languages\Jobs\Batch\BatchProcessor;
 use Riomigal\Languages\Jobs\ExportTranslationJob;
-use Riomigal\Languages\Jobs\ExportTranslationsJob;
-use Riomigal\Languages\Jobs\ImportLanguagesJob;
 use Riomigal\Languages\Livewire\Traits\HasBatchProcess;
 use Riomigal\Languages\Models\Language;
 use Riomigal\Languages\Models\Translation;
@@ -146,6 +142,15 @@ class Translations extends AuthComponent
     }
 
     /**
+     * @param int $id
+     * @return void
+     */
+    public function requestTranslation(int $id): void
+    {
+        Translation::findOrFail($id)->update(['needs_translation' => true]);
+    }
+
+    /**
      * @return void
      */
     public function hideTranslationModal(): void
@@ -233,9 +238,7 @@ class Translations extends AuthComponent
      */
     public function exportTranslationsForAllLanguages(ExportTranslationService $exportTranslationService, BatchProcessor $batchProcessor): void
     {
-
         if ($this->anotherJobIsRunning()) return;
-
 
         $languages = Language::find(Translation::query()
             ->isUpdated()

@@ -32,7 +32,7 @@ class MissingTranslationService
      * @param null|Batch $batch
      * @return int
      */
-    public function findMissingTranslations(null|Batch $batch): int
+    public function findMissingTranslations(null|Batch $batch = null): int
     {
         if ($batch) {
             $this->batch = $batch;
@@ -63,7 +63,7 @@ class MissingTranslationService
                             if ($this->batch) {
                                 $this->batch->add(new MassCreateEloquentTranslationsJob($translations->toArray(), $language->id, $language->code));
                             } else {
-                                MassCreateEloquentTranslationsJob::dispatch($translations->toArray(), $language->id, $language->code);
+                                $this->massCreateEloquentTranslations($translations->toArray(), $language->id, $language->code);
                             }
                         });
                 }

@@ -20,7 +20,8 @@ return [
         ],
         'action' => [
             'translate' => 'Translate',
-            'approve' => 'Approve'
+            'approve' => 'Approve',
+            'needs_translation' => 'Request translation'
         ]
     ],
     'filter' => [

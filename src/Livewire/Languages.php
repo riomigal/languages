@@ -19,7 +19,6 @@ use Riomigal\Languages\Notifications\FlashMessage;
 use Riomigal\Languages\Services\ImportLanguageService;
 use Riomigal\Languages\Services\ImportTranslationService;
 use Riomigal\Languages\Services\MissingTranslationService;
-use function PHPUnit\Framework\directoryExists;
 
 class Languages extends AuthComponent
 {

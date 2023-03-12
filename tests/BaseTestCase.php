@@ -4,7 +4,6 @@ namespace Riomigal\Languages\Tests;
 
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
 use Livewire\LivewireServiceProvider;
 use Orchestra\Testbench\TestCase;
