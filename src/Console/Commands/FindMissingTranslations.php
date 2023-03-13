@@ -2,7 +2,6 @@
 
 namespace Riomigal\Languages\Console\Commands;
 
-
 use Illuminate\Console\Command;
 use Riomigal\Languages\Models\Language;
 use Riomigal\Languages\Models\Translation;
@@ -41,7 +40,6 @@ class FindMissingTranslations extends Command
             $totalTranslationsBefore = Translation::count();
 
             $this->info('Existing Translations: ' . $totalTranslationsBefore . '.');
-
             $this->info('Importing translations...');
             $missingTranslationService->findMissingTranslations();
             $total = Translation::count() - $totalTranslationsBefore;

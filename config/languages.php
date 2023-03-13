@@ -71,4 +71,34 @@ return [
 
     'translator_guard' => 'languages_translator',
 
+    /*
+ |--------------------------------------------------------------------------
+ | API
+ |--------------------------------------------------------------------------
+ |
+ | Set the api settings
+ |
+ */
+
+    // TO DO future api development
+//    'api' => [
+//        'enabled' => true, // Enables the API routes, disable if not used
+//
+//        'middleware' => ['api'],
+//
+//        'prefix' => 'api',
+//
+//        'root_prefix' => 'translator',
+//
+//        'languages_url' => 'languages',
+//
+//        'translations_url' => 'translations',
+//
+//        'translators_url' => 'translators',
+//
+//        'login_url' => 'login',
+//    ]
+
+
+
 ];

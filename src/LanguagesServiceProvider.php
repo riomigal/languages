@@ -4,6 +4,7 @@ namespace Riomigal\Languages;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
 use Riomigal\Languages\Console\Commands\ExportTranslations;
@@ -138,6 +139,13 @@ class LanguagesServiceProvider extends ServiceProvider
     protected function loadRoutes(): void
     {
         $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
+        // TO DO future api development
+//        if(config('languages.api.enabled')) {
+//            $this->loadRoutesFrom(__DIR__ . '/../routes/api.php');
+//            Route::middleware(config('languages.api.middleware'))
+//                ->prefix(config('languages.api.prefix'))
+//                ->group(__DIR__ . '/../routes/api.php');
+//        }
     }
 
     /**
