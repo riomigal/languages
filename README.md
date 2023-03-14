@@ -39,4 +39,8 @@ Change the queue connection in the .env file to:
 
 QUEUE_CONNECTION=database
 
+If it's a new project or the lang folder (/lang) wasn't published yet, it is necessary to publish the lang folder with:
+
+```php artisan lang:publish```
+
 
