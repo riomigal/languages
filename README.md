@@ -15,8 +15,28 @@ The App has it's own guard which isolates Laravel Languages from an existing App
 
 ## Installation
 
+Require the package from composer:
+
 ```composer require riomigal/languages```
 
-....
+Migrate database files, run:
+
+```php artisan migrate```
+
+Publish public assets:
+
+```php artisan vendor:publish --tag=languages-public```
+
+Run queue process:
+
+```php artisan queue:work --queue=languageProcesser```
+
+The queue process has the name languageProcessor, the value is configurable in the config file. To run the default queue or any other additional queue just add them before or after (first has higher priority) the languageProcessor, e.g.:
+
+```php artisan queue:work --queue=languageProcesser,default```
+
+Change the queue connection in the .env file to:
+
+QUEUE_CONNECTION=database
 
 
