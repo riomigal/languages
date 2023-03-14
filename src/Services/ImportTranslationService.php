@@ -42,9 +42,11 @@ class ImportTranslationService
 
         $languages = Language::query()->get();
 
+        $this->createMissingDirectory(App::langPath());
         // Imports app translations
         $this->importFromRoot(App::langPath(), $languages);
 
+        $this->createMissingDirectory(App::langPath('vendor'));
         // Imports vendor translations if language exists in db
         foreach (File::directories(App::langPath('vendor')) as $directory) {
             $this->importFromRoot($directory, $languages);
@@ -66,9 +68,8 @@ class ImportTranslationService
 
         foreach ($languages as $language) {
 
-            if (!File::exists($root . '/' . $language->code)) {
-                File::makeDirectory($root . '/' . $language->code);
-            }
+            $this->createMissingDirectory($root . '/' . $language->code);
+
             // Handles JSON Language file in root directory
             if (isset($rootJsonFiles[$language->code . '.json'])) {
                 $this->generateContent($rootJsonFiles[$language->code . '.json'], $language);
@@ -123,6 +124,17 @@ class ImportTranslationService
             }
         } catch (\Throwable $e) {
             throw new ImportTranslationsException($e->getMessage(), __('languages::exceptions.invalid_file_error', ['relativePathname' => $relativePathname]), 0);
+        }
+    }
+
+    /**
+     * @param string $path
+     * @return void
+     */
+    protected function createMissingDirectory(string $path): void
+    {
+        if (!File::exists($path)) {
+            File::makeDirectory($path);
         }
     }
 
