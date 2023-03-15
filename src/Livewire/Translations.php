@@ -168,6 +168,7 @@ class Translations extends AuthComponent
             $this->translation->value = $this->translatedValue;
             $this->translation->updated_translation = true;
             $this->translation->approved = false;
+            $this->translation->needs_translation = false;
             $this->translation->save();
             $this->hideTranslationModal();
             $this->emit('showToast', __('languages::translations.update_success_message'), LanguagesToastMessage::MESSAGE_TYPES['SUCCESS'], 4000);

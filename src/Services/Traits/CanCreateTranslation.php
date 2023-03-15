@@ -132,7 +132,7 @@ trait CanCreateTranslation
             'key' => $key,
             'value' => $value,
             'approved' => true,
-            'needs_translation' => false,
+            'needs_translation' => !$value,
             'updated_translation' => false,
             'created_at' => now(),
             'updated_at' => now()

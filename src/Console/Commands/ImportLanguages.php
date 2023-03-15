@@ -21,7 +21,7 @@ class ImportLanguages extends Command
      *
      * @var string
      */
-    protected $description = 'Imports all the languages from in the filesystem.';
+    protected $description = 'Imports all the languages which are in the filesystem.';
 
     /**
      * Execute the console command.

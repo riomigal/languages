@@ -7,14 +7,14 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Languages Route
+    | Route
     |--------------------------------------------------------------------------
     |
     | The languages route names.
     |
-    | Change if you would like to change the route names.
+    | Change if you would like to use different the URL paths.
     |
-    | Current setting ./translator/login, ./translator/languages...
+    | Default settings: ./translator/login, ./translator/languages...
     |
     */
     'prefix' => 'translator',
@@ -29,7 +29,7 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Languages Table
+    | Tables
     |--------------------------------------------------------------------------
     |
     | The languages table names.
@@ -47,7 +47,7 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Queue Languages
+    | Queue
     |--------------------------------------------------------------------------
     |
     | Set the queue name and batch name for the languages background jobs
@@ -58,7 +58,7 @@ return [
 
     'batch_name' => 'languageBatch',
 
-    'prune_batch_hours' => 1, // Prunes all finished or cancelled batches older than this value (value in hours)
+    'prune_batch_hours' => 24, // Prunes all finished or cancelled batches older than this value (value in hours)
 
     /*
   |--------------------------------------------------------------------------

@@ -4,7 +4,6 @@ namespace Riomigal\Languages;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
 use Riomigal\Languages\Console\Commands\ExportTranslations;
@@ -24,7 +23,6 @@ use Riomigal\Languages\Models\Translator;
 
 class LanguagesServiceProvider extends ServiceProvider
 {
-
     /**
      * Bootstrap the package services.
      *
