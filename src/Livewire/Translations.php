@@ -221,7 +221,7 @@ class Translations extends AuthComponent
                 ->count();
             $language = $this->language;
             $finally = function () use (&$total, &$language) {
-                Translator::query()->each(function (Translator $translator) use ($total, $language) {
+                Translator::query()->admin()->each(function (Translator $translator) use ($total, $language) {
                     $translator->notify(new FlashMessage($total ? __('languages::translations.export_language_success', ['language' => $language->name, 'total' => $total]) . __('languages::global.reload_suggestion') : __('languages::translations.nothing_exported')));
                 });
             };
@@ -258,7 +258,7 @@ class Translations extends AuthComponent
                 ->count();
 
             $finally = function () use (&$total, &$languages) {
-                Translator::query()->each(function (Translator $translator) use ($total, $languages) {
+                Translator::query()->admin()->each(function (Translator $translator) use ($total, $languages) {
                     $translator->notify(new FlashMessage($total ? __('languages::translations.export_languages_success', ['languages' => implode(', ', $languages->pluck('name')->all()), 'total' => $total]) . __('languages::global.reload_suggestion') : __('languages::translations.nothing_exported')));
                 });
             };

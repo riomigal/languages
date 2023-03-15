@@ -17,7 +17,7 @@ trait HandlesFailedJobs
      */
     public function failed(\Throwable $e): void
     {
-        Translator::query()->where('admin', true)->each(function (Translator $translator) use ($e) {
+        Translator::query()->admin()->each(function (Translator $translator) use ($e) {
             if (in_array($e::class, [ImportTranslationsException::class, ExportTranslationException::class, MassCreateTranslationsException::class, ExportFileException::class])) {
                 $translator->notify(new FlashMessage($e->getPublicMessage()));
             } else {

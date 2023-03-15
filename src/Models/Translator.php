@@ -59,4 +59,15 @@ class Translator extends Authenticatable
     {
         return $this->belongsToMany(Language::class, config('languages.table_translator_language'));
     }
+
+
+    /**
+     * @param Builder $query
+     * @param bool $value
+     * @return Builder
+     */
+    public function scopeAdmin(Builder $query, bool $value = true): Builder
+    {
+        return $query->where('admin', $value);
+    }
 }

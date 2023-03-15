@@ -93,7 +93,7 @@ class Languages extends AuthComponent
                 ->reject(function (Language $language) use ($languages) {
                     return in_array($language->id, $languages);
                 })->pluck('name')->all();
-            Translator::query()->each(function (Translator $translator) use ($newLanguages) {
+            Translator::query()->admin()->each(function (Translator $translator) use ($newLanguages) {
                 $translator->notify(new FlashMessage($newLanguages ? __('languages::languages.import_languages_success', ['languages' => implode(', ', $newLanguages)]) . __('languages::global.reload_suggestion') : __('languages::global.import.nothing_imported')));
             });
         };
@@ -119,7 +119,7 @@ class Languages extends AuthComponent
         $finally = function () use (&$totalTranslationsBefore) {
 
             $total = Translation::count() - $totalTranslationsBefore;
-            Translator::query()->each(function (Translator $translator) use ($total) {
+            Translator::query()->admin()->each(function (Translator $translator) use ($total) {
                 $translator->notify(new FlashMessage($total ? __('languages::languages.import_translations_success', ['total' => $total]) . __('languages::global.reload_suggestion') : __('languages::global.import.nothing_imported')));
             });
         };
@@ -155,7 +155,7 @@ class Languages extends AuthComponent
             $finally = function () use (&$totalTranslationsBefore) {
 
                 $total = Translation::count() - $totalTranslationsBefore;
-                Translator::query()->each(function (Translator $translator) use ($total) {
+                Translator::query()->admin()->where('admin', true)->each(function (Translator $translator) use ($total) {
                     $translator->notify(new FlashMessage($total ? __('languages::languages.find_missing_translations_success', ['total' => $total]) . __('languages::global.reload_suggestion') : __('languages::global.import.nothing_imported')));
                 });
             };
