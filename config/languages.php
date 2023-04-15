@@ -71,6 +71,8 @@ return [
 
     'translator_guard' => 'languages_translator',
 
+    'auth_guard' => 'auth_translator',
+
     /*
  |--------------------------------------------------------------------------
  | API
@@ -80,7 +82,6 @@ return [
  |
  */
 
-    // TO DO future api development
 //    'api' => [
 //        'enabled' => true, // Enables the API routes, disable if not used
 //

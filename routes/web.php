@@ -11,17 +11,21 @@ use Riomigal\Languages\Livewire\Translators;
 /**
  * App Routes
  */
-Route::prefix(config('languages.prefix'))->middleware(config('languages.translator_guard'))->group(function () {
-    Route::get('/' . config('languages.login_url'), Login::class)->name('languages.login');
+Route::prefix(config('languages.prefix'))->middleware([config('languages.translator_guard'), config('languages.auth_guard')])->group(function () {
     Route::get('/' . config('languages.translators_url'), Translators::class)->name('languages.translators');
     Route::get('/' . config('languages.languages_url'), Languages::class)->name('languages.languages');
     Route::get('/' . config('languages.translations_url') . '/{language}', Translations::class)->name('languages.translations');
 });
 
 /**
+ * Login Route
+ */
+Route::prefix(config('languages.prefix'))->middleware(config('languages.translator_guard'))->get('/' . config('languages.login_url'), Login::class)->name('languages.login');
+
+/**
  * Logout Route
  */
-Route::middleware(config('languages.translator_guard'))->post('logout', function (Request $request) {
+Route::prefix(config('languages.prefix'))->middleware(config('languages.translator_guard'))->post('logout', function (Request $request) {
     $request->session()->invalidate();
     $request->session()->regenerateToken();
     Auth::guard(config('languages.translator_guard'))->logout();

@@ -70,8 +70,8 @@ class Translations extends AuthComponent
     {
         parent::init();
         $this->language = $language;
-        if (!auth()->user()->admin) {
-            $languages = auth()->user()->languages()->pluck('languages.id')->all();
+        if (!$this->isAdministrator) {
+            $languages = $this->authUser->languages()->pluck('languages.id')->all();
             if (!in_array($this->language->id, $languages)) {
                 abort(403);
             }
@@ -165,6 +165,7 @@ class Translations extends AuthComponent
     {
         if ($this->translation->value != $this->translatedValue) {
 
+            $this->translation->old_value = $this->translation->value;
             $this->translation->value = $this->translatedValue;
             $this->translation->updated_translation = true;
             $this->translation->approved = false;
@@ -182,7 +183,8 @@ class Translations extends AuthComponent
     public function approveTranslation(int $id): void
     {
         Translation::findOrFail($id)->update([
-            'approved' => true
+            'approved' => true,
+            'old_value' => ''
         ]);
     }
 
@@ -193,7 +195,8 @@ class Translations extends AuthComponent
     public function approveAllTranslations(): void
     {
         $this->language->translations()->where('approved', false)->update([
-            'approved' => true
+            'approved' => true,
+            'old_value' => ''
         ]);
     }
 

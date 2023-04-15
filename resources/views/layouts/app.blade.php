@@ -6,17 +6,17 @@
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>{{__('languages::global.app_name') }}</title>
-{{--        <link rel="stylesheet" href="{{ mix('css/app.css') }}">--}}
-    <link rel="stylesheet" href="{{ asset('vendor/languages/css/app.css') }}">
+        <link rel="stylesheet" href="{{ mix('css/app.css') }}">
+{{--    <link rel="stylesheet" href="{{ asset('vendor/languages/css/app.css') }}">--}}
     @livewireStyles
     @stack('styles')
-{{--    <script defer src="{{ mix('js/app.js') }}"></script>--}}
-    <script defer src="{{ asset('vendor/languages/js/app.js') }}"></script>
+    <script defer src="{{ mix('js/app.js') }}"></script>
+{{--    <script defer src="{{ asset('vendor/languages/js/app.js') }}"></script>--}}
 </head>
 <body
         class="bg-white h-screen border-gray-200 lg:px-6 py-2.5 dark:bg-gray-900 dark:border-gray-800 order-1 border-b">
 <livewire:toast/>
-@if(auth()->check())
+@if(auth(config('languages.translator_guard'))->check())
 <livewire:flash-message/>
 @endif
 <nav class="bg-white border-gray-200 px-2 sm:px-4 py-2.5 rounded dark:bg-gray-900 mx-4">
@@ -38,7 +38,7 @@
                         fill-rule="evenodd" clip-rule="evenodd"></path>
                 </svg>
             </button>
-            @if(auth()->check())
+            @if(auth(config('languages.translator_guard'))->check())
                 <button data-collapse-toggle="mobile-menu-2" type="button"
                         class="inline-flex items-center p-2 ml-1 text-sm text-gray-500 rounded-lg md:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
                         aria-controls="mobile-menu-2" aria-expanded="false">
@@ -52,7 +52,7 @@
                 </button>
             @endif
         </div>
-        @if(auth()->check())
+        @if(auth(config('languages.translator_guard'))->check())
             <div class="items-center justify-between hidden w-full md:flex md:w-auto md:order-1" id="mobile-menu-2">
                 <ul class="flex flex-col p-4 mt-4 border border-gray-100 rounded-lg bg-gray-50 md:flex-row md:space-x-8 md:mt-0 md:text-sm md:font-medium md:border-0 md:bg-white dark:bg-gray-800 md:dark:bg-gray-900 dark:border-gray-700">
                     <li>
@@ -60,7 +60,7 @@
                            class="block py-2 pl-3 pr-4 text-gray-700 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:text-gray-400 md:dark:hover:text-white dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-gray-700"
                            aria-current="page">{{ __('languages::navbar.languages') }}</a>
                     </li>
-                    @if(auth()->user()->admin)
+                    @if(auth(config('languages.translator_guard'))->user()->admin)
                         <li>
                             <a href="{{ route('languages.translators') }}"
                                class="block py-2 pl-3 pr-4 text-gray-700 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:text-gray-400 md:dark:hover:text-white dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-gray-700">{{ __('languages::navbar.translators') }}</a>

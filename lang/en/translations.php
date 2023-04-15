@@ -17,6 +17,7 @@ return [
             'updated_translation' => 'Updated',
             'key' => 'Key',
             'content' => 'Content',
+            'old_content' => 'Old Content',
         ],
         'action' => [
             'translate' => 'Translate',

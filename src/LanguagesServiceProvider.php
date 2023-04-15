@@ -4,6 +4,7 @@ namespace Riomigal\Languages;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
 use Riomigal\Languages\Console\Commands\ExportTranslations;
@@ -18,6 +19,7 @@ use Riomigal\Languages\Livewire\LanguagesToastMessage;
 use Riomigal\Languages\Livewire\Login;
 use Riomigal\Languages\Livewire\Translations;
 use Riomigal\Languages\Livewire\Translators;
+use Riomigal\Languages\Middleware\AuthTranslator;
 use Riomigal\Languages\Models\Translator;
 
 
@@ -96,6 +98,7 @@ class LanguagesServiceProvider extends ServiceProvider
     protected function addMiddleware(): void
     {
         $translatorGuard = config('languages.translator_guard');
+        app('router')->aliasMiddleware(config('languages.auth_guard'), AuthTranslator::class);
         app('router')->pushMiddlewareToGroup($translatorGuard, \Illuminate\Cookie\Middleware\EncryptCookies::class);
         app('router')->pushMiddlewareToGroup($translatorGuard, \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class);
         app('router')->pushMiddlewareToGroup($translatorGuard, \Illuminate\Session\Middleware\StartSession::class);
@@ -137,13 +140,12 @@ class LanguagesServiceProvider extends ServiceProvider
     protected function loadRoutes(): void
     {
         $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
-        // TO DO future api development
-//        if(config('languages.api.enabled')) {
-//            $this->loadRoutesFrom(__DIR__ . '/../routes/api.php');
-//            Route::middleware(config('languages.api.middleware'))
-//                ->prefix(config('languages.api.prefix'))
-//                ->group(__DIR__ . '/../routes/api.php');
-//        }
+        if(config('languages.api.enabled')) {
+            $this->loadRoutesFrom(__DIR__ . '/../routes/api.php');
+            Route::middleware(config('languages.api.middleware'))
+                ->prefix(config('languages.api.prefix'))
+                ->group(__DIR__ . '/../routes/api.php');
+        }
     }
 
     /**

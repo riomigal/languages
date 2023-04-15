@@ -33,7 +33,7 @@ class FlashMessage extends Component
      */
     public function mount(): void
     {
-        $this->notifiable = auth()->id();
+        $this->notifiable = auth(config('languages.translator_guard'))->id();
         $this->updateNotifications();
     }
 
