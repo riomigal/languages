@@ -6,6 +6,7 @@ namespace Riomigal\Languages\Services;
 use Illuminate\Bus\Batch;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Riomigal\Languages\Exceptions\ExportTranslationException;
 use Riomigal\Languages\Jobs\ExportUpdatedTranslation;
 use Riomigal\Languages\Models\Language;
@@ -63,18 +64,18 @@ class ExportTranslationService
         File::copyDirectory($languageDirectory, $tempLangDirectory);
         try {
             Translation::query()
-                ->select('relative_pathname', 'type')
+                ->select('namespace', 'group', 'is_vendor', 'type')
                 ->where('language_id', $language->id)
                 ->isUpdated()
                 ->approved()
-                ->groupBy('relative_pathname', 'type')
-                ->orderBy('relative_pathname')
+                ->groupBy('namespace', 'group', 'is_vendor', 'type')
+                ->orderBy('group')
                 ->chunk(200, function ($translations) use ($language) {
                     foreach ($translations as $translation) {
                         if ($this->batch) {
-                            $this->batch->add([new ExportUpdatedTranslation($translation->relative_pathname, $translation->type, $language->id)]);
+                            $this->batch->add([new ExportUpdatedTranslation($translation->type, $language->code, $translation->is_vendor, $translation->namespace, $translation->group)]);
                         } else {
-                            $this->updateTranslation($translation->relative_pathname, $translation->type, $language->id);
+                            $this->updateTranslation($translation->type, $language->code, $translation->is_vendor, $translation->namespace, $translation->group);
                         }
                     }
                 });

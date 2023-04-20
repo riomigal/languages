@@ -15,7 +15,7 @@ class Translation extends Model
      * @var string[]
      */
     protected $fillable = [
-        'language_id', 'language_code', 'shared_identifier', 'is_vendor', 'type', 'namespace', 'group', 'key', 'value', 'old_value', 'approved', 'needs_translation', 'updated_translation'
+        'language_id', 'language_code', 'shared_identifier', 'is_vendor', 'type', 'namespace', 'group', 'key', 'value', 'old_value', 'approved', 'needs_translation', 'updated_translation', 'updated_by', 'approved_by'
     ];
 
     /**

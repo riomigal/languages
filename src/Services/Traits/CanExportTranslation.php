@@ -12,31 +12,48 @@ use Riomigal\Languages\Models\Translation;
 trait CanExportTranslation
 {
     /**
-     * @param string $relativePathname
      * @param string $type
-     * @param int $languageId
+     * @param string $languageCode
+     * @param bool $isVendor
+     * @param string $namespace
+     * @param string $group
      * @return void
      * @throws ExportTranslationException
      */
-    protected function updateTranslation(string $relativePathname, string $type, int $languageId): void
+    protected function updateTranslation(string $type, string $languageCode, bool $isVendor, string $namespace = '', string $group = ''): void
     {
         try {
-            $translations = Translation::where('relative_pathname', $relativePathname)
+            $query = Translation::where([
+                ['type', '=', $type ],
+                ['is_vendor', '=', $isVendor],
+                ['namespace', '=', $namespace ],
+                ['group', '=', $group ],
+                ['language_code', '=', $languageCode],
+            ])
                 ->isUpdated()
-                ->approved()
+                ->approved();
+
+            $translations = $query
                 ->pluck('value', 'key')->all();
 
+            if($type == 'json') {
+                $relativePath = $languageCode;
+            } else {
+                $relativePath  = $languageCode . '/' . $group;
+            }
 
-            $this->updateFileContent($translations, App::langPath($relativePathname), $type);
+            if($isVendor) {
+                $path = App::langPath('vendor/' . $namespace . '/' . $relativePath . '.' . $type);
+            } else {
+                $path = App::langPath($relativePath . '.' . $type);
+            }
 
+            $this->updateFileContent($translations, $path, $type);
+            $query->update(['updated_translation' => false]);
 
-            Translation::where('language_id', $languageId)
-                ->where('relative_pathname', $relativePathname)
-                ->isUpdated()
-                ->approved()
-                ->update(['updated_translation' => false]);
         } catch (\Exception $e) {
-            throw new ExportFileException($e->getMessage(), __('languages::exceptions.export_file_error', ['relativePathname' => $relativePathname]), 0, $e);
+            $query->update(['updated_translation' => true]);
+            throw new ExportFileException($e->getMessage(), __('languages::exceptions.export_file_error', ['path' => $path]), 0);
         }
     }
 
@@ -47,7 +64,6 @@ trait CanExportTranslation
      * @param string $fullPath
      * @param string $type
      * @return void
-     * @throws ExportTranslationException
      */
     protected function updateFileContent(array $translations, string $fullPath, string $type): void
     {

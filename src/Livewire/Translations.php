@@ -186,7 +186,6 @@ class Translations extends AuthComponent
         Translation::findOrFail($id)->update([
             'approved' => true,
             'old_value' => null,
-            'updated_translation' => false
         ]);
     }
 
@@ -199,7 +198,6 @@ class Translations extends AuthComponent
         $this->language->translations()->where('approved', false)->update([
             'approved' => true,
             'old_value' => null,
-            'updated_translation' => false
         ]);
     }
 
