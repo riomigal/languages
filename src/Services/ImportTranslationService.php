@@ -82,22 +82,33 @@ class ImportTranslationService
         $this->root = App::langPath();
         $this->importFromRoot();
 
-        // Imports vendor translations if language exists in db
-        $loader = Lang::getLoader();
-        $this->isVendor = true;
-        foreach ($loader->namespaces() as $namespace => $directory) {
-            $this->namespace = $namespace;
-            $publishedVendorDirectory = App::langPath('vendor/' . $this->namespace);
-            $this->createMissingDirectory($publishedVendorDirectory);
-            // Look first if there are published lang files
-            $this->root = $publishedVendorDirectory;
-            $this->importFromRoot();
-            // Look for not published lang files
-            $this->root = $directory;
-            $this->importFromRoot();
-        };
-
+        // Imports vendor translations
+        $this->importVendorTranslations();
     }
+
+    /**
+     * @return void
+     * @throws ImportTranslationsException
+     */
+    protected function importVendorTranslations(): void
+    {
+        if(config('languages.import_vendor_translations')) {
+            $loader = Lang::getLoader();
+            $this->isVendor = true;
+            foreach ($loader->namespaces() as $namespace => $directory) {
+                $this->namespace = $namespace;
+                $publishedVendorDirectory = App::langPath('vendor/' . $this->namespace);
+                $this->createMissingDirectory($publishedVendorDirectory);
+                // Look first if there are published lang files
+                $this->root = $publishedVendorDirectory;
+                $this->importFromRoot();
+                // Look for not published lang files
+                $this->root = $directory;
+                $this->importFromRoot();
+            };
+        }
+    }
+
 
     /**
      * @return void

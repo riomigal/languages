@@ -61,17 +61,26 @@ return [
     'prune_batch_hours' => 24, // Prunes all finished or cancelled batches older than this value (value in hours)
 
     /*
-  |--------------------------------------------------------------------------
-  | Guard Translator
-  |--------------------------------------------------------------------------
-  |
-  | Set the guard name for the translator UI, will be assigned to model translator
-  |
-  */
+    |--------------------------------------------------------------------------
+    | Guard Translator
+    |--------------------------------------------------------------------------
+    |
+    | Set the guard name for the translator UI, will be assigned to model translator
+    |
+    */
 
     'translator_guard' => 'languages_translator',
 
     'auth_guard' => 'auth_translator',
+
+    /*
+    |--------------------------------------------------------------------------
+    | General Settings
+    |--------------------------------------------------------------------------
+    |
+    */
+
+    'import_vendor_translations' => true,
 
     /*
  |--------------------------------------------------------------------------
