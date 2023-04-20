@@ -15,16 +15,17 @@ class Translation extends Model
      * @var string[]
      */
     protected $fillable = [
-        'language_id', 'language_code', 'relative_path', 'relative_pathname', 'shared_identifier', 'file', 'type', 'key', 'value', 'old_value', 'approved', 'needs_translation', 'updated_translation'
+        'language_id', 'language_code', 'shared_identifier', 'is_vendor', 'type', 'namespace', 'group', 'key', 'value', 'old_value', 'approved', 'needs_translation', 'updated_translation'
     ];
 
     /**
      * @var string[]
      */
     protected $casts = [
+        'is_vendor' => 'boolean',
         'approved' => 'boolean',
         'needs_translation' => 'boolean',
-        'updated_translation' => 'boolean',
+        'updated_translation' => 'boolean'
     ];
 
     /**

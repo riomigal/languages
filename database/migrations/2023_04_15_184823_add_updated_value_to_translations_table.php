@@ -13,7 +13,18 @@ return new class extends Migration
     {
         Schema::table(config('languages.table_translations'), function (Blueprint $table) {
             $table->text('old_value')->nullable()->after('value');
+            $table->text('namespace')->nullable()->after('type');
+            $table->text('group')->nullable()->after('namespace');
+            $table->boolean('is_vendor')->default(false);
         });
+
+        Schema::table(config('languages.table_translations'), function (Blueprint $table) {
+            Schema::dropColumns(config('languages.table_translations'), ['relative_path']);
+            Schema::dropColumns(config('languages.table_translations'), ['relative_pathname']);
+            Schema::dropColumns(config('languages.table_translations'), ['file']);
+        });
+
+
     }
 
     /**
@@ -21,10 +32,14 @@ return new class extends Migration
      */
     public function down(): void
     {
-        if(Schema::hasColumn(config('languages.table_translations'), 'old_value')) {
-            Schema::table(config('languages.table_translations'), function (Blueprint $table) {
-                   Schema::dropColumns(config('languages.table_translations'), 'old_value');
-            });
-        }
+        Schema::table(config('languages.table_translations'), function (Blueprint $table) {
+                Schema::dropColumns(config('languages.table_translations'), ['old_value','namespace', 'group', 'is_vendor']);
+        });
+
+        Schema::table(config('languages.table_translations'), function (Blueprint $table) {
+            $table->string('relative_path');
+            $table->string('relative_pathname');
+            $table->string('file');
+        });
     }
 };

@@ -4,9 +4,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Riomigal\Languages\Languages;
-use Riomigal\Languages\Models\Language;
 
-class CreateLanguagesTable extends Migration
+return new class extends Migration
 {
     /**
      * Run the migrations.
@@ -33,4 +32,4 @@ class CreateLanguagesTable extends Migration
     {
         Schema::dropIfExists(config('languages.table_languages'));
     }
-}
+};

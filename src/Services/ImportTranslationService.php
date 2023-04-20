@@ -6,6 +6,7 @@ use Illuminate\Bus\Batch;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\Log;
 use Riomigal\Languages\Exceptions\ImportTranslationsException;
 use Riomigal\Languages\Jobs\MassCreateTranslationsJob;
@@ -25,6 +26,36 @@ class ImportTranslationService
     /**
      * @var string
      */
+    protected string $root;
+
+    /**
+     * @var string
+     */
+    protected string $namespace = '';
+
+    /**
+     * @var Collection
+     */
+    protected Collection $languages;
+
+    /**
+     * @var Language
+     */
+    protected Language $language;
+
+    /**
+     * @var \SplFileInfo
+     */
+    protected \SplFileInfo $file;
+
+    /**
+     * @var bool
+     */
+    protected bool $isVendor = false;
+
+    /**
+     * @var string
+     */
     protected string $languagePlaceholder = '{language}';
 
     /**
@@ -40,58 +71,76 @@ class ImportTranslationService
             $this->batch = $batch;
         }
 
-        $languages = Language::query()->get();
+        // Get all languages
+        $this->languages = Language::query()->get();
 
+        // Create root lang and vendor directory if missing
         $this->createMissingDirectory(App::langPath());
-        // Imports app translations
-        $this->importFromRoot(App::langPath(), $languages);
-
         $this->createMissingDirectory(App::langPath('vendor'));
+
+        // Imports app translations
+        $this->root = App::langPath();
+        $this->importFromRoot();
+
         // Imports vendor translations if language exists in db
-        foreach (File::directories(App::langPath('vendor')) as $directory) {
-            $this->importFromRoot($directory, $languages);
+        $loader = Lang::getLoader();
+        $this->isVendor = true;
+        foreach ($loader->namespaces() as $namespace => $directory) {
+            $this->namespace = $namespace;
+            $publishedVendorDirectory = App::langPath('vendor/' . $this->namespace);
+            $this->createMissingDirectory($publishedVendorDirectory);
+            // Look first if there are published lang files
+            $this->root = $publishedVendorDirectory;
+            $this->importFromRoot();
+            // Look for not published lang files
+            $this->root = $directory;
+            $this->importFromRoot();
         };
 
     }
 
     /**
-     * @param string $root
-     * @param Collection $languages
      * @return void
      * @throws ImportTranslationsException
      */
-    protected function importFromRoot(string $root, Collection $languages): void
+    protected function importFromRoot(): void
     {
-        $rootJsonFiles = collect(File::files($root))->mapWithKeys(function (SplFileInfo $file) {
+        // Get files from root directory
+        $rootJsonFiles = collect(File::files($this->root))->mapWithKeys(function (SplFileInfo $file) {
             return [$file->getFilename() => $file];
         })->toArray();
 
-        foreach ($languages as $language) {
-
-            $this->createMissingDirectory($root . '/' . $language->code);
+        // Loop through languages in directory
+        foreach ($this->languages as $language) {
+            $this->language = $language;
+            if($this->isVendor) {
+                $this->createMissingDirectory(App::langPath('vendor/' . $this->namespace) . '/' . $this->language->code);
+            } else {
+                $this->createMissingDirectory($this->root . '/' . $this->language->code);
+            }
 
             // Handles JSON Language file in root directory
-            if (isset($rootJsonFiles[$language->code . '.json'])) {
-                $this->generateContent($rootJsonFiles[$language->code . '.json'], $language);
+            if (isset($rootJsonFiles[$this->language->code . '.json'])) {
+                $this->generateContent($this->root, $rootJsonFiles[$this->language->code . '.json']);
             }
 
             // Handles files in language subdirectory
-            foreach (File::allFiles($root . '/' . $language->code) as $file) {
-                $this->generateContent($file, $language);
+            foreach (File::allFiles($this->root . '/' . $this->language->code) as $file) {
+                $this->generateContent(str_replace('/src/../', '/', $this->root), $file);
             }
         }
     }
 
     /**
+     * @param string $root
      * @param \SplFileInfo $file
-     * @param Language $language
      * @return void
      * @throws ImportTranslationsException
      */
-    protected function generateContent(\SplFileInfo $file, Language $language): void
+    protected function generateContent(string $root, \SplFileInfo $file): void
     {
         try {
-            $relativePathname = str_replace(App::langPath(), '', $file->getRealPath());
+            $relativePathname = str_replace($root, '', $file->getRealPath());
             $relativePath = File::dirname($relativePathname);
             $type = $file->getExtension();
             if (!in_array($type, ['json', 'php'])) {
@@ -99,9 +148,11 @@ class ImportTranslationService
             }
 
             if ($type == 'json') {
+                $group = '';
                 $content = json_decode(File::get($file->getRealPath()), true);
-                $sharedRelativePathname = str_replace($language->code . '.json', $this->languagePlaceholder . '.json', $relativePathname);
+                $sharedRelativePathname = str_replace($this->language->code . '.json', $this->languagePlaceholder . '.json', $relativePathname);
             } else {
+                $group = str_replace('.'. $type, '', substr($relativePathname,4));
                 $content = require($file->getRealPath());
                 $sharedRelativePathname = $this->languagePlaceholder . substr($relativePathname, 2);
             }
@@ -117,9 +168,9 @@ class ImportTranslationService
             if (count($content) > 0) {
                 $content = app('lang.helper')->array_convert_keys_to_dot_notation($content);
                 if ($this->batch) {
-                    $this->batch->add(new MassCreateTranslationsJob($content, $relativePath, $relativePathname, $sharedRelativePathname, $type, $language->id, $language->code));
+                    $this->batch->add(new MassCreateTranslationsJob($content, $sharedRelativePathname, $type, $this->language->id, $this->language->code, $this->namespace, $group, $this->isVendor));
                 } else {
-                    $this->massCreateTranslations($content, $relativePath, $relativePathname, $sharedRelativePathname, $type, $language->id, $language->code);
+                    $this->massCreateTranslations($content,  $sharedRelativePathname, $type, $this->language->id, $this->language->code, $this->namespace, $group, $this->isVendor);
                 }
             }
         } catch (\Throwable $e) {

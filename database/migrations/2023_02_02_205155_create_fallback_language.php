@@ -3,7 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Riomigal\Languages\Models\Language;
 
-class CreateFallbackLanguage extends Migration
+return new class extends Migration
 {
     /**
      * Run the migrations.
@@ -32,4 +32,4 @@ class CreateFallbackLanguage extends Migration
     {
         Language::query()->delete();
     }
-}
+};

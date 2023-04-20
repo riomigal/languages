@@ -90,8 +90,9 @@ class Translations extends AuthComponent
             ->when($this->search, function ($query) {
                 $query->where(function ($query) {
                     $query->where(
-                        'relative_pathname', 'LIKE', '%' . $this->search . '%'
+                        'namespace', 'LIKE', '%' . $this->search . '%'
                     )
+                        ->orWhere('group', 'LIKE', '%' . $this->search . '%')
                         ->orWhere('key', 'LIKE', '%' . $this->search . '%')
                         ->orWhere('value', 'LIKE', '%' . $this->search . '%');
                 });
@@ -184,7 +185,8 @@ class Translations extends AuthComponent
     {
         Translation::findOrFail($id)->update([
             'approved' => true,
-            'old_value' => ''
+            'old_value' => null,
+            'updated_translation' => false
         ]);
     }
 
@@ -196,7 +198,8 @@ class Translations extends AuthComponent
     {
         $this->language->translations()->where('approved', false)->update([
             'approved' => true,
-            'old_value' => ''
+            'old_value' => null,
+            'updated_translation' => false
         ]);
     }
 

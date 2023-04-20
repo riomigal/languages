@@ -4,9 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-
-class AddUpdatedValueToTranslations extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      *
@@ -14,8 +12,15 @@ class AddUpdatedValueToTranslations extends Migration
      */
     public function up(): void
     {
-        Schema::table(config('languages.table_translations'), function (Blueprint $table) {
-            $table->text('updated_value')->nullable()->after('value');
+        Schema::create(config('languages.table_translator_language'), function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->unsignedBigInteger('language_id');
+            $table->unsignedBigInteger('translator_id');
+            $table->foreign('language_id')->references('id')
+                ->on(config('languages.table_languages'))->cascadeOnDelete();
+            $table->foreign('translator_id')->references('id')
+                ->on(config('languages.table_translators'))->cascadeOnDelete();
+            $table->timestamps();
         });
     }
 
@@ -24,11 +29,8 @@ class AddUpdatedValueToTranslations extends Migration
      *
      * @return void
      */
-    public function down()
+    public function down(): void
     {
-        if (Schema::hasColumn('updated_value')) {
-            Schema::dropColumns(config('languages.table_translations'), 'updated_value');
-        }
+        Schema::dropIfExists(config('languages.table_translator_language'));
     }
-}
-
+};

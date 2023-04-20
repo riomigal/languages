@@ -6,6 +6,7 @@ use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Translation\FileLoader;
 use Livewire\Livewire;
 use Riomigal\Languages\Console\Commands\ExportTranslations;
 use Riomigal\Languages\Console\Commands\FindMissingTranslations;
@@ -62,6 +63,35 @@ class LanguagesServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__ . '/../config/languages.php', 'languages');
         $this->app->singleton('lang.helper', function () {
             return new LanguageHelper();
+        });
+
+        $this->registerLoader();
+
+        $this->app->singleton('translator', function ($app) {
+            $loader = $app['translation.loader'];
+
+            // When registering the translator component, we'll need to set the default
+            // locale as well as the fallback locale. So, we'll grab the application
+            // configuration so we can easily get both of these values from there.
+            $locale = $app->getLocale();
+
+            $trans = new \Illuminate\Translation\Translator($loader, $locale);
+
+            $trans->setFallback($app->getFallbackLocale());
+
+            return $trans;
+        });
+    }
+
+    /**
+     * Register the translation line loader.
+     *
+     * @return void
+     */
+    protected function registerLoader()
+    {
+        $this->app->singleton('translation.loader', function ($app) {
+            return new TranslationLoader($app['files'], [lang_path(), $app['path.lang']]);
         });
     }
 

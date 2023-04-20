@@ -60,8 +60,9 @@
         </div>
         @include('languages::component.table', [
                       'thead' => [
-                      __('languages::translations.table.head.path'),
-                       __('languages::translations.table.head.file'),
+                      __('languages::translations.table.head.is_vendor'),
+                      __('languages::translations.table.head.namespace'),
+                       __('languages::translations.table.head.group'),
                        __('languages::translations.table.head.approved') ,
                        __('languages::translations.table.head.needs_translation'),
                        __('languages::translations.table.head.updated_translation') ,
@@ -69,7 +70,7 @@
                        __('languages::translations.table.head.content'),
                        __('languages::translations.table.head.old_content')
                        ],
-                       'tbody' => ['relative_path', 'file','approved', 'needs_translation', 'updated_translation', 'key', 'value', 'old_value'],
+                       'tbody' => ['is_vendor', 'namespace', 'group','approved', 'needs_translation', 'updated_translation', 'key', 'value', 'old_value'],
                        'action' => ['translate', 'approve_translation', 'needs_translation'],
                   ])
         <div>

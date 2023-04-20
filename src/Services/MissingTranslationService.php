@@ -42,9 +42,9 @@ class MissingTranslationService
         Translation::query()->select('shared_identifier')->groupBy('shared_identifier')->orderBy('shared_identifier')->chunk(400,
             function ($records) {
                 foreach ($this->languages as $language) {
+
                     // Get array of all identifier
                     $identifierArray = $records->pluck('shared_identifier')->all();
-
 
                     // Get array of language identifier found
                     $identifierArrayTwo = Translation::query()->select('shared_identifier')
@@ -55,9 +55,9 @@ class MissingTranslationService
                     $missingIdentifier = array_diff($identifierArray, $identifierArrayTwo);
 
                     Translation::query()
-                        ->select('shared_identifier', 'relative_path', 'relative_pathname', 'file', 'type', 'key')
+                        ->select('shared_identifier', 'namespace', 'group', 'is_vendor', 'type', 'key')
                         ->whereIn('shared_identifier', $missingIdentifier)
-                        ->groupBy('shared_identifier', 'relative_path', 'relative_pathname', 'file', 'type', 'key')
+                        ->groupBy('shared_identifier', 'namespace', 'group', 'is_vendor', 'type', 'key')
                         ->orderBy('shared_identifier')
                         ->chunk(400, function ($translations) use ($language) {
                             if ($this->batch) {
