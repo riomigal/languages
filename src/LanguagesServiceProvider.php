@@ -4,9 +4,7 @@ namespace Riomigal\Languages;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\ServiceProvider;
-use Illuminate\Translation\FileLoader;
+use Illuminate\Translation\TranslationServiceProvider;
 use Livewire\Livewire;
 use Riomigal\Languages\Console\Commands\ExportTranslations;
 use Riomigal\Languages\Console\Commands\FindMissingTranslations;
@@ -24,7 +22,7 @@ use Riomigal\Languages\Middleware\AuthTranslator;
 use Riomigal\Languages\Models\Translator;
 
 
-class LanguagesServiceProvider extends ServiceProvider
+class LanguagesServiceProvider extends TranslationServiceProvider
 {
     /**
      * Bootstrap the package services.
@@ -65,22 +63,7 @@ class LanguagesServiceProvider extends ServiceProvider
             return new LanguageHelper();
         });
 
-        $this->registerLoader();
-
-        $this->app->singleton('translator', function ($app) {
-            $loader = $app['translation.loader'];
-
-            // When registering the translator component, we'll need to set the default
-            // locale as well as the fallback locale. So, we'll grab the application
-            // configuration so we can easily get both of these values from there.
-            $locale = $app->getLocale();
-
-            $trans = new \Illuminate\Translation\Translator($loader, $locale);
-
-            $trans->setFallback($app->getFallbackLocale());
-
-            return $trans;
-        });
+        parent::register();
     }
 
     /**
@@ -88,11 +71,15 @@ class LanguagesServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    protected function registerLoader()
+    protected function registerLoader(): void
     {
-        $this->app->singleton('translation.loader', function ($app) {
-            return new TranslationLoader($app['files'], [lang_path(), $app['path.lang']]);
-        });
+        if(config('languages.load_translations_from_db')) {
+            $this->app->singleton('translation.loader', function ($app) {
+                return new TranslationLoader($app['files'], $app['path.lang']);
+            });
+        } else {
+            parent::registerLoader();
+        }
     }
 
     /**
@@ -170,12 +157,12 @@ class LanguagesServiceProvider extends ServiceProvider
     protected function loadRoutes(): void
     {
         $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
-        if(config('languages.api.enabled')) {
-            $this->loadRoutesFrom(__DIR__ . '/../routes/api.php');
-            Route::middleware(config('languages.api.middleware'))
-                ->prefix(config('languages.api.prefix'))
-                ->group(__DIR__ . '/../routes/api.php');
-        }
+//        if(config('languages.api.enabled')) {
+//            $this->loadRoutesFrom(__DIR__ . '/../routes/api.php');
+//            Route::middleware(config('languages.api.middleware'))
+//                ->prefix(config('languages.api.prefix'))
+//                ->group(__DIR__ . '/../routes/api.php');
+//        }
     }
 
     /**

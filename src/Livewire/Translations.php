@@ -183,22 +183,24 @@ class Translations extends AuthComponent
      */
     public function approveTranslation(int $id): void
     {
-        Translation::findOrFail($id)->update([
-            'approved' => true,
-            'old_value' => null,
-        ]);
+        $translation =  Translation::findOrFail($id);
+        $translation->approved = true;
+        $translation->old_value = null;
+        $translation->save();
+        Translation::unsetCachedTranslation($translation->language_code, $translation->group, $translation->namespace);
+        Translation::getCachedTranslations($translation->language_code, $translation->group, $translation->namespace);
+
     }
 
     /**
-     *
      * @return void
      */
     public function approveAllTranslations(): void
     {
-        $this->language->translations()->where('approved', false)->update([
-            'approved' => true,
-            'old_value' => null,
-        ]);
+        $this->language->translations()->where('approved', false)
+            ->each(function(Translation $translation) {
+                $this->approveTranslation($translation->id);
+            });
     }
 
     /**

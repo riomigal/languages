@@ -53,7 +53,6 @@ return [
     | Set the queue name and batch name for the languages background jobs
     |
     */
-
     'queue_name' => 'languageProcessor',
 
     'batch_name' => 'languageBatch',
@@ -68,7 +67,6 @@ return [
     | Set the guard name for the translator UI, will be assigned to model translator
     |
     */
-
     'translator_guard' => 'languages_translator',
 
     'auth_guard' => 'auth_translator',
@@ -79,8 +77,11 @@ return [
     |--------------------------------------------------------------------------
     |
     */
+    'import_vendor_translations' => true, // Imports as well vendor translations
 
-    'import_vendor_translations' => true,
+    'load_translations_from_db' => false, // Loads translations from the DB without using the filesystem
+
+    'cache_key' => 'languages_cache'
 
     /*
  |--------------------------------------------------------------------------
@@ -108,7 +109,5 @@ return [
 //
 //        'login_url' => 'login',
 //    ]
-
-
 
 ];
