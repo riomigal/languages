@@ -63,15 +63,18 @@
                       __('languages::translations.table.head.is_vendor'),
                       __('languages::translations.table.head.namespace'),
                        __('languages::translations.table.head.group'),
-                       __('languages::translations.table.head.approved') ,
-                       __('languages::translations.table.head.needs_translation'),
+                        __('languages::translations.table.head.needs_translation'),
+                       __('languages::translations.table.head.approved'),
+                       __('languages::translations.table.head.approved_by'),
                        __('languages::translations.table.head.updated_translation') ,
+                       __('languages::translations.table.head.updated_by') ,
+                       __('languages::translations.table.head.exported') ,
                        __('languages::translations.table.head.key'),
                        __('languages::translations.table.head.content'),
                        __('languages::translations.table.head.old_content')
                        ],
-                       'tbody' => ['is_vendor', 'namespace', 'group','approved', 'needs_translation', 'updated_translation', 'key', 'value', 'old_value'],
-                       'action' => ['translate', 'approve_translation', 'needs_translation'],
+                       'tbody' => ['is_vendor', 'namespace', 'group', 'needs_translation', 'approved', 'approver', 'updated_translation', 'updater', 'exported', 'key', 'value', 'old_value'],
+                       'action' => ['translate', 'approve_translation', 'needs_translation', 'restore_translation'],
                   ])
         <div>
             @include('languages::vendor.livewire.tailwind', ['data' => $data])

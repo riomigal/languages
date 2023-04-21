@@ -30,8 +30,9 @@ trait CanExportTranslation
                 ['group', '=', $group ],
                 ['language_code', '=', $languageCode],
             ])
-                ->isUpdated()
-                ->approved();
+                ->isUpdated(false)
+                ->approved()
+                ->exported(false);
 
             $translations = $query
                 ->pluck('value', 'key')->all();
@@ -49,10 +50,10 @@ trait CanExportTranslation
             }
 
             $this->updateFileContent($translations, $path, $type);
-            $query->update(['updated_translation' => false]);
+            $query->update(['exported' => true]);
 
         } catch (\Exception $e) {
-            $query->update(['updated_translation' => true]);
+            $query->update(['exported' => false]);
             throw new ExportFileException($e->getMessage(), __('languages::exceptions.export_file_error', ['path' => $path]), 0);
         }
     }

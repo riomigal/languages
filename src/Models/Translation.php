@@ -16,7 +16,9 @@ class Translation extends Model
      * @var string[]
      */
     protected $fillable = [
-        'language_id', 'language_code', 'shared_identifier', 'is_vendor', 'type', 'namespace', 'group', 'key', 'value', 'old_value', 'approved', 'needs_translation', 'updated_translation', 'updated_by', 'approved_by'
+        'language_id', 'language_code', 'shared_identifier', 'is_vendor', 'type', 'namespace',
+        'group', 'key', 'value', 'old_value', 'approved', 'needs_translation', 'updated_translation',
+        'updated_by', 'previous_updated_by', 'approved_by', 'previous_approved_by', 'exported'
     ];
 
     /**
@@ -26,7 +28,8 @@ class Translation extends Model
         'is_vendor' => 'boolean',
         'approved' => 'boolean',
         'needs_translation' => 'boolean',
-        'updated_translation' => 'boolean'
+        'updated_translation' => 'boolean',
+        'exported' => 'boolean'
     ];
 
     /**
@@ -67,6 +70,16 @@ class Translation extends Model
     public function scopeApproved(Builder $query, bool $value = true): Builder
     {
         return $query->where('approved', $value);
+    }
+
+    /**
+     * @param Builder $query
+     * @param bool $value
+     * @return Builder
+     */
+    public function scopeExported(Builder $query, bool $value = true): Builder
+    {
+        return $query->where('exported', $value);
     }
 
     /**
@@ -121,4 +134,23 @@ class Translation extends Model
     {
         Cache::forget(config('languages.cache_key') . $locale . $group . $namespace);
     }
+
+    /**
+     * @return string
+     */
+    public function getApproverAttribute(): string
+    {
+        $translator = Translator::find($this->approved_by);
+        return $translator ? $translator->first_name . ' ' . $translator->last_name : '';
+    }
+
+    /**
+     * @return string
+     */
+    public function getUpdaterAttribute(): string
+    {
+        $translator = Translator::find($this->updated_by);
+        return $translator ? $translator->first_name . ' ' . $translator->last_name : '';
+    }
+
 }

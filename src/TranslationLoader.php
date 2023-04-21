@@ -2,7 +2,6 @@
 
 namespace Riomigal\Languages;
 
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Translation\FileLoader;
 use Riomigal\Languages\Models\Translation;
 

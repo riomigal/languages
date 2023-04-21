@@ -66,8 +66,9 @@ class ExportTranslationService
             Translation::query()
                 ->select('namespace', 'group', 'is_vendor', 'type')
                 ->where('language_id', $language->id)
-                ->isUpdated()
+                ->isUpdated(false)
                 ->approved()
+                ->exported(false)
                 ->groupBy('namespace', 'group', 'is_vendor', 'type')
                 ->orderBy('group')
                 ->chunk(200, function ($translations) use ($language) {

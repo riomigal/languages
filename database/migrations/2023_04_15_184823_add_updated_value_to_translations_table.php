@@ -16,6 +16,11 @@ return new class extends Migration
             $table->text('namespace')->nullable()->after('type');
             $table->text('group')->nullable()->after('namespace');
             $table->boolean('is_vendor')->default(false);
+            $table->bigInteger('updated_by')->unsigned()->nullable();
+            $table->bigInteger('previous_updated_by')->unsigned()->nullable();
+            $table->bigInteger('approved_by')->unsigned()->nullable();
+            $table->bigInteger('previous_approved_by')->unsigned()->nullable();
+            $table->boolean('exported')->default(true);
         });
 
         Schema::table(config('languages.table_translations'), function (Blueprint $table) {
@@ -33,7 +38,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table(config('languages.table_translations'), function (Blueprint $table) {
-                Schema::dropColumns(config('languages.table_translations'), ['old_value','namespace', 'group', 'is_vendor']);
+                Schema::dropColumns(config('languages.table_translations'), ['old_value','namespace', 'group', 'is_vendor', 'updated_by', 'previous_updated_by', 'approved_by',  'previous_approved_by', 'exported']);
         });
 
         Schema::table(config('languages.table_translations'), function (Blueprint $table) {

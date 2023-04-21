@@ -165,12 +165,18 @@ class Translations extends AuthComponent
     public function updateTranslation(): void
     {
         if ($this->translation->value != $this->translatedValue) {
-
-            $this->translation->old_value = $this->translation->value;
-            $this->translation->value = $this->translatedValue;
-            $this->translation->updated_translation = true;
-            $this->translation->approved = false;
+            $this->translation->exported = false;
             $this->translation->needs_translation = false;
+            if(!$this->translation->updated_translation) {
+                $this->translation->previous_approved_by = $this->translation->approved_by;
+                $this->translation->previous_updated_by = $this->translation->updated_by;
+                $this->translation->old_value = $this->translation->value;
+            }
+            $this->translation->approved_by = null;
+            $this->translation->updated_by = $this->authUser->id;
+            $this->translation->updated_translation = true;
+            $this->translation->value = $this->translatedValue;
+            $this->translation->approved = false;
             $this->translation->save();
             $this->hideTranslationModal();
             $this->emit('showToast', __('languages::translations.update_success_message'), LanguagesToastMessage::MESSAGE_TYPES['SUCCESS'], 4000);
@@ -185,7 +191,11 @@ class Translations extends AuthComponent
     {
         $translation =  Translation::findOrFail($id);
         $translation->approved = true;
+        $translation->updated_translation = false;
         $translation->old_value = null;
+        $translation->approved_by = $this->authUser->id;
+        $translation->previous_updated_by = null;
+        $translation->previous_approved_by = null;
         $translation->save();
         Translation::unsetCachedTranslation($translation->language_code, $translation->group, $translation->namespace);
         Translation::getCachedTranslations($translation->language_code, $translation->group, $translation->namespace);
@@ -204,6 +214,27 @@ class Translations extends AuthComponent
     }
 
     /**
+     * @param int $id
+     * @return void
+     */
+    public function restoreTranslation(int $id): void
+    {
+        $translation =  Translation::findOrFail($id);
+        if($translation->old_value && !$translation->approved) {
+            $translation->value = $translation->old_value;
+            $translation->old_value = null;
+            $translation->approved_by = $translation->previous_approved_by;
+            $translation->updated_by = $translation->previous_updated_by;
+            $translation->previous_updated_by = null;
+            $translation->previous_approved_by = null;
+            $translation->approved = true;
+            $translation->exported = true;
+            $translation->updated_translation = false;
+            $translation->save();
+        }
+    }
+
+    /**
      * @param ExportTranslationService $exportTranslationService
      * @param BatchProcessor $batchProcessor
      * @return void
@@ -213,7 +244,7 @@ class Translations extends AuthComponent
         if ($this->anotherJobIsRunning()) return;
 
         $updatedTranslationsTotal = $this->language->translations()
-            ->isUpdated()
+            ->isUpdated(false)->exported(false)
             ->approved()->count();
 
         if ($updatedTranslationsTotal) {
@@ -222,7 +253,7 @@ class Translations extends AuthComponent
             ];
 
             $total = Translation::query()->where('language_id', $this->language->id)
-                ->isUpdated()
+                ->isUpdated(false)->exported(false)
                 ->approved()
                 ->count();
             $language = $this->language;
@@ -248,7 +279,7 @@ class Translations extends AuthComponent
         if ($this->anotherJobIsRunning()) return;
 
         $languages = Language::find(Translation::query()
-            ->isUpdated()
+            ->isUpdated(false)->exported(false)
             ->approved()->distinct()->pluck('language_id')->toArray());
 
         if ($languages->count() > 0) {
@@ -259,7 +290,7 @@ class Translations extends AuthComponent
             });
 
             $total = Translation::query()
-                ->isUpdated()
+                ->isUpdated(false)->exported(false)
                 ->approved()
                 ->count();
 
