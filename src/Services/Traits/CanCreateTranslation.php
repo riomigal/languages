@@ -13,7 +13,7 @@ trait CanCreateTranslation
 {
     /**
      * @param array $content
-     * @param $sharedRelativePathname
+     * @param string $sharedRelativePathname
      * @param string $type
      * @param int $languageId
      * @param string $languageCode
@@ -23,13 +23,13 @@ trait CanCreateTranslation
      * @return void
      * @throws MassCreateTranslationsException
      */
-    protected function massCreateTranslations(array $content, $sharedRelativePathname, string $type, int $languageId, string $languageCode, string $namespace, string $group, bool $isVendor): void
+    protected function massCreateTranslations(array $content, string $sharedRelativePathname, string $type, int $languageId, string $languageCode, string $namespace, string $group, bool $isVendor): void
     {
         try {
             DB::beginTransaction();
             $translationsArray = [];
             foreach ($content as $key => $value) {
-                $sharedIdentifier = base64_encode(str_replace(base_path(), '', $sharedRelativePathname . $key));
+                $sharedIdentifier = base64_encode(str_replace(base_path(), '', $sharedRelativePathname . $key . $namespace . $group));
                 $translationsArray[] = $this->getNewTranslation($languageId, $languageCode, $sharedIdentifier, $type, $key, $value, $namespace, $group, $isVendor);
             }
             $translationsArray = array_filter($translationsArray);
