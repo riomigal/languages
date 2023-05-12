@@ -79,7 +79,7 @@ return [
     */
     'import_vendor_translations' => true, // Imports as well vendor translations
 
-    'load_translations_from_db' => true, // Loads translations from the DB without using the filesystem
+    'load_translations_from_db' => false, // Loads translations from the DB without using the filesystem
 
     'cache_key' => 'languages_cache'
 

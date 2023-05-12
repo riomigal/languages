@@ -90,7 +90,7 @@
                     class="flex justify-between items-center pb-4 mb-4 rounded-t border-b sm:mb-5 dark:border-gray-600">
                     @if($translation)
                         <p class="text-sm text-gray-400 font-bold dark:text-gray-400">
-                            {{$translation->relative_pathname}} - {{$translation->key}}
+                           {{$translation->namespace ? $translation->namespace . '::' : ''}}{{$translation->group ? $translation->group . '.': ''}}{{$translation->key}}
                         </p>
                     @endif
                     <button type="button"

@@ -10,6 +10,12 @@ return [
     'checkbox_filter_button' => 'State Filters',
     'table' => [
         'head' => [
+            'is_vendor' => 'Vendor',
+            'namespace' => 'Namespace',
+            'group' => 'Group',
+            'approved_by' => 'Approver',
+            'updated_by' => 'Updated',
+            'exported' => 'Exported',
             'path' => 'Path',
             'file' => 'File Name',
             'approved' => 'Approved',
@@ -22,7 +28,8 @@ return [
         'action' => [
             'translate' => 'Translate',
             'approve' => 'Approve',
-            'needs_translation' => 'Request translation'
+            'needs_translation' => 'Request translation',
+            'restore_translation' => 'Restore'
         ]
     ],
     'filter' => [
