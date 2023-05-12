@@ -4,6 +4,8 @@ namespace Riomigal\Languages;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Translation\TranslationServiceProvider;
 use Livewire\Livewire;
 use Riomigal\Languages\Console\Commands\ExportTranslations;
@@ -16,9 +18,11 @@ use Riomigal\Languages\Livewire\BatchExecution;
 use Riomigal\Languages\Livewire\FlashMessage;
 use Riomigal\Languages\Livewire\LanguagesToastMessage;
 use Riomigal\Languages\Livewire\Login;
+use Riomigal\Languages\Livewire\Settings;
 use Riomigal\Languages\Livewire\Translations;
 use Riomigal\Languages\Livewire\Translators;
 use Riomigal\Languages\Middleware\AuthTranslator;
+use Riomigal\Languages\Models\Setting;
 use Riomigal\Languages\Models\Translator;
 
 
@@ -73,7 +77,7 @@ class LanguagesServiceProvider extends TranslationServiceProvider
      */
     protected function registerLoader(): void
     {
-        if(config('languages.load_translations_from_db')) {
+        if(Schema::hasTable('settings') && DB::table('settings')->first()->db_loader) {
             $this->app->singleton('translation.loader', function ($app) {
                 return new TranslationLoader($app['files'], $app['path.lang']);
             });
@@ -137,6 +141,7 @@ class LanguagesServiceProvider extends TranslationServiceProvider
         Livewire::component('toast', LanguagesToastMessage::class);
         Livewire::component('flash-message', FlashMessage::class);
         Livewire::component('batch-execution', BatchExecution::class);
+        Livewire::component('settings', Settings::class);
     }
 
     /**

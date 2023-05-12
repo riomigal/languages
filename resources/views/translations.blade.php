@@ -1,3 +1,4 @@
+@php use Riomigal\Languages\Models\Setting; @endphp
 @extends('languages::component.table-section')
 @section('content')
     @include('languages::component.table-h1-heading', ['title' => __('languages::translations.title', ['language' => $this->language->name, 'code' => $this->language->code]) ])
@@ -21,12 +22,14 @@
 
             @if($isAdministrator && $data->items())
 
+                @if(!Setting::getCached()->db_loader)
                 @include('languages::component.button',
                   [
                   'clickEvent' => 'exportTranslationsForLanguage',
                  'text' => __('languages::translations.button.export_translation')
                   ]
                 )
+                @endif
 
                 @include('languages::component.button',
                       [
@@ -35,12 +38,14 @@
                       ]
                   )
 
-                @include('languages::component.button',
-                  [
-                  'clickEvent' => 'exportTranslationsForAllLanguages',
-                 'text' => __('languages::translations.button.export_all_translations')
-                  ]
-              )
+                  @if(!Setting::getCached()->db_loader)
+                        @include('languages::component.button',
+                          [
+                          'clickEvent' => 'exportTranslationsForAllLanguages',
+                         'text' => __('languages::translations.button.export_all_translations')
+                          ]
+                           )
+                @endif
             @endif
 
             @include('languages::component.select-checkbox-multiple',

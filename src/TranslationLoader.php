@@ -3,6 +3,7 @@
 namespace Riomigal\Languages;
 
 use Illuminate\Translation\FileLoader;
+use Riomigal\Languages\Models\Setting;
 use Riomigal\Languages\Models\Translation;
 
 class TranslationLoader extends FileLoader
@@ -18,6 +19,9 @@ class TranslationLoader extends FileLoader
      */
     public function load($locale,  $group, $namespace = null): array
     {
+        if(!Setting::getCached()->import_vendor && $namespace) {
+            return parent::load($locale, $group, $namespace);
+        }
         return Translation::getCachedTranslations($locale,  $group, $namespace);
     }
 }

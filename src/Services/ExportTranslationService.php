@@ -6,7 +6,6 @@ namespace Riomigal\Languages\Services;
 use Illuminate\Bus\Batch;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Log;
 use Riomigal\Languages\Exceptions\ExportTranslationException;
 use Riomigal\Languages\Jobs\ExportUpdatedTranslation;
 use Riomigal\Languages\Models\Language;

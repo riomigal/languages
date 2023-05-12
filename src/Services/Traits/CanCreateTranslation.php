@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Riomigal\Languages\Exceptions\MassCreateTranslationsException;
+use Riomigal\Languages\Models\Setting;
 use Riomigal\Languages\Models\Translation;
 
 trait CanCreateTranslation
@@ -35,7 +36,8 @@ trait CanCreateTranslation
             if (count($translationsArray) > 0) {
                 $this->massInsertTranslations($translationsArray);
             }
-            DB::commit();;
+            DB::commit();
+            Translation::unsetCachedTranslation($languageCode, $group ?? null, $namespace ?? null);
         } catch (\Exception|MassCreateTranslationsException $e) {
             DB::rollBack();
             if ($e::class == MassCreateTranslationsException::class) {

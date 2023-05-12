@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Riomigal\Languages\Livewire\Languages;
 use Riomigal\Languages\Livewire\Login;
+use Riomigal\Languages\Livewire\Settings;
 use Riomigal\Languages\Livewire\Translations;
 use Riomigal\Languages\Livewire\Translators;
 
@@ -15,6 +16,7 @@ Route::prefix(config('languages.prefix'))->middleware([config('languages.transla
     Route::get('/' . config('languages.translators_url'), Translators::class)->name('languages.translators');
     Route::get('/' . config('languages.languages_url'), Languages::class)->name('languages.languages');
     Route::get('/' . config('languages.translations_url') . '/{language}', Translations::class)->name('languages.translations');
+    Route::get('/' . config('languages.settings_url'), Settings::class)->name('languages.settings');
 });
 
 /**

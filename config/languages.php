@@ -25,6 +25,8 @@ return [
 
     'translators_url' => 'translators',
 
+    'settings_url' => 'settings',
+
     'login_url' => 'login',
 
     /*
@@ -42,6 +44,8 @@ return [
     'table_translations' => 'translations',
 
     'table_translators' => 'translators',
+
+    'table_settings' => 'settings',
 
     'table_translator_language' => 'translator_language',
 
@@ -77,37 +81,6 @@ return [
     |--------------------------------------------------------------------------
     |
     */
-    'import_vendor_translations' => true, // Imports as well vendor translations
 
-    'load_translations_from_db' => false, // Loads translations from the DB without using the filesystem
-
-    'cache_key' => 'languages_cache'
-
-    /*
- |--------------------------------------------------------------------------
- | API
- |--------------------------------------------------------------------------
- |
- | Set the api settings
- |
- */
-
-//    'api' => [
-//        'enabled' => true, // Enables the API routes, disable if not used
-//
-//        'middleware' => ['api'],
-//
-//        'prefix' => 'api',
-//
-//        'root_prefix' => 'translator',
-//
-//        'languages_url' => 'languages',
-//
-//        'translations_url' => 'translations',
-//
-//        'translators_url' => 'translators',
-//
-//        'login_url' => 'login',
-//    ]
-
+    'cache_key' => 'languages_cache',
 ];

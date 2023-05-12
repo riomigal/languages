@@ -197,9 +197,8 @@ class Translations extends AuthComponent
         $translation->previous_updated_by = null;
         $translation->previous_approved_by = null;
         $translation->save();
-        Translation::unsetCachedTranslation($translation->language_code, $translation->group, $translation->namespace);
-        Translation::getCachedTranslations($translation->language_code, $translation->group, $translation->namespace);
-
+        Translation::unsetCachedTranslation($translation->language_code, $translation->group ?? null, $translation->namespace ?? null);
+        Translation::getCachedTranslations($translation->language_code, $translation->group ?? null, $translation->namespace ?? null);
     }
 
     /**

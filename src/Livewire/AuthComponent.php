@@ -3,6 +3,7 @@
 namespace Riomigal\Languages\Livewire;
 
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Model;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Riomigal\Languages\Models\Translator;
@@ -32,9 +33,9 @@ abstract class AuthComponent extends Component
     public Translator $authUser;
 
     /**
-     * @return LengthAwarePaginator
+     * @return LengthAwarePaginator|Model
      */
-    abstract public function query(): LengthAwarePaginator;
+    abstract public function query(): LengthAwarePaginator|Model;
 
     /**
      * @return void

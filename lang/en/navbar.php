@@ -7,5 +7,7 @@ return [
 
     'translators' => 'Translators',
 
+    'settings' => 'Settings',
+
     'logout' => 'Logout',
 ];

@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Log;
 use Riomigal\Languages\Exceptions\ImportTranslationsException;
 use Riomigal\Languages\Jobs\MassCreateTranslationsJob;
 use Riomigal\Languages\Models\Language;
+use Riomigal\Languages\Models\Setting;
 use Riomigal\Languages\Services\Traits\CanCreateTranslation;
 use Symfony\Component\Finder\SplFileInfo;
 
@@ -92,7 +93,7 @@ class ImportTranslationService
      */
     protected function importVendorTranslations(): void
     {
-        if(config('languages.import_vendor_translations')) {
+        if(Setting::getCached()->import_vendor) {
             $loader = Lang::getLoader();
             $this->isVendor = true;
             foreach ($loader->namespaces() as $namespace => $directory) {
@@ -124,7 +125,7 @@ class ImportTranslationService
         // Loop through languages in directory
         foreach ($this->languages as $language) {
             $this->language = $language;
-            if($this->isVendor) {
+            if ($this->isVendor) {
                 $this->createMissingDirectory(App::langPath('vendor/' . $this->namespace) . '/' . $this->language->code);
             } else {
                 $this->createMissingDirectory($this->root . '/' . $this->language->code);
@@ -136,8 +137,10 @@ class ImportTranslationService
             }
 
             // Handles files in language subdirectory
-            foreach (File::allFiles($this->root . '/' . $this->language->code) as $file) {
-                $this->generateContent(str_replace('/src/../', '/', $this->root), $file);
+            if(File::exists($this->root . '/' . $this->language->code)) {
+                foreach (File::allFiles($this->root . '/' . $this->language->code) as $file) {
+                    $this->generateContent(str_replace('/src/../', '/', $this->root), $file);
+                }
             }
         }
     }
@@ -151,37 +154,39 @@ class ImportTranslationService
     protected function generateContent(string $root, \SplFileInfo $file): void
     {
         try {
-            $relativePathname = str_replace($root, '', $file->getRealPath());
-            $relativePath = File::dirname($relativePathname);
-            $type = $file->getExtension();
-            if (!in_array($type, ['json', 'php'])) {
-                Log::error('File (' . $relativePathname . ') has an invalid file extension. File extension must be php or json. Remove the file or change the extension.');
-            }
-
-            if ($type == 'json') {
-                $group = '';
-                $content = json_decode(File::get($file->getRealPath()), true);
-                $sharedRelativePathname = str_replace($this->language->code . '.json', $this->languagePlaceholder . '.json', $relativePathname);
-            } else {
-                $group = str_replace('.'. $type, '', substr($relativePathname,4));
-                $content = require($file->getRealPath());
-                $sharedRelativePathname = $this->languagePlaceholder . substr($relativePathname, 2);
-            }
-
-            if (!is_array($content)) {
-                if ($type == 'php') {
-                    Log::error('File (' . $relativePathname . ') has no valid php array, Please check the file in the filesystem.');
-                } else {
-                    Log::error('File (' . $relativePathname . ') has no valid JSON string, Please check the file in the filesystem.');
+            if(File::exists($file->getRealPath())) {
+                $relativePathname = str_replace($root, '', $file->getRealPath());
+                $relativePath = File::dirname($relativePathname);
+                $type = $file->getExtension();
+                if (!in_array($type, ['json', 'php'])) {
+                    Log::error('File (' . $relativePathname . ') has an invalid file extension. File extension must be php or json. Remove the file or change the extension.');
                 }
-            }
 
-            if (count($content) > 0) {
-                $content = app('lang.helper')->array_convert_keys_to_dot_notation($content);
-                if ($this->batch) {
-                    $this->batch->add(new MassCreateTranslationsJob($content, $sharedRelativePathname, $type, $this->language->id, $this->language->code, $this->namespace, $group, $this->isVendor));
+                if ($type == 'json') {
+                    $group = '';
+                    $content = json_decode(File::get($file->getRealPath()), true);
+                    $sharedRelativePathname = str_replace($this->language->code . '.json', $this->languagePlaceholder . '.json', $relativePathname);
                 } else {
-                    $this->massCreateTranslations($content,  $sharedRelativePathname, $type, $this->language->id, $this->language->code, $this->namespace, $group, $this->isVendor);
+                    $group = str_replace('.' . $type, '', substr($relativePathname, 4));
+                    $content = require($file->getRealPath());
+                    $sharedRelativePathname = $this->languagePlaceholder . substr($relativePathname, 2);
+                }
+
+                if (!is_array($content)) {
+                    if ($type == 'php') {
+                        Log::error('File (' . $relativePathname . ') has no valid php array, Please check the file in the filesystem.');
+                    } else {
+                        Log::error('File (' . $relativePathname . ') has no valid JSON string, Please check the file in the filesystem.');
+                    }
+                }
+
+                if (count($content) > 0) {
+                    $content = app('lang.helper')->array_convert_keys_to_dot_notation($content);
+                    if ($this->batch) {
+                        $this->batch->add(new MassCreateTranslationsJob($content, $sharedRelativePathname, $type, $this->language->id, $this->language->code, $this->namespace, $group, $this->isVendor));
+                    } else {
+                        $this->massCreateTranslations($content, $sharedRelativePathname, $type, $this->language->id, $this->language->code, $this->namespace, $group, $this->isVendor);
+                    }
                 }
             }
         } catch (\Throwable $e) {
@@ -195,8 +200,10 @@ class ImportTranslationService
      */
     protected function createMissingDirectory(string $path): void
     {
-        if (!File::exists($path)) {
-            File::makeDirectory($path);
+        if(!Setting::getCached()->db_loader) {
+            if (!File::exists($path)) {
+                File::makeDirectory($path);
+            }
         }
     }
 
