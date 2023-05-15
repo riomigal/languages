@@ -34,11 +34,9 @@ return [
     ],
     'filter' => [
         'needs_translation' => 'Needs Translation',
-        'doesnt_need_translation' => 'Does not need translation',
         'approved' => 'Approved',
-        'not_approved' => 'Not approved',
         'updated_translation' => 'Updated',
-        'not_updated_translation' => 'Not updated'
+        'is_vendor' => 'Is Vendor',
     ],
     'example_language' => [
         'label' => 'Example Language',

@@ -87,6 +87,16 @@ class Translation extends Model
      * @param bool $value
      * @return Builder
      */
+    public function scopeIsVendor(Builder $query, bool $value = true): Builder
+    {
+        return $query->where('is_vendor', $value);
+    }
+
+    /**
+     * @param Builder $query
+     * @param bool $value
+     * @return Builder
+     */
     public function scopeNeedsTranslation(Builder $query, bool $value = true): Builder
     {
         return $query->where('needs_translation', $value);

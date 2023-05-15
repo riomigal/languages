@@ -20,7 +20,7 @@
         <div class="flex flex-col md:flex-row items-center justify-between space-y-3 md:space-y-0 md:space-x-4 p-4">
             @include('languages::component.search')
 
-            @if($isAdministrator && $data->items())
+            @if($isAdministrator)
 
                 @if(!Setting::getCached()->db_loader)
                 @include('languages::component.button',
@@ -48,19 +48,16 @@
                 @endif
             @endif
 
-            @include('languages::component.select-checkbox-multiple',
+            @include('languages::component.select-checkbox-three-states',
              [
                  'id' => 'translations_filters_checkbox',
                  'text' => __('languages::translations.checkbox_filter_button'),
-                 'model' => 'checkboxFilters',
                  'data' => [
                      'needs_translation' => __('languages::translations.filter.needs_translation'),
-                                         'approved' => __('languages::translations.filter.approved'),
-                                         'updated_translation' => __('languages::translations.filter.updated_translation'),
-                     'doesnt_need_translation' => __('languages::translations.filter.doesnt_need_translation'),
-                     'not_approved' => __('languages::translations.filter.not_approved'),
-                                                              'not_updated_translation' => __('languages::translations.filter.not_updated_translation'),
-                     ]
+                     'approved' => __('languages::translations.filter.approved'),
+                     'updated_translation' => __('languages::translations.filter.updated_translation'),
+                     'is_vendor' => __('languages::translations.filter.is_vendor'),
+                    ]
                 ])
         </div>
         @include('languages::component.table', [

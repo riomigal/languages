@@ -43,11 +43,6 @@ class Translations extends AuthComponent
     public int $translateLanguageFallbackExampleId;
 
     /**
-     * @var array
-     */
-    public array $checkboxFilters = [];
-
-    /**
      * @var string
      */
     public string $translatedValue = '';
@@ -60,7 +55,28 @@ class Translations extends AuthComponent
     /**
      * @var string[]
      */
-    protected $queryString = ['search', 'page', 'checkboxFilters'];
+    protected $queryString = ['search', 'page', 'needs_translation', 'approved', 'updated_translation'];
+
+
+    /**
+     * @var bool|null
+     */
+    public bool|null $approved = null;
+
+    /**
+     * @var bool|null
+     */
+    public bool|null $needs_translation = null;
+
+    /**
+     * @var bool|null
+     */
+    public bool|null $updated_translation = null;
+
+    /**
+     * @var bool|null
+     */
+    public bool|null $is_vendor = null;
 
     /**
      * @param Language $language
@@ -94,32 +110,24 @@ class Translations extends AuthComponent
                     )
                         ->orWhere('group', 'LIKE', '%' . $this->search . '%')
                         ->orWhere('key', 'LIKE', '%' . $this->search . '%')
-                        ->orWhere('value', 'LIKE', '%' . $this->search . '%');
+                        ->orWhere('value', 'LIKE', '%' . $this->search . '%')
+                        ->orWhere('old_value', 'LIKE', '%' . $this->search . '%');
                 });
-            })->when(in_array('needs_translation', $this->checkboxFilters), function ($query) {
+            })->when($this->needs_translation !== null, function ($query) {
                 $query->where(function ($query) {
-                    $query->needsTranslation();
+                    $query->needsTranslation($this->needs_translation);
                 });
-            })->when(in_array('approved', $this->checkboxFilters), function ($query) {
+            })->when($this->approved !== null, function ($query) {
                 $query->where(function ($query) {
-                    $query->approved();
-
+                    $query->approved($this->approved);
                 });
-            })->when(in_array('updated_translation', $this->checkboxFilters), function ($query) {
+            })->when($this->updated_translation !== null, function ($query) {
                 $query->where(function ($query) {
-                    $query->isUpdated();
+                    $query->isUpdated($this->updated_translation);
                 });
-            })->when(in_array('doesnt_need_translation', $this->checkboxFilters), function ($query) {
+            })->when($this->is_vendor !== null, function ($query) {
                 $query->where(function ($query) {
-                    $query->needsTranslation(false);
-                });
-            })->when(in_array('not_approved', $this->checkboxFilters), function ($query) {
-                $query->where(function ($query) {
-                    $query->approved(false);
-                });
-            })->when(in_array('not_updated_translation', $this->checkboxFilters), function ($query) {
-                $query->where(function ($query) {
-                    $query->isUpdated(false);
+                    $query->isVendor($this->is_vendor);
                 });
             })
             ->paginate(10);
@@ -302,6 +310,24 @@ class Translations extends AuthComponent
 
         } else {
             $this->authUser->notify(new FlashMessage(__('languages::translations.nothing_exported')));
+        }
+    }
+
+    /**
+     * @param string $key
+     * @return void
+     */
+    public function updateThreeStatesFilter(string $key): void
+    {
+        if($this->{$key} === null) {
+            $this->{$key} = true;
+            $this->queryString[$key] = true;
+        } else if($this->{$key} === true) {
+            $this->{$key} = false;
+            $this->queryString[$key] = false;
+        } else {
+            $this->{$key} = null;
+            $this->queryString[$key] = null;
         }
     }
 
