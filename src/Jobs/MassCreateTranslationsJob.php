@@ -16,12 +16,13 @@ class MassCreateTranslationsJob implements ShouldQueue
 
     public function __construct(
         protected array  $content,
-        protected string $relativePath,
-        protected string $relativePathname,
         protected string $sharedPathname,
         protected string $type,
         protected int    $languageId,
-        protected string $languageCode
+        protected string $languageCode,
+        protected string $namespace,
+        protected string $group,
+        protected bool $isVendor
     )
     {
         $this->onQueue(config('languages.queue_name'));
@@ -33,6 +34,6 @@ class MassCreateTranslationsJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->massCreateTranslations($this->content, $this->relativePath, $this->relativePathname, $this->sharedPathname, $this->type, $this->languageId, $this->languageCode);
+        $this->massCreateTranslations($this->content, $this->sharedPathname, $this->type, $this->languageId, $this->languageCode, $this->namespace, $this->group, $this->isVendor);
     }
 }

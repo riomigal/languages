@@ -4,7 +4,9 @@ namespace Riomigal\Languages;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Translation\TranslationServiceProvider;
 use Livewire\Livewire;
 use Riomigal\Languages\Console\Commands\ExportTranslations;
 use Riomigal\Languages\Console\Commands\FindMissingTranslations;
@@ -16,12 +18,15 @@ use Riomigal\Languages\Livewire\BatchExecution;
 use Riomigal\Languages\Livewire\FlashMessage;
 use Riomigal\Languages\Livewire\LanguagesToastMessage;
 use Riomigal\Languages\Livewire\Login;
+use Riomigal\Languages\Livewire\Settings;
 use Riomigal\Languages\Livewire\Translations;
 use Riomigal\Languages\Livewire\Translators;
+use Riomigal\Languages\Middleware\AuthTranslator;
+use Riomigal\Languages\Models\Setting;
 use Riomigal\Languages\Models\Translator;
 
 
-class LanguagesServiceProvider extends ServiceProvider
+class LanguagesServiceProvider extends TranslationServiceProvider
 {
     /**
      * Bootstrap the package services.
@@ -61,6 +66,24 @@ class LanguagesServiceProvider extends ServiceProvider
         $this->app->singleton('lang.helper', function () {
             return new LanguageHelper();
         });
+
+        parent::register();
+    }
+
+    /**
+     * Register the translation line loader.
+     *
+     * @return void
+     */
+    protected function registerLoader(): void
+    {
+        if(Schema::hasTable('settings') && DB::table('settings')->first()->db_loader) {
+            $this->app->singleton('translation.loader', function ($app) {
+                return new TranslationLoader($app['files'], $app['path.lang']);
+            });
+        } else {
+            parent::registerLoader();
+        }
     }
 
     /**
@@ -96,6 +119,7 @@ class LanguagesServiceProvider extends ServiceProvider
     protected function addMiddleware(): void
     {
         $translatorGuard = config('languages.translator_guard');
+        app('router')->aliasMiddleware(config('languages.auth_guard'), AuthTranslator::class);
         app('router')->pushMiddlewareToGroup($translatorGuard, \Illuminate\Cookie\Middleware\EncryptCookies::class);
         app('router')->pushMiddlewareToGroup($translatorGuard, \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class);
         app('router')->pushMiddlewareToGroup($translatorGuard, \Illuminate\Session\Middleware\StartSession::class);
@@ -117,6 +141,7 @@ class LanguagesServiceProvider extends ServiceProvider
         Livewire::component('toast', LanguagesToastMessage::class);
         Livewire::component('flash-message', FlashMessage::class);
         Livewire::component('batch-execution', BatchExecution::class);
+        Livewire::component('settings', Settings::class);
     }
 
     /**
@@ -137,7 +162,6 @@ class LanguagesServiceProvider extends ServiceProvider
     protected function loadRoutes(): void
     {
         $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
-        // TO DO future api development
 //        if(config('languages.api.enabled')) {
 //            $this->loadRoutesFrom(__DIR__ . '/../routes/api.php');
 //            Route::middleware(config('languages.api.middleware'))

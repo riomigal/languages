@@ -2,12 +2,9 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
-use Riomigal\Languages\Models\Language;
-use Riomigal\Languages\Models\Translator;
 
-class CreateTranslatorsTable extends Migration
+return new class extends Migration
 {
     /**
      * Run the migrations.
@@ -39,4 +36,4 @@ class CreateTranslatorsTable extends Migration
     {
         Schema::dropIfExists(config('languages.table_translators'));
     }
-}
+};

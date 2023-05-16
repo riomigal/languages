@@ -11,7 +11,7 @@ class BaseException extends \Exception
      */
     protected string $publicMessage;
 
-    function __construct(string $message = "", string $publicMessage, int $code = 0, ?Throwable $previous = null)
+    function __construct(string $message, string $publicMessage, int $code = 0, ?\Throwable $previous = null)
     {
         $this->publicMessage = $publicMessage;
         parent::__construct($message, $code, $previous);

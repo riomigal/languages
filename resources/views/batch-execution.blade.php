@@ -1,4 +1,4 @@
-@if(auth()->check() && auth()->user()->admin)
+@if(auth(config('languages.translator_guard'))->check() && auth(config('languages.translator_guard'))->user()->admin)
     <div x-data="{open: @entangle('batchId'), progress: @entangle('progress')}">
         <div
             x-show="open"

@@ -1,3 +1,4 @@
+@php use Riomigal\Languages\Models\Setting; @endphp
 @extends('languages::component.table-section')
 @section('content')
     @include('languages::component.table-h1-heading', ['title' => __('languages::translations.title', ['language' => $this->language->name, 'code' => $this->language->code]) ])
@@ -19,14 +20,16 @@
         <div class="flex flex-col md:flex-row items-center justify-between space-y-3 md:space-y-0 md:space-x-4 p-4">
             @include('languages::component.search')
 
-            @if($isAdministrator && $data->items())
+            @if($isAdministrator)
 
+                @if(!Setting::getCached()->db_loader)
                 @include('languages::component.button',
                   [
                   'clickEvent' => 'exportTranslationsForLanguage',
                  'text' => __('languages::translations.button.export_translation')
                   ]
                 )
+                @endif
 
                 @include('languages::component.button',
                       [
@@ -35,41 +38,45 @@
                       ]
                   )
 
-                @include('languages::component.button',
-                  [
-                  'clickEvent' => 'exportTranslationsForAllLanguages',
-                 'text' => __('languages::translations.button.export_all_translations')
-                  ]
-              )
+                  @if(!Setting::getCached()->db_loader)
+                        @include('languages::component.button',
+                          [
+                          'clickEvent' => 'exportTranslationsForAllLanguages',
+                         'text' => __('languages::translations.button.export_all_translations')
+                          ]
+                           )
+                @endif
             @endif
 
-            @include('languages::component.select-checkbox-multiple',
+            @include('languages::component.select-checkbox-three-states',
              [
                  'id' => 'translations_filters_checkbox',
                  'text' => __('languages::translations.checkbox_filter_button'),
-                 'model' => 'checkboxFilters',
                  'data' => [
                      'needs_translation' => __('languages::translations.filter.needs_translation'),
-                                         'approved' => __('languages::translations.filter.approved'),
-                                         'updated_translation' => __('languages::translations.filter.updated_translation'),
-                     'doesnt_need_translation' => __('languages::translations.filter.doesnt_need_translation'),
-                     'not_approved' => __('languages::translations.filter.not_approved'),
-                                                              'not_updated_translation' => __('languages::translations.filter.not_updated_translation'),
-                     ]
+                     'approved' => __('languages::translations.filter.approved'),
+                     'updated_translation' => __('languages::translations.filter.updated_translation'),
+                     'is_vendor' => __('languages::translations.filter.is_vendor'),
+                    ]
                 ])
         </div>
         @include('languages::component.table', [
                       'thead' => [
-                      __('languages::translations.table.head.path'),
-                       __('languages::translations.table.head.file'),
-                       __('languages::translations.table.head.approved') ,
-                       __('languages::translations.table.head.needs_translation'),
+                      __('languages::translations.table.head.is_vendor'),
+                      __('languages::translations.table.head.namespace'),
+                       __('languages::translations.table.head.group'),
+                        __('languages::translations.table.head.needs_translation'),
+                       __('languages::translations.table.head.approved'),
+                       __('languages::translations.table.head.approved_by'),
                        __('languages::translations.table.head.updated_translation') ,
+                       __('languages::translations.table.head.updated_by') ,
+                       __('languages::translations.table.head.exported') ,
                        __('languages::translations.table.head.key'),
-                       __('languages::translations.table.head.content')
+                       __('languages::translations.table.head.content'),
+                       __('languages::translations.table.head.old_content')
                        ],
-                       'tbody' => ['relative_path', 'file','approved', 'needs_translation', 'updated_translation', 'key', 'value'],
-                       'action' => ['translate', 'approve_translation', 'needs_translation'],
+                       'tbody' => ['is_vendor', 'namespace', 'group', 'needs_translation', 'approved', 'approver', 'updated_translation', 'updater', 'exported', 'key', 'value', 'old_value'],
+                       'action' => ['translate', 'approve_translation', 'needs_translation', 'restore_translation'],
                   ])
         <div>
             @include('languages::vendor.livewire.tailwind', ['data' => $data])
@@ -85,7 +92,7 @@
                     class="flex justify-between items-center pb-4 mb-4 rounded-t border-b sm:mb-5 dark:border-gray-600">
                     @if($translation)
                         <p class="text-sm text-gray-400 font-bold dark:text-gray-400">
-                            {{$translation->relative_pathname}} - {{$translation->key}}
+                           {{$translation->namespace ? $translation->namespace . '::' : ''}}{{$translation->group ? $translation->group . '.': ''}}{{$translation->key}}
                         </p>
                     @endif
                     <button type="button"

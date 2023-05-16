@@ -5,7 +5,6 @@ namespace Riomigal\Languages\Livewire;
 use DanHarrin\LivewireRateLimiting\Exceptions\TooManyRequestsException;
 use DanHarrin\LivewireRateLimiting\WithRateLimiting;
 use Illuminate\Contracts\View\View;
-use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\Redirector;
 use Riomigal\Languages\Models\Language;
@@ -49,7 +48,7 @@ class Login extends Component
      */
     public function mount(): void
     {
-        if (auth()->check()) {
+        if (auth(config('languages.translator_guard'))->check()) {
             redirect(route('languages.languages'));
         };
     }
@@ -59,7 +58,6 @@ class Login extends Component
      */
     public function login(): Redirector|null
     {
-        Auth::shouldUse(config('languages.translator_guard'));
         try {
             $this->rateLimit(10);
         } catch (TooManyRequestsException $exception) {
@@ -69,7 +67,7 @@ class Login extends Component
 
         $this->validate();
 
-        if (!auth()->attempt([
+        if (!auth(config('languages.translator_guard'))->attempt([
             'email' => $this->email,
             'password' => $this->password,
         ])) {
@@ -77,7 +75,7 @@ class Login extends Component
             return null;
         }
 
-        auth()->login(Translator::query()->where('email', $this->email)->first(), $this->remember);
+        auth(config('languages.translator_guard'))->login(Translator::query()->where('email', $this->email)->first(), $this->remember);
 
         return redirect(route('languages.languages'));
     }

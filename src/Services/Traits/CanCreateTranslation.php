@@ -2,48 +2,52 @@
 
 namespace Riomigal\Languages\Services\Traits;
 
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Riomigal\Languages\Exceptions\MassCreateTranslationsException;
+use Riomigal\Languages\Models\Setting;
 use Riomigal\Languages\Models\Translation;
 
 trait CanCreateTranslation
 {
-
     /**
      * @param array $content
-     * @param string $relativePath
-     * @param string $relativePathname
-     * @param $sharedRelativePathname
+     * @param string $sharedRelativePathname
      * @param string $type
      * @param int $languageId
      * @param string $languageCode
+     * @param string $namespace
+     * @param string $group
+     * @param bool $isVendor
      * @return void
      * @throws MassCreateTranslationsException
      */
-    protected function massCreateTranslations(array $content, string $relativePath, string $relativePathname, $sharedRelativePathname, string $type, int $languageId, string $languageCode): void
+    protected function massCreateTranslations(array $content, string $sharedRelativePathname, string $type, int $languageId, string $languageCode, string $namespace, string $group, bool $isVendor): void
     {
-
         try {
             DB::beginTransaction();
             $translationsArray = [];
-            $file = File::basename($relativePathname);
             foreach ($content as $key => $value) {
-                $sharedIdentifier = base64_encode(str_replace(base_path(), '', $sharedRelativePathname . $key));
-                $translationsArray[] = $this->getNewTranslation($languageId, $languageCode, $relativePath, $relativePathname, $sharedIdentifier, $file, $type, $key, $value);
+                $sharedIdentifier = base64_encode(str_replace(base_path(), '', $sharedRelativePathname . $key . $namespace . $group));
+                $translationsArray[] = $this->getNewTranslation($languageId, $languageCode, $sharedIdentifier, $type, $key, $value, $namespace, $group, $isVendor);
             }
-
             $translationsArray = array_filter($translationsArray);
             if (count($translationsArray) > 0) {
                 $this->massInsertTranslations($translationsArray);
             }
-            DB::commit();;
+            DB::commit();
+            Translation::unsetCachedTranslation($languageCode, $group ?? null, $namespace ?? null);
         } catch (\Exception|MassCreateTranslationsException $e) {
             DB::rollBack();
             if ($e::class == MassCreateTranslationsException::class) {
                 throw $e;
             } else {
+                if($isVendor) {
+                    $relativePathname = App::langPath('vendor/' . $namespace . '/' . $languageCode . '/' . $group . '.' . $type);
+                } else {
+                    $relativePathname = App::langPath('vendor/' . $namespace . '/' . $languageCode . '/' . $group . '.' . $type);
+                }
                 Log::error('Something went wrong while mass creating translations.', ['relativePathname' => $relativePathname, 'array' => $translationsArray]);
                 throw new MassCreateTranslationsException($e->getMessage(), __('languages::exceptions.mass_create_fails', ['relativePathname' => $relativePathname]));
             }
@@ -64,7 +68,7 @@ trait CanCreateTranslation
             $translationsArray = [];
 
             foreach ($translations as $translation) {
-                $translationsArray[] = $this->getTranslationArray($languageId, $languageCode, $translation['relative_path'], $translation['relative_pathname'], $translation['shared_identifier'], $translation['file'], $translation['type'], $translation['key'], '');
+                $translationsArray[] = $this->getTranslationArray($languageId, $languageCode, $translation['shared_identifier'], $translation['type'], $translation['key'], '', $translation['namespace'], $translation['group'], $translation['is_vendor']);
             }
             $this->massInsertTranslations($translationsArray);
             DB::commit();
@@ -86,22 +90,21 @@ trait CanCreateTranslation
      *
      * @param int $languageId
      * @param string $languageCode
-     * @param string $relativePath
-     * @param string $relativePathname
      * @param string $sharedIdentifier
-     * @param string $file
      * @param string $type
      * @param string $key
      * @param string $value
+     * @param string $namespace
+     * @param string $group
+     * @param bool $isVendor
      * @return array
      */
-    protected function getNewTranslation(int $languageId, string $languageCode, string $relativePath, string $relativePathname, string $sharedIdentifier, string $file, string $type, string $key, string $value): array
+    protected function getNewTranslation(int $languageId, string $languageCode, string $sharedIdentifier, string $type, string $key, string $value, string $namespace, string $group, bool $isVendor): array
     {
         if (!$this->translationExists($sharedIdentifier, $languageCode)) {
-            return $this->getTranslationArray($languageId, $languageCode, $relativePath, $relativePathname, $sharedIdentifier, $file, $type, $key, $value);
+            return $this->getTranslationArray($languageId, $languageCode, $sharedIdentifier, $type, $key, $value, $namespace, $group, $isVendor);
         }
         return [];
-
     }
 
 
@@ -110,25 +113,25 @@ trait CanCreateTranslation
      *
      * @param int $languageId
      * @param string $languageCode
-     * @param string $relativePath
-     * @param string $relativePathname
      * @param string $sharedIdentifier
-     * @param string $file
      * @param string $type
      * @param string $key
      * @param string $value
+     * @param string $namespace
+     * @param string $group
+     * @param bool $isVendor
      * @return array
      */
-    protected function getTranslationArray(int $languageId, string $languageCode, string $relativePath, string $relativePathname, string $sharedIdentifier, string $file, string $type, string $key, string $value): array
+    protected function getTranslationArray(int $languageId, string $languageCode, string $sharedIdentifier, string $type, string $key, string $value, string $namespace, string $group, bool $isVendor): array
     {
         return [
             'language_id' => $languageId,
             'language_code' => $languageCode,
-            'relative_path' => $relativePath,
-            'relative_pathname' => $relativePathname,
             'shared_identifier' => $sharedIdentifier,
-            'file' => $file,
             'type' => $type,
+            'namespace' => $namespace,
+            'is_vendor' => $isVendor,
+            'group' => $group,
             'key' => $key,
             'value' => $value,
             'approved' => true,

@@ -43,11 +43,6 @@ class Translations extends AuthComponent
     public int $translateLanguageFallbackExampleId;
 
     /**
-     * @var array
-     */
-    public array $checkboxFilters = [];
-
-    /**
      * @var string
      */
     public string $translatedValue = '';
@@ -60,7 +55,28 @@ class Translations extends AuthComponent
     /**
      * @var string[]
      */
-    protected $queryString = ['search', 'page', 'checkboxFilters'];
+    protected $queryString = ['search', 'page', 'needs_translation', 'approved', 'updated_translation'];
+
+
+    /**
+     * @var bool|null
+     */
+    public bool|null $approved = null;
+
+    /**
+     * @var bool|null
+     */
+    public bool|null $needs_translation = null;
+
+    /**
+     * @var bool|null
+     */
+    public bool|null $updated_translation = null;
+
+    /**
+     * @var bool|null
+     */
+    public bool|null $is_vendor = null;
 
     /**
      * @param Language $language
@@ -70,8 +86,8 @@ class Translations extends AuthComponent
     {
         parent::init();
         $this->language = $language;
-        if (!auth()->user()->admin) {
-            $languages = auth()->user()->languages()->pluck('languages.id')->all();
+        if (!$this->isAdministrator) {
+            $languages = $this->authUser->languages()->pluck('languages.id')->all();
             if (!in_array($this->language->id, $languages)) {
                 abort(403);
             }
@@ -90,35 +106,28 @@ class Translations extends AuthComponent
             ->when($this->search, function ($query) {
                 $query->where(function ($query) {
                     $query->where(
-                        'relative_pathname', 'LIKE', '%' . $this->search . '%'
+                        'namespace', 'LIKE', '%' . $this->search . '%'
                     )
+                        ->orWhere('group', 'LIKE', '%' . $this->search . '%')
                         ->orWhere('key', 'LIKE', '%' . $this->search . '%')
-                        ->orWhere('value', 'LIKE', '%' . $this->search . '%');
+                        ->orWhere('value', 'LIKE', '%' . $this->search . '%')
+                        ->orWhere('old_value', 'LIKE', '%' . $this->search . '%');
                 });
-            })->when(in_array('needs_translation', $this->checkboxFilters), function ($query) {
+            })->when($this->needs_translation !== null, function ($query) {
                 $query->where(function ($query) {
-                    $query->needsTranslation();
+                    $query->needsTranslation($this->needs_translation);
                 });
-            })->when(in_array('approved', $this->checkboxFilters), function ($query) {
+            })->when($this->approved !== null, function ($query) {
                 $query->where(function ($query) {
-                    $query->approved();
-
+                    $query->approved($this->approved);
                 });
-            })->when(in_array('updated_translation', $this->checkboxFilters), function ($query) {
+            })->when($this->updated_translation !== null, function ($query) {
                 $query->where(function ($query) {
-                    $query->isUpdated();
+                    $query->isUpdated($this->updated_translation);
                 });
-            })->when(in_array('doesnt_need_translation', $this->checkboxFilters), function ($query) {
+            })->when($this->is_vendor !== null, function ($query) {
                 $query->where(function ($query) {
-                    $query->needsTranslation(false);
-                });
-            })->when(in_array('not_approved', $this->checkboxFilters), function ($query) {
-                $query->where(function ($query) {
-                    $query->approved(false);
-                });
-            })->when(in_array('not_updated_translation', $this->checkboxFilters), function ($query) {
-                $query->where(function ($query) {
-                    $query->isUpdated(false);
+                    $query->isVendor($this->is_vendor);
                 });
             })
             ->paginate(10);
@@ -164,11 +173,18 @@ class Translations extends AuthComponent
     public function updateTranslation(): void
     {
         if ($this->translation->value != $this->translatedValue) {
-
-            $this->translation->value = $this->translatedValue;
-            $this->translation->updated_translation = true;
-            $this->translation->approved = false;
+            $this->translation->exported = false;
             $this->translation->needs_translation = false;
+            if(!$this->translation->updated_translation) {
+                $this->translation->previous_approved_by = $this->translation->approved_by;
+                $this->translation->previous_updated_by = $this->translation->updated_by;
+                $this->translation->old_value = $this->translation->value;
+            }
+            $this->translation->approved_by = null;
+            $this->translation->updated_by = $this->authUser->id;
+            $this->translation->updated_translation = true;
+            $this->translation->value = $this->translatedValue;
+            $this->translation->approved = false;
             $this->translation->save();
             $this->hideTranslationModal();
             $this->emit('showToast', __('languages::translations.update_success_message'), LanguagesToastMessage::MESSAGE_TYPES['SUCCESS'], 4000);
@@ -181,20 +197,48 @@ class Translations extends AuthComponent
      */
     public function approveTranslation(int $id): void
     {
-        Translation::findOrFail($id)->update([
-            'approved' => true
-        ]);
+        $translation =  Translation::findOrFail($id);
+        $translation->approved = true;
+        $translation->updated_translation = false;
+        $translation->old_value = null;
+        $translation->approved_by = $this->authUser->id;
+        $translation->previous_updated_by = null;
+        $translation->previous_approved_by = null;
+        $translation->save();
+        Translation::unsetCachedTranslation($translation->language_code, $translation->group ?? null, $translation->namespace ?? null);
+        Translation::getCachedTranslations($translation->language_code, $translation->group ?? null, $translation->namespace ?? null);
     }
 
     /**
-     *
      * @return void
      */
     public function approveAllTranslations(): void
     {
-        $this->language->translations()->where('approved', false)->update([
-            'approved' => true
-        ]);
+        $this->language->translations()->where('approved', false)
+            ->each(function(Translation $translation) {
+                $this->approveTranslation($translation->id);
+            });
+    }
+
+    /**
+     * @param int $id
+     * @return void
+     */
+    public function restoreTranslation(int $id): void
+    {
+        $translation =  Translation::findOrFail($id);
+        if($translation->old_value && !$translation->approved) {
+            $translation->value = $translation->old_value;
+            $translation->old_value = null;
+            $translation->approved_by = $translation->previous_approved_by;
+            $translation->updated_by = $translation->previous_updated_by;
+            $translation->previous_updated_by = null;
+            $translation->previous_approved_by = null;
+            $translation->approved = true;
+            $translation->exported = true;
+            $translation->updated_translation = false;
+            $translation->save();
+        }
     }
 
     /**
@@ -207,7 +251,7 @@ class Translations extends AuthComponent
         if ($this->anotherJobIsRunning()) return;
 
         $updatedTranslationsTotal = $this->language->translations()
-            ->isUpdated()
+            ->isUpdated(false)->exported(false)
             ->approved()->count();
 
         if ($updatedTranslationsTotal) {
@@ -216,7 +260,7 @@ class Translations extends AuthComponent
             ];
 
             $total = Translation::query()->where('language_id', $this->language->id)
-                ->isUpdated()
+                ->isUpdated(false)->exported(false)
                 ->approved()
                 ->count();
             $language = $this->language;
@@ -242,7 +286,7 @@ class Translations extends AuthComponent
         if ($this->anotherJobIsRunning()) return;
 
         $languages = Language::find(Translation::query()
-            ->isUpdated()
+            ->isUpdated(false)->exported(false)
             ->approved()->distinct()->pluck('language_id')->toArray());
 
         if ($languages->count() > 0) {
@@ -253,7 +297,7 @@ class Translations extends AuthComponent
             });
 
             $total = Translation::query()
-                ->isUpdated()
+                ->isUpdated(false)->exported(false)
                 ->approved()
                 ->count();
 
@@ -266,6 +310,24 @@ class Translations extends AuthComponent
 
         } else {
             $this->authUser->notify(new FlashMessage(__('languages::translations.nothing_exported')));
+        }
+    }
+
+    /**
+     * @param string $key
+     * @return void
+     */
+    public function updateThreeStatesFilter(string $key): void
+    {
+        if($this->{$key} === null) {
+            $this->{$key} = true;
+            $this->queryString[$key] = true;
+        } else if($this->{$key} === true) {
+            $this->{$key} = false;
+            $this->queryString[$key] = false;
+        } else {
+            $this->{$key} = null;
+            $this->queryString[$key] = null;
         }
     }
 

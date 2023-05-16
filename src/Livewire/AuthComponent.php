@@ -3,7 +3,7 @@
 namespace Riomigal\Languages\Livewire;
 
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Database\Eloquent\Model;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Riomigal\Languages\Models\Translator;
@@ -33,22 +33,17 @@ abstract class AuthComponent extends Component
     public Translator $authUser;
 
     /**
-     * @return LengthAwarePaginator
+     * @return LengthAwarePaginator|Model
      */
-    abstract public function query(): LengthAwarePaginator;
+    abstract public function query(): LengthAwarePaginator|Model;
 
     /**
      * @return void
      */
     public function init(): void
     {
-        Auth::shouldUse(config('languages.translator_guard'));
-        if (!auth()->check()) {
-            abort(302, '', ['Location' => route('languages.login')]);
-        } else {
-            $this->authUser = Translator::find(auth()->user()->id);
-            $this->isAdministrator = $this->authUser->admin;
-        }
+        $this->authUser = Translator::find(auth(config('languages.translator_guard'))->user()->id);
+        $this->isAdministrator = $this->authUser->admin;
     }
 
 
@@ -67,8 +62,8 @@ abstract class AuthComponent extends Component
     public function delete(int $id): bool
     {
         if (!$this->isAdministrator) {
-            return false;
             $this->showNoAuthorizationMessage();
+            return false;
         }
         return true;
     }
@@ -79,8 +74,8 @@ abstract class AuthComponent extends Component
     public function update(): bool
     {
         if (!$this->isAdministrator) {
-            return false;
             $this->showNoAuthorizationMessage();
+            return false;
         }
         return true;
     }

@@ -63,18 +63,19 @@ class ExportTranslationService
         File::copyDirectory($languageDirectory, $tempLangDirectory);
         try {
             Translation::query()
-                ->select('relative_pathname', 'type')
+                ->select('namespace', 'group', 'is_vendor', 'type')
                 ->where('language_id', $language->id)
-                ->isUpdated()
+                ->isUpdated(false)
                 ->approved()
-                ->groupBy('relative_pathname', 'type')
-                ->orderBy('relative_pathname')
+                ->exported(false)
+                ->groupBy('namespace', 'group', 'is_vendor', 'type')
+                ->orderBy('group')
                 ->chunk(200, function ($translations) use ($language) {
                     foreach ($translations as $translation) {
                         if ($this->batch) {
-                            $this->batch->add([new ExportUpdatedTranslation($translation->relative_pathname, $translation->type, $language->id)]);
+                            $this->batch->add([new ExportUpdatedTranslation($translation->type, $language->code, $translation->is_vendor, $translation->namespace, $translation->group)]);
                         } else {
-                            $this->updateTranslation($translation->relative_pathname, $translation->type, $language->id);
+                            $this->updateTranslation($translation->type, $language->code, $translation->is_vendor, $translation->namespace, $translation->group);
                         }
                     }
                 });

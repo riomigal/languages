@@ -1,14 +1,11 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Schema;
 use Riomigal\Languages\Models\Language;
 use Riomigal\Languages\Models\Translator;
 
-class CreateAdminTranslator extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      *
@@ -39,4 +36,4 @@ class CreateAdminTranslator extends Migration
         $translator->languages()->detach();
         $translator->delete();
     }
-}
+};

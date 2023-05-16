@@ -31,18 +31,18 @@ class ExportTranslations extends Command
     public function handle(ExportTranslationService $exportTranslationService): void
     {
         $languages = Language::find(Translation::query()
-            ->isUpdated()
+            ->isUpdated(false)->exported(false)
             ->approved()->distinct()->pluck('language_id')->toArray());
 
         if(count($languages)) {
             $total = Translation::query()
-                ->isUpdated()
+                ->isUpdated(false)->exported(false)
                 ->approved()
                 ->count();
             $this->info('Exporting translations...');
             $exportTranslationService->exportAllTranslations(Language::all());
             $total -= Translation::query()
-                ->isUpdated()
+                ->isUpdated(false)->exported(false)
                 ->approved()
                 ->count();
             $this->info('Total translations exported: ' . $total . '.');

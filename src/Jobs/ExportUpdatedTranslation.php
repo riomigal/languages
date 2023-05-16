@@ -15,7 +15,11 @@ class ExportUpdatedTranslation implements ShouldQueue
     use Batchable, Dispatchable, InteractsWithQueue, Queueable, CanExportTranslation, HandlesFailedJobs;
 
     public function __construct(
-        protected string $relativePathname, protected string $type, protected int $languageId
+        protected string $type,
+        protected string $languageCode,
+        protected bool $isVendor,
+        protected string $namespace = '',
+        protected string $group = ''
     )
     {
         $this->onQueue(config('languages.queue_name'));
@@ -27,7 +31,7 @@ class ExportUpdatedTranslation implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->updateTranslation($this->relativePathname, $this->type, $this->languageId);
+        $this->updateTranslation($this->type, $this->languageCode, $this->isVendor, $this->namespace, $this->group);
     }
-    
+
 }
