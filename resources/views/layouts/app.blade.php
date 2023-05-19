@@ -127,7 +127,6 @@
                 localStorage.setItem('color-theme', 'dark');
             }
         }
-
     });
 </script>
 </body>
