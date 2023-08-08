@@ -4,16 +4,13 @@ namespace Riomigal\Languages;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Translation\TranslationServiceProvider;
+use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
 use Riomigal\Languages\Console\Commands\ExportTranslations;
 use Riomigal\Languages\Console\Commands\FindMissingTranslations;
 use Riomigal\Languages\Console\Commands\ImportLanguages;
 use Riomigal\Languages\Console\Commands\ImportTranslations;
 use Riomigal\Languages\Console\Commands\PruneLanguageBatches;
-use Riomigal\Languages\Helpers\LanguageHelper;
 use Riomigal\Languages\Livewire\BatchExecution;
 use Riomigal\Languages\Livewire\FlashMessage;
 use Riomigal\Languages\Livewire\LanguagesToastMessage;
@@ -22,11 +19,10 @@ use Riomigal\Languages\Livewire\Settings;
 use Riomigal\Languages\Livewire\Translations;
 use Riomigal\Languages\Livewire\Translators;
 use Riomigal\Languages\Middleware\AuthTranslator;
-use Riomigal\Languages\Models\Setting;
 use Riomigal\Languages\Models\Translator;
 
 
-class LanguagesServiceProvider extends TranslationServiceProvider
+class LanguagesServiceProvider extends ServiceProvider
 {
     /**
      * Bootstrap the package services.
@@ -63,44 +59,6 @@ class LanguagesServiceProvider extends TranslationServiceProvider
     public function register(): void
     {
         $this->mergeConfigFrom(__DIR__ . '/../config/languages.php', 'languages');
-        $this->app->singleton('lang.helper', function () {
-            return new LanguageHelper();
-        });
-
-        parent::register();
-    }
-
-    /**
-     * Register the translation line loader.
-     *
-     * @return void
-     */
-    protected function registerLoader(): void
-    {
-        if(app()->runningInConsole()) {
-            try {
-                DB::connection()->getDatabaseName();
-                $this->loadTranslationsArray();
-            } catch (\Exception) {
-                parent::registerLoader();
-            }
-        } else {
-            $this->loadTranslationsArray();
-        }
-    }
-
-    /**
-     * @return void
-     */
-    protected function loadTranslationsArray(): void
-    {
-        if(Schema::hasTable('settings') && DB::table('settings')->first()->db_loader) {
-            $this->app->singleton('translation.loader', function ($app) {
-                return new TranslationLoader($app['files'], $app['path.lang']);
-            });
-        } else {
-            parent::registerLoader();
-        }
     }
 
     /**

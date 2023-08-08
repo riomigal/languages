@@ -33,7 +33,8 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Riomigal\\Languages\\LanguagesServiceProvider"
+                "Riomigal\\Languages\\LanguagesServiceProvider",
+                "Riomigal\\Languages\\LanguagesTranslatorServiceProvider"
             ]
         }
     },
