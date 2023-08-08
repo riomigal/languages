@@ -36,8 +36,8 @@ class LanguagesServiceProvider extends TranslationServiceProvider
     public function boot(): void
     {
         $this->publishes([
-            __DIR__ . '/../config/languages.php' => config_path('languages.php'), 'languages-config',
-        ]);
+            __DIR__ . '/../config/languages.php' => config_path('languages.php')], 'languages-config',
+        );
         $this->addMiddleware();
         $this->setCustomGuard();
         $this->loadTranslations();
