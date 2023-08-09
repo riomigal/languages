@@ -5,6 +5,7 @@ namespace Riomigal\Languages\Models;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Cache;
 
 /**
@@ -130,6 +131,9 @@ class Translation extends Model
                 $query->where('namespace', $namespace);
             })->each(function(Translation $translation) use(&$array,$locale, $namespace, $group) {
                 $array[$translation->key] = $translation->approved ? $translation->value : $translation->old_value;
+                if(!$array[$translation->key]) {
+                    $array[$translation->key] = self::getCachedTranslations(App::getFallbackLocale(), $group, $namespace)[$translation->key];
+                }
             });
         return $array;
         });
