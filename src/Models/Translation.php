@@ -110,7 +110,7 @@ class Translation extends Model
      */
     public static function getCachedTranslations(string $locale, string|null $group = null, string|null $namespace = null): array {
 
-        return Cache::rememberForever(config('languages.cache_key') . $locale . $group . $namespace, function() use ($locale, $group, $namespace) {
+        return Cache::rememberForever(config('languages.cache_key') . $locale . $group ?? '' . $namespace ?? '', function() use ($locale, $group, $namespace) {
         $array = [];
         Translation::select(
             'language_code',
@@ -143,7 +143,7 @@ class Translation extends Model
      */
     public static function unsetCachedTranslation(string $locale, string|null $group = null, string|null $namespace = null): void
     {
-        Cache::forget(config('languages.cache_key') . $locale . $group . $namespace);
+        Cache::forget(config('languages.cache_key') . $locale . $group ?? '' . $namespace ?? '');
     }
 
     /**

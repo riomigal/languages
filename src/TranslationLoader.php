@@ -19,7 +19,7 @@ class TranslationLoader extends FileLoader
      */
     public function load($locale,  $group, $namespace = null): array
     {
-        if(!Setting::getCached()->import_vendor && $namespace) {
+        if(!Setting::getCached()->import_vendor && $namespace && $namespace !== '*') {
             return parent::load($locale, $group, $namespace);
         }
         return Translation::getCachedTranslations($locale,  $group, $namespace);
