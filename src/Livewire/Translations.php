@@ -103,6 +103,7 @@ class Translations extends AuthComponent
     public function query(): LengthAwarePaginator
     {
         return $this->language->translations()
+            ->with('approvedBy', 'updatedBy')
             ->when($this->search, function ($query) {
                 $query->where(function ($query) {
                     $query->where(

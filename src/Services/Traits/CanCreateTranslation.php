@@ -68,7 +68,7 @@ trait CanCreateTranslation
             $translationsArray = [];
 
             foreach ($translations as $translation) {
-                $translationsArray[] = $this->getTranslationArray($languageId, $languageCode, $translation['shared_identifier'], $translation['type'], $translation['key'], '', $translation['namespace'], $translation['group'], $translation['is_vendor']);
+                $translationsArray[] = $this->getTranslationArray($languageId, $languageCode, $translation['shared_identifier'], $translation['type'], $translation['key'], $translation['value'], $translation['namespace'], $translation['group'], $translation['is_vendor']);
             }
             $this->massInsertTranslations($translationsArray);
             DB::commit();

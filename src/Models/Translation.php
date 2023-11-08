@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Cache;
  */
 class Translation extends Model
 {
-    /**
+     /**
      * @var string[]
      */
     protected $fillable = [
@@ -41,8 +41,8 @@ class Translation extends Model
      */
     public function __construct(array $attributes = [])
     {
-        parent::__construct($attributes);
         $this->table = config('languages.table_translations');
+        parent::__construct($attributes);
     }
 
     /**
@@ -51,6 +51,22 @@ class Translation extends Model
     public function language(): BelongsTo
     {
         return $this->belongsTo(Language::class);
+    }
+
+    /**
+     * @return BelongsTo
+     */
+    public function approvedBy(): BelongsTo
+    {
+        return $this->belongsTo(Translator::class, 'approved_by', 'id');
+    }
+
+    /**
+     * @return BelongsTo
+     */
+    public function updatedBy(): BelongsTo
+    {
+        return $this->belongsTo(Translator::class, 'updated_by', 'id');
     }
 
     /**
@@ -131,9 +147,6 @@ class Translation extends Model
                 $query->where('namespace', $namespace);
             })->each(function(Translation $translation) use(&$array,$locale, $namespace, $group) {
                 $array[$translation->key] = $translation->approved ? $translation->value : $translation->old_value;
-                if(!$array[$translation->key]) {
-                    $array[$translation->key] = self::getCachedTranslations(App::getFallbackLocale(), $group, $namespace)[$translation->key];
-                }
             });
         return $array;
         });
@@ -155,8 +168,7 @@ class Translation extends Model
      */
     public function getApproverAttribute(): string
     {
-        $translator = Translator::find($this->approved_by);
-        return $translator ? $translator->first_name . ' ' . $translator->last_name : '';
+        return $this->approvedBy ? $this->approvedBy->first_name . ' ' . $this->approvedBy->last_name : '';
     }
 
     /**
@@ -164,8 +176,7 @@ class Translation extends Model
      */
     public function getUpdaterAttribute(): string
     {
-        $translator = Translator::find($this->updated_by);
-        return $translator ? $translator->first_name . ' ' . $translator->last_name : '';
+        return $this->updatedBy ? $this->updatedBy->first_name . ' ' . $this->updatedBy->last_name : '';
     }
 
 }

@@ -55,9 +55,9 @@ class MissingTranslationService
                     $missingIdentifier = array_diff($identifierArray, $identifierArrayTwo);
 
                     Translation::query()
-                        ->select('shared_identifier', 'namespace', 'group', 'is_vendor', 'type', 'key')
+                        ->select('shared_identifier', 'namespace', 'group', 'is_vendor', 'type', 'key', 'value')
                         ->whereIn('shared_identifier', $missingIdentifier)
-                        ->groupBy('shared_identifier', 'namespace', 'group', 'is_vendor', 'type', 'key')
+                        ->groupBy('shared_identifier', 'namespace', 'group', 'is_vendor', 'type', 'key', 'value')
                         ->orderBy('shared_identifier')
                         ->chunk(400, function ($translations) use ($language) {
                             if ($this->batch) {

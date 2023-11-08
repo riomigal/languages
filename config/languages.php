@@ -39,15 +39,15 @@ return [
     | Change these lines only before running the migrations. Else it will be necessary to manually change the table names afterwards.
     |
     */
-    'table_languages' => 'languages',
+    'table_languages' => 'languages_languages',
 
-    'table_translations' => 'translations',
+    'table_translations' => 'languages_translations',
 
-    'table_translators' => 'translators',
+    'table_translators' => 'languages_translators',
 
-    'table_settings' => 'settings',
+    'table_settings' => 'languages_settings',
 
-    'table_translator_language' => 'translator_language',
+    'table_translator_language' => 'languages_language',
 
     /*
     |--------------------------------------------------------------------------

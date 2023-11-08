@@ -6,7 +6,6 @@ use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Riomigal\Languages\Models\Translation;
 
 /**
  * @mixin Builder
@@ -176,8 +175,8 @@ class Language extends Model
      */
     public function __construct(array $attributes = [])
     {
-        parent::__construct($attributes);
         $this->table = config('languages.table_languages');
+        parent::__construct($attributes);
     }
 
     /**

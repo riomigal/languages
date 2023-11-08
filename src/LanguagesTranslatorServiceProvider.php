@@ -57,7 +57,7 @@ class LanguagesTranslatorServiceProvider extends TranslationServiceProvider
      */
     protected function loadTranslationsArray(): void
     {
-        if(Schema::hasTable('settings') && DB::table('settings')->first()->db_loader) {
+        if(Schema::hasTable(config('languages.table_settings')) && DB::table(config('languages.table_settings'))->first()->db_loader) {
             $this->app->singleton('translation.loader', function ($app) {
                 return new TranslationLoader($app['files'], $app['path.lang']);
             });
