@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('language_code');
             $table->string('relative_path');
             $table->string('relative_pathname');
-            $table->string('shared_identifier');
+            $table->text('shared_identifier');
             $table->string('file');
             $table->enum('type', ['json', 'php']);
             $table->text('key');

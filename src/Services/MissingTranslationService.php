@@ -16,7 +16,12 @@ class MissingTranslationService
     /**
      * @var Collection
      */
-    protected Collection $languages;
+    protected Collection $missingLanguages;
+
+    /**
+     * @var Collection
+     */
+    protected Collection $allLanguages;
 
     /**
      * @var int
@@ -37,38 +42,52 @@ class MissingTranslationService
         if ($batch) {
             $this->batch = $batch;
         }
-        $this->languages = Language::query()->get();
+        $this->allLanguages = Language::all();
 
-        Translation::query()->select('shared_identifier')->groupBy('shared_identifier')->orderBy('shared_identifier')->chunk(400,
-            function ($records) {
-                foreach ($this->languages as $language) {
 
-                    // Get array of all identifier
-                    $identifierArray = $records->pluck('shared_identifier')->all();
+//        $es = Translation::where('language_code', 'it')->pluck('shared_identifier')->all();
+//        $en = Translation::where('language_code', 'en')->pluck('shared_identifier')->all();
+//        $result = array_diff($es, $en);
+//        dd($result);
 
-                    // Get array of language identifier found
-                    $identifierArrayTwo = Translation::query()->select('shared_identifier')
-                        ->where('language_id', $language->id)
-                        ->whereIn('shared_identifier', $identifierArray)->pluck('shared_identifier')->all();
+        foreach($this->allLanguages as $allLanguage) {
 
-                    // Get missing identifier for language
-                    $missingIdentifier = array_diff($identifierArray, $identifierArrayTwo);
+            $this->missingLanguages = $this->allLanguages->reject(fn($language) => $language->id == $allLanguage->id);
 
-                    Translation::query()
-                        ->select('shared_identifier', 'namespace', 'group', 'is_vendor', 'type', 'key', 'value')
-                        ->whereIn('shared_identifier', $missingIdentifier)
-                        ->groupBy('shared_identifier', 'namespace', 'group', 'is_vendor', 'type', 'key', 'value')
-                        ->orderBy('shared_identifier')
-                        ->chunk(400, function ($translations) use ($language) {
-                            if ($this->batch) {
-                                $this->batch->add(new MassCreateEloquentTranslationsJob($translations->toArray(), $language->id, $language->code));
-                            } else {
-                                $this->massCreateEloquentTranslations($translations->toArray(), $language->id, $language->code);
-                            }
-                        });
-                }
-            }
-        );
+            Translation::query()->select('shared_identifier')->where('language_code', $allLanguage->code)
+                ->groupBy('shared_identifier')
+                ->orderBy('shared_identifier')->chunk(400,
+                    function ($records) use ($allLanguage) {
+                        foreach ($this->missingLanguages as $language) {
+
+                            // Get array of all identifier
+                            $identifierArray = $records->pluck('shared_identifier')->all();
+
+                            // Get array of language identifier found
+                            $identifierArrayTwo = Translation::query()->select('shared_identifier')
+                                ->where('language_id', $language->id)
+                                ->whereIn('shared_identifier', $identifierArray)->pluck('shared_identifier')->all();
+
+                            // Get missing identifier for language
+                            $missingIdentifier = array_diff($identifierArray, $identifierArrayTwo);
+
+                            Translation::query()
+                                ->select('shared_identifier', 'namespace', 'group', 'is_vendor', 'type', 'key', 'value')
+                                ->whereIn('shared_identifier', $missingIdentifier)
+                                ->where('language_code', $allLanguage->code)
+                                ->groupBy('shared_identifier', 'namespace', 'group', 'is_vendor', 'type', 'key', 'value')
+                                ->orderBy('shared_identifier')
+                                ->chunk(400, function ($translations) use ($language) {
+                                    if ($this->batch) {
+                                        $this->batch->add(new MassCreateEloquentTranslationsJob($translations->toArray(), $language->id, $language->code));
+                                    } else {
+                                        $this->massCreateEloquentTranslations($translations->toArray(), $language->id, $language->code);
+                                    }
+                                });
+                        }
+                    }
+                );
+        }
 
         return $this->translationsFound;
     }
