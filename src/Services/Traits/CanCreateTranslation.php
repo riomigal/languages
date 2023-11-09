@@ -29,7 +29,7 @@ trait CanCreateTranslation
             DB::beginTransaction();
             $translationsArray = [];
             foreach ($content as $key => $value) {
-                $sharedIdentifier = base64_encode(str_replace(base_path(), '', $sharedRelativePathname . $key . $namespace . $group));
+                $sharedIdentifier = $type . $namespace . $group . $key;
                 $translationsArray[] = $this->getNewTranslation($languageId, $languageCode, $sharedIdentifier, $type, $key, $value, $namespace, $group, $isVendor);
             }
             $translationsArray = array_filter($translationsArray);
