@@ -171,7 +171,7 @@ class ImportTranslationService
                     $content = require($file->getRealPath());
                     $sharedRelativePathname = $this->languagePlaceholder . substr($relativePathname, 2);
                 }
-                $content = $this->arrayUniqueKey($content);
+
                 if (!is_array($content)) {
                     if ($type == 'php') {
                         Log::error('File (' . $relativePathname . ') has no valid php array, Please check the file in the filesystem.');
@@ -205,22 +205,6 @@ class ImportTranslationService
                 File::makeDirectory($path);
             }
         }
-    }
-
-    protected function arrayUniqueKey($input, &$keys = []) {
-
-        // filter any preexisting keys from the input while adding its keys to the set of unique keys
-
-        $input = array_filter($input, function($key) use (&$keys) {
-            return isset($keys[$key]) ? false: $keys[$key] = true;
-        }, ARRAY_FILTER_USE_KEY);
-
-        // recursively map this function over the remaining values
-
-        return array_map(function($value) use (&$keys) {
-            return is_array($value) ? $this->arrayUniqueKey($value, $keys): $value;
-        }, $input);
-
     }
 
 }
