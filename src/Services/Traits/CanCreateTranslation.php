@@ -2,15 +2,62 @@
 
 namespace Riomigal\Languages\Services\Traits;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Riomigal\Languages\Exceptions\MassCreateTranslationsException;
-use Riomigal\Languages\Models\Setting;
+use Riomigal\Languages\Models\Language;
 use Riomigal\Languages\Models\Translation;
 
 trait CanCreateTranslation
 {
+    /**
+     * @var Collection
+     */
+    protected Collection $missingLanguages;
+
+    /**
+     * @param Language $rootLanguage
+     * @return void
+     * @throws MassCreateTranslationsException
+     */
+    public function findMissingTranslationsByLanguage(Collection $languages, Language $rootLanguage): void
+    {
+        $this->missingLanguages = $languages->reject(fn($language) => $language->id == $rootLanguage->id);
+
+        Translation::query()->select('shared_identifier')->where('language_code', $rootLanguage->code)
+            ->groupBy('shared_identifier')
+            ->orderBy('shared_identifier')->chunk(400,
+                function ($records) use ($rootLanguage) {
+                    foreach ($this->missingLanguages as $language) {
+
+                        // Get array of all identifier
+                        $identifierArray = $records->pluck('shared_identifier')->all();
+
+                        // Get array of language identifier found
+                        $identifierArrayTwo = Translation::query()->select('shared_identifier')
+                            ->where('language_id', $language->id)
+                            ->whereIn('shared_identifier', $identifierArray)->pluck('shared_identifier')->all();
+
+                        // Get missing identifier for language
+                        $missingIdentifier = array_diff($identifierArray, $identifierArrayTwo);
+
+                        Translation::query()
+                            ->select('shared_identifier', 'namespace', 'group', 'is_vendor', 'type', 'key', 'value')
+                            ->whereIn('shared_identifier', $missingIdentifier)
+                            ->where('language_code', $rootLanguage->code)
+                            ->groupBy('shared_identifier', 'namespace', 'group', 'is_vendor', 'type', 'key', 'value')
+                            ->orderBy('shared_identifier')
+                            ->chunk(400, function ($translations) use ($language) {
+                                $this->massCreateEloquentTranslations($translations->toArray(), $language->id, $language->code);
+                            });
+                    }
+                }
+            );
+
+    }
+
     /**
      * @param array $content
      * @param string $sharedRelativePathname
