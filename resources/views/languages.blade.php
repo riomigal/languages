@@ -1,10 +1,10 @@
-@extends('languages::component.table-section')
+@extends('languages::component.table-section', ['maxWidth' => '1200'])
 @section('content')
     @include('languages::component.table-h1-heading', ['title' => __('languages::navbar.languages')])
     @if(!$hasImportedLanguages && $isAdministrator)
         <div class="p-4 mb-4 text-sm text-blue-800 rounded-lg bg-blue-50 dark:bg-gray-800 dark:text-blue-400"
              role="alert">
-            {{ __('languages::languages.info_fallback_language', ['language' => config('app.fallback_locale')]) }}
+            {{ __('languages::languages.info_fallback_language', ['language' => config('app.locale')]) }}
         </div>
     @endif
     @if($isAdministrator && $showForm)

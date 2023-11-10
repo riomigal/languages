@@ -29,5 +29,5 @@ return [
     'find_missing_translations_success' => 'Import finished. Missing Translations imported: :total',
     'deleted' => 'Language deleted!',
     'created' => 'Language :language created!',
-    'info_fallback_language' => 'Your default language (config: app.fallback_locale) is: :LANGUAGE. Please make sure that this is the default language to use before importing the languages. Click on "Import Languages" to start using the application.'
+    'info_fallback_language' => 'Your default language (config: app.locale) is: :language. Please make sure that this is the default language to use before importing the languages. Click on "Import Languages" to start using the application.'
 ];

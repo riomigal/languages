@@ -87,7 +87,7 @@ class Translations extends AuthComponent
         parent::init();
         $this->language = $language;
         if (!$this->isAdministrator) {
-            $languages = $this->authUser->languages()->pluck('languages.id')->all();
+            $languages = $this->authUser->languages()->pluck(config('languages.table_languages') . '.id')->all();
             if (!in_array($this->language->id, $languages)) {
                 abort(403);
             }

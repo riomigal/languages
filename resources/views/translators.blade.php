@@ -1,4 +1,4 @@
-@extends('languages::component.table-section')
+@extends('languages::component.table-section', ['maxWidth' => 1300])
 @section('content')
     @include('languages::component.table-h1-heading', ['title' => __('languages::navbar.translators')])
     {{--CreateForm--}}

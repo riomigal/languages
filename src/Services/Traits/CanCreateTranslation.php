@@ -18,6 +18,7 @@ trait CanCreateTranslation
     protected Collection $missingLanguages;
 
     /**
+     * @param Collection $languages
      * @param Language $rootLanguage
      * @return void
      * @throws MassCreateTranslationsException
@@ -114,9 +115,20 @@ trait CanCreateTranslation
         try {
             DB::beginTransaction();
             $translationsArray = [];
-
             foreach ($translations as $translation) {
-                $translationsArray[] = $this->getTranslationArray($languageId, $languageCode, $translation['shared_identifier'], $translation['type'], $translation['key'], $translation['value'], $translation['namespace'], $translation['group'], $translation['is_vendor']);
+                $translationsArray[] = $this->getTranslationArray(
+                    $languageId,
+                    $languageCode,
+                    $translation['shared_identifier'],
+                    $translation['type'],
+                    $translation['key'],
+                    $translation['value'],
+                    $translation['namespace'],
+                    $translation['group'],
+                    $translation['is_vendor'],
+                    false,
+                    true
+                );
             }
             $this->massInsertTranslations($translationsArray);
             DB::commit();
@@ -170,7 +182,7 @@ trait CanCreateTranslation
      * @param bool $isVendor
      * @return array
      */
-    protected function getTranslationArray(int $languageId, string $languageCode, string $sharedIdentifier, string $type, string $key, string $value, string $namespace, string $group, bool $isVendor): array
+    protected function getTranslationArray(int $languageId, string $languageCode, string $sharedIdentifier, string $type, string $key, string $value, string $namespace, string $group, bool $isVendor, bool $approved = true, ?bool $needsTranslation = null): array
     {
         return [
             'language_id' => $languageId,
@@ -182,8 +194,8 @@ trait CanCreateTranslation
             'group' => $group,
             'key' => $key,
             'value' => $value,
-            'approved' => true,
-            'needs_translation' => !$value,
+            'approved' => $approved,
+            'needs_translation' => ($needsTranslation !== null) ? $needsTranslation : !$value,
             'updated_translation' => false,
             'created_at' => now(),
             'updated_at' => now()

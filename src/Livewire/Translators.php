@@ -243,7 +243,7 @@ class Translators extends AuthComponent
                     $query->where(function ($query) use ($language) {
                         $query->whereHas('languages', function ($query) use ($language) {
                             $query->where(function ($query) use ($language) {
-                                $query->where('languages.id', $language);
+                                $query->where(config('languages.table_languages') . '.id', $language);
                             });
                         });
                     });
