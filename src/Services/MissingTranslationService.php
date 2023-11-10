@@ -78,11 +78,11 @@ class MissingTranslationService
                                 ->groupBy('shared_identifier', 'namespace', 'group', 'is_vendor', 'type', 'key', 'value')
                                 ->orderBy('shared_identifier')
                                 ->chunk(400, function ($translations) use ($language) {
-                                    if ($this->batch) {
-                                        $this->batch->add(new MassCreateEloquentTranslationsJob($translations->toArray(), $language->id, $language->code));
-                                    } else {
+//                                    if ($this->batch) {
+//                                        $this->batch->add(new MassCreateEloquentTranslationsJob($translations->toArray(), $language->id, $language->code));
+//                                    } else {
                                         $this->massCreateEloquentTranslations($translations->toArray(), $language->id, $language->code);
-                                    }
+//                                    }
                                 });
                         }
                     }

@@ -20,7 +20,7 @@ abstract class AuthComponent extends Component
     /**
      * @var bool
      */
-    public bool $isAdministrator = false;
+    public ?bool $isAdministrator = false;
 
     /**
      * @var string[]
@@ -30,7 +30,7 @@ abstract class AuthComponent extends Component
     /**
      * @return void
      */
-    public Translator $authUser;
+    public ?Translator $authUser;
 
     /**
      * @return LengthAwarePaginator|Model
@@ -42,8 +42,8 @@ abstract class AuthComponent extends Component
      */
     public function init(): void
     {
-        $this->authUser = Translator::find(auth(config('languages.translator_guard'))->user()->id);
-        $this->isAdministrator = $this->authUser->admin;
+        $this->authUser = Translator::find(auth(config('languages.translator_guard'))->user()?->id);
+        $this->isAdministrator = $this->authUser?->admin;
     }
 
 

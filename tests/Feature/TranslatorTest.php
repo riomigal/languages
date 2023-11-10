@@ -63,7 +63,7 @@ class TranslatorTest extends BaseTestCase
     public function trans_guest_cannot_access_translators_page(): void
     {
         Livewire::test(Translators::class)
-            ->assertStatus(302);
+            ->assertStatus(403);
     }
 
     /**
