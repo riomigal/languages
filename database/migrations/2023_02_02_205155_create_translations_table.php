@@ -23,7 +23,7 @@ return new class extends Migration
             $table->string('relative_pathname');
             $table->text('shared_identifier');
             $table->string('file');
-            $table->enum('type', ['json', 'php']);
+            $table->enum('type', ['json', 'php', 'model']);
             $table->text('key');
             $table->text('value')->nullable();
             $table->boolean('approved')->default(true);

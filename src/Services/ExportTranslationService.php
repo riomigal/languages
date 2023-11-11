@@ -65,6 +65,7 @@ class ExportTranslationService
             Translation::query()
                 ->select('namespace', 'group', 'is_vendor', 'type')
                 ->where('language_id', $language->id)
+                ->where('type', '!=', 'model')
                 ->isUpdated(false)
                 ->approved()
                 ->exported(false)
