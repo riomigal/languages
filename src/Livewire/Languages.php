@@ -227,7 +227,7 @@ class Languages extends AuthComponent
      */
     public function query(): LengthAwarePaginator
     {
-        if ($this->authUser->admin) {
+        if ($this->authUser?->admin) {
             $query = Language::query();
         } else {
             $query = $this->authUser->languages();

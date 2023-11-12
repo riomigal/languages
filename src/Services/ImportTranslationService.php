@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\Log;
 use Riomigal\Languages\Exceptions\ImportTranslationsException;
+use Riomigal\Languages\Helpers\LanguageHelper;
 use Riomigal\Languages\Jobs\MassCreateTranslationsJob;
 use Riomigal\Languages\Models\Language;
 use Riomigal\Languages\Models\Setting;
@@ -220,7 +221,7 @@ class ImportTranslationService
                 }
 
                 if (count($content) > 0) {
-                    $content = app('lang.helper')->array_convert_keys_to_dot_notation($content);
+                    $content = resolve(LanguageHelper::class)->array_convert_keys_to_dot_notation($content);
                     if ($this->batch) {
                         $this->batch->add(new MassCreateTranslationsJob($content, $sharedRelativePathname, $type, $this->language->id, $this->language->code, $this->namespace, $group, $this->isVendor));
                     } else {

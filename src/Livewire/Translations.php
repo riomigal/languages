@@ -55,7 +55,7 @@ class Translations extends AuthComponent
     /**
      * @var string[]
      */
-    protected $queryString = ['search', 'page', 'needs_translation', 'approved', 'updated_translation'];
+    protected $queryString = ['search', 'page', 'needs_translation', 'approved', 'updated_translation', 'types'];
 
 
     /**
@@ -77,6 +77,11 @@ class Translations extends AuthComponent
      * @var bool|null
      */
     public bool|null $is_vendor = null;
+
+    /**
+     * @var array
+     */
+    public array $types = [];
 
     /**
      * @param Language $language
@@ -129,6 +134,10 @@ class Translations extends AuthComponent
             })->when($this->is_vendor !== null, function ($query) {
                 $query->where(function ($query) {
                     $query->isVendor($this->is_vendor);
+                });
+            })->when(!empty($this->types), function ($query) {
+                $query->where(function ($query) {
+                    $query->type($this->types);
                 });
             })
             ->paginate(10);

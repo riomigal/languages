@@ -37,6 +37,12 @@ return [
         'approved' => 'Approved',
         'updated_translation' => 'Updated',
         'is_vendor' => 'Is Vendor',
+        'type' => 'Type',
+        'type_selection' => [
+            'php' => 'PHP',
+            'json' => 'JSON',
+            'model' => 'Model'
+        ]
     ],
     'example_language' => [
         'label' => 'Example Language',

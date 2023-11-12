@@ -2,7 +2,6 @@
 
 namespace Riomigal\Languages\Services;
 
-
 use Illuminate\Bus\Batch;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;

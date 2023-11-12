@@ -48,6 +48,18 @@
                 @endif
             @endif
 
+            @include('languages::component.select-checkbox-multiple',
+               [
+                   'id' => 'translations_select_type',
+                   'text' =>__('languages::translations.filter.type'),
+                   'model' => 'types',
+                   'data' => [
+                       'php' => __('languages::translations.filter.type_selection.php'),
+                       'json' => __('languages::translations.filter.type_selection.json'),
+                       'model' => __('languages::translations.filter.type_selection.model')
+                       ]
+                  ])
+
             @include('languages::component.select-checkbox-three-states',
              [
                  'id' => 'translations_filters_checkbox',

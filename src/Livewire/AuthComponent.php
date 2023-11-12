@@ -43,6 +43,7 @@ abstract class AuthComponent extends Component
     public function init(): void
     {
         $this->authUser = Translator::find(auth(config('languages.translator_guard'))->user()?->id);
+        if(!$this->authUser) abort(403);
         $this->isAdministrator = $this->authUser?->admin;
     }
 

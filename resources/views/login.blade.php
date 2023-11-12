@@ -39,6 +39,7 @@
                     </div>
                     @include('languages::component.button', [
                     'clickEvent' => 'login',
+                    'type' => 'submit',
                     'text' =>  __('languages::login.sign_in')
                         ]
                      )
