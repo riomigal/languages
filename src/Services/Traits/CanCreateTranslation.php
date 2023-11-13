@@ -129,6 +129,11 @@ trait CanCreateTranslation
             DB::beginTransaction();
             $translationsArray = [];
             foreach ($translations as $translation) {
+                $translation['value'] = resolve(OpenAITranslationService::class)->translateString(
+                    $translation['language_code'],
+                    $languageCode,
+                    $translation['value']
+                );
                 $translationsArray[] = $this->getTranslationArray(
                     $languageId,
                     $languageCode,
@@ -143,19 +148,6 @@ trait CanCreateTranslation
                     true
                 );
             }
-
-            // Get Open Api translated array
-            $translatedArray = resolve(OpenAITranslationService::class)->translateArray(
-                $translation['language_code'],
-                $languageCode,
-                array_map(fn($translation) => $translation['value'], $translationsArray)
-            );
-
-            // Update translations from Open AI
-            $translationsArray = collect($translationsArray)->map(function ($translation, $index) use ($translatedArray) {
-                $translation['value'] = $translatedArray[$index];
-                return $translation;
-            })->toArray();
 
             $this->massInsertTranslations($translationsArray);
             DB::commit();
