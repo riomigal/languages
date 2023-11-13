@@ -116,7 +116,7 @@ return [
     |
     | Here you can change the open api model: gpt-3.5-turbo should do a good job for a good price
     */
-    'enable_open_ai' => true,
+    'enable_open_ai' => false,
 
     'open_ai_model' => 'gpt-3.5-turbo'
 ];

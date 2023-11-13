@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use PHPUnit\Logging\Exception;
 use Riomigal\Languages\Exceptions\MassCreateTranslationsException;
 use Riomigal\Languages\Models\Language;
 use Riomigal\Languages\Models\Translation;
@@ -156,8 +158,13 @@ trait CanCreateTranslation
             if ($e::class == MassCreateTranslationsException::class) {
                 throw $e;
             } else {
-                Log::error('Something went wrong while mass creating eloquent translations.', ['relativePathname' => $translations[0]['relative_pathname'], 'array' => $translationsArray]);
-                throw new MassCreateTranslationsException($e->getMessage(), __('languages::exceptions.mass_create_eloquent_fails', ['relativePathname' => $translations[0]['relative_pathname']]));
+                $errorId = Str::random();
+                $languageCode = $translations[0]['language_code'];
+                Log::error('Something went wrong while mass creating eloquent translations: ' . $languageCode, [
+                    'error_id' => $errorId,
+                    'shared_identifier' => collect($translations)->pluck('shared_identifier')->all()
+                ]);
+                throw new MassCreateTranslationsException($e->getMessage(), __('languages::exceptions.mass_create_eloquent_fails', ['errorId' => $errorId]));
             }
         }
 
@@ -253,8 +260,13 @@ trait CanCreateTranslation
             $translations = array_filter($translations);
             Translation::insert($translations);
         } catch (\Exception $e) {
-            Log::error('Couldn\'t mass insert translations for path: ' . $translations[0]['relative_pathname']);
-            throw new MassCreateTranslationsException($e->getMessage(), __('languages::exceptions.invalid_translation_array', ['relativePathname' => $translations[0]['relative_pathname']]));
+            $errorId = Str::random();
+            $languageCode = $translations[0]['language_code'];
+            Log::error('Couldn\'t mass insert translations language: ' . $languageCode, [
+                'error_id' => $errorId,
+                'shared_identifier' => collect($translations)->pluck('shared_identifier')->all()
+            ]);
+            throw new MassCreateTranslationsException($e->getMessage(), __('languages::exceptions.invalid_translation_array', ['errorId' => $errorId, 'languageCode' => $languageCode]));
         }
     }
 }

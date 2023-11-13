@@ -156,7 +156,7 @@ class Languages extends AuthComponent
                 $total[] = -1;
         });
 
-        $total =  count(array_unique($total));
+        $total = count(array_unique($total));
 
         if ($total > 1) {
             $batchArray = [
