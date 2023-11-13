@@ -8,5 +8,9 @@ return [
         'start_message' => 'Import started. You will receive a message (bottom right) when finished.',
         'nothing_imported' => 'Nothing imported.',
         'processing_no_action' => 'An import/export is running, no action allowed. Wait until the task finishes.'
+    ],
+    'jobs' => [
+        'delete_success' => ':total Jobs deleted.',
+        'delete_not_found' => 'Nothing deleted. No jobs found.'
     ]
 ];

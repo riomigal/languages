@@ -19,7 +19,6 @@ trait HasBatchProcess
      */
     protected function anotherJobIsRunning(): bool
     {
-
         if (DB::table('jobs')
             ->where('queue', config('languages.queue_name'))
             ->exists()) {

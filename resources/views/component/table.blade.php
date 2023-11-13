@@ -43,7 +43,7 @@
                                            class="block cursor-pointer py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">{{__('languages::translations.table.action.needs_translation')}}</a>
                                     </li>
                                 @endif
-                                @if(isset($action['restore_translation']) && !$item->approved)
+                                @if(isset($action['restore_translation']) && !$item->approved && $item->old_content)
                                     <li>
                                         <a wire:click.prevent="restoreTranslation({{$item->id}})"
                                            class="block cursor-pointer py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">{{__('languages::translations.table.action.restore_translation')}}</a>

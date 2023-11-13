@@ -20,6 +20,7 @@ use Riomigal\Languages\Livewire\Translations;
 use Riomigal\Languages\Livewire\Translators;
 use Riomigal\Languages\Middleware\AuthTranslator;
 use Riomigal\Languages\Models\Translator;
+use Riomigal\Languages\Services\OpenAITranslationService;
 
 
 class LanguagesServiceProvider extends ServiceProvider
@@ -32,7 +33,9 @@ class LanguagesServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->publishes([
-            __DIR__ . '/../config/languages.php' => config_path('languages.php')], 'languages-config',
+            __DIR__ . '/../config/languages.php' => config_path('languages.php'),
+            __DIR__ . '/../config/openai.php' => config_path('openai.php') // Creates an open ai config
+        ], 'languages-config',
         );
         $this->addMiddleware();
         $this->setCustomGuard();
@@ -58,6 +61,9 @@ class LanguagesServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->singleton(OpenAITranslationService::class, function () {
+            return new OpenAITranslationService();
+        });
         $this->mergeConfigFrom(__DIR__ . '/../config/languages.php', 'languages');
     }
 
