@@ -2,6 +2,7 @@
 
 namespace Riomigal\Languages\Services\Traits;
 
+use Illuminate\Bus\Batch;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
@@ -9,6 +10,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use PHPUnit\Logging\Exception;
 use Riomigal\Languages\Exceptions\MassCreateTranslationsException;
+use Riomigal\Languages\Jobs\MassCreateEloquentTranslationsJob;
 use Riomigal\Languages\Models\Language;
 use Riomigal\Languages\Models\Translation;
 use Riomigal\Languages\Services\OpenAITranslationService;
@@ -26,14 +28,14 @@ trait CanCreateTranslation
      * @return void
      * @throws MassCreateTranslationsException
      */
-    public function findMissingTranslationsByLanguage(Collection $languages, Language $rootLanguage): void
+    public function findMissingTranslationsByLanguage(Collection $languages, Language $rootLanguage, ?Batch $batch = null): void
     {
         $this->missingLanguages = $languages->reject(fn($language) => $language->id == $rootLanguage->id);
 
         Translation::query()->select('shared_identifier')->where('language_code', $rootLanguage->code)
             ->groupBy('shared_identifier')
             ->orderBy('shared_identifier')->chunk(400,
-                function ($records) use ($rootLanguage) {
+                function ($records) use ($rootLanguage, $batch) {
                     foreach ($this->missingLanguages as $language) {
 
                         // Get array of all identifier
@@ -53,8 +55,12 @@ trait CanCreateTranslation
                             ->where('language_code', $rootLanguage->code)
                             ->groupBy('shared_identifier', 'namespace', 'group', 'is_vendor', 'type', 'key', 'value', 'language_code')
                             ->orderBy('shared_identifier')
-                            ->chunk(400, function ($translations) use ($language) {
-                                $this->massCreateEloquentTranslations($translations->toArray(), $language->id, $language->code);
+                            ->chunk(400, function ($translations) use ($language, $batch) {
+                                if($batch) {
+                                    $batch->add(new MassCreateEloquentTranslationsJob($translations->toArray(), $language->id, $language->code));
+                                } else {
+                                    $this->massCreateEloquentTranslations($translations->toArray(), $language->id, $language->code);
+                                }
                             });
                     }
                 }
