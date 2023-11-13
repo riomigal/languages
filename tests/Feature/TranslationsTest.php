@@ -79,7 +79,6 @@ class TranslationsTest extends BaseTestCase
         $languageTwo = Language::find(4);
         $translator = factory(Translator::class)->create();
         $translator->languages()->attach(Language::find(1)->id);
-
         /**
          * When the translator accesses an assigned langauge
          */
@@ -128,7 +127,7 @@ class TranslationsTest extends BaseTestCase
     {
         $this->language = Language::find(1);
         Livewire::test(Translations::class, ['language' => $this->language])
-            ->assertStatus(302);
+            ->assertStatus(403);
     }
 
 

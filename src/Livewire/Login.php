@@ -56,7 +56,7 @@ class Login extends Component
     /**
      * @return Redirector|null
      */
-    public function login(): Redirector|null
+    public function login(): Redirector|\Illuminate\Routing\Redirector|null
     {
         try {
             $this->rateLimit(10);
@@ -75,7 +75,7 @@ class Login extends Component
             return null;
         }
 
-        auth(config('languages.translator_guard'))->login(Translator::query()->where('email', $this->email)->first(), $this->remember);
+        auth(config('languages.translator_guard'))->login(Translator::where('email', $this->email)->first(), $this->remember);
 
         return redirect(route('languages.languages'));
     }

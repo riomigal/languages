@@ -3,11 +3,13 @@
 namespace Riomigal\Languages\Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Riomigal\Languages\Helpers\LanguageHelper;
 use Riomigal\Languages\Jobs\FindMissingTranslationsJob;
 use Riomigal\Languages\Jobs\ImportLanguagesJob;
 use Riomigal\Languages\Jobs\ImportTranslationsJob;
 use Riomigal\Languages\Models\Language;
+use Riomigal\Languages\Models\Setting;
 use Riomigal\Languages\Models\Translation;
 use Riomigal\Languages\Models\Translator;
 use Riomigal\Languages\Services\ImportLanguageService;
@@ -52,7 +54,7 @@ class ImportTranslationServiceTest extends BaseTestCase
         ImportTranslationsJob::dispatch(new ImportTranslationService(), $this->admin);
 
         /**
-         * Then it will create Database entry for each translation value including vendor translations
+         * Then it will create Database entry for each translation value excluding vendor translations
          */
         $total = resolve(LanguageHelper::class)->count_all_array_values_in_directory($this->getTempDataPath());
         $this->assertEquals($total, Translation::count());

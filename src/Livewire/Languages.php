@@ -84,7 +84,7 @@ class Languages extends AuthComponent
         if ($this->anotherJobIsRunning()) return;
 
         $batchArray = [
-            new ImportLanguagesJob($importLanguageService, $this->authUser)
+            new ImportLanguagesJob($importLanguageService)
         ];
 
         $languages = Language::pluck('id')->toArray();

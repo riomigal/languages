@@ -106,6 +106,6 @@ return [
     */
 
     'translatable_models' => [
-        \App\Models\User::class
+//        \App\Models\User::class
     ]
 ];
