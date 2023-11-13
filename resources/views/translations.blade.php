@@ -88,7 +88,7 @@
                        __('languages::translations.table.head.old_content')
                        ],
                        'tbody' => ['is_vendor', 'namespace', 'group', 'needs_translation', 'approved', 'approver', 'updated_translation', 'updater', 'exported', 'key', 'value', 'old_value'],
-                       'action' => ['translate', 'approve_translation', 'needs_translation', 'restore_translation'],
+                       'action' => ['translate', 'approve_translation', 'needs_translation', 'restore_needs_translation', 'restore_translation'],
                   ])
         <div>
             @include('languages::vendor.livewire.tailwind', ['data' => $data])

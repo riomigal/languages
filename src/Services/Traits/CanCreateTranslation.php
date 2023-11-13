@@ -129,11 +129,15 @@ trait CanCreateTranslation
             DB::beginTransaction();
             $translationsArray = [];
             foreach ($translations as $translation) {
-                $translation['value'] = resolve(OpenAITranslationService::class)->translateString(
-                    $translation['language_code'],
-                    $languageCode,
-                    $translation['value']
-                );
+//                try {
+//                    $translation['value'] = resolve(OpenAITranslationService::class)->translateString(
+//                        $translation['language_code'],
+//                        $languageCode,
+//                        $translation['value']
+//                    );
+//                } catch(\Exception $e) {
+//
+//                }
                 $translationsArray[] = $this->getTranslationArray(
                     $languageId,
                     $languageCode,
@@ -147,6 +151,37 @@ trait CanCreateTranslation
                     false,
                     true
                 );
+            }
+
+            // Get Open Api translated array
+            try {
+                try {
+                    $translatedArrayResult = resolve(OpenAITranslationService::class)->translateArray(
+                        $translation['language_code'],
+                        $languageCode,
+                        array_map(fn($translation) => $translation['value'], $translationsArray)
+                    );
+                } catch(\Exception $e) {
+                    try {
+                        $translatedArrayResult = collect($translationsArray)->map(function ($translation, $languageCode) {
+                            return resolve(OpenAITranslationService::class)->translateString(
+                                $translation['language_code'],
+                                $languageCode,
+                                $translation['value']
+                            );
+                        })->toArray();
+                    } catch(\Exception $e) {
+
+                    }
+                }
+
+                $translationsArray = collect($translationsArray)->map(function ($translation, $index) use ($translatedArrayResult) {
+                    $translation['value'] = $translatedArrayResult[$index];
+                    return $translation;
+                })->toArray();
+
+            } catch (\Exception $e) {
+
             }
 
             $this->massInsertTranslations($translationsArray);
