@@ -29,6 +29,6 @@ class FindMissingTranslationsByLanguage implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->findMissingTranslationsByLanguage(Language::whereIn('id', $this->languageIds)->get(), Language::find($this->languageId));
+        $this->findMissingTranslationsByLanguage(Language::query()->whereIn('id', $this->languageIds)->get(), Language::find($this->languageId));
     }
 }

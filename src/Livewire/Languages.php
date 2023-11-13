@@ -5,6 +5,7 @@ namespace Riomigal\Languages\Livewire;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Validation\Rule;
 use Riomigal\Languages\Jobs\Batch\BatchProcessor;
@@ -69,6 +70,17 @@ class Languages extends AuthComponent
                 Rule::in($this->languageCodes), Rule::notIn(Language::query()->pluck('code')->all()), Rule::unique(config('languages.table_languages'), 'code')
             ]
         ];
+    }
+
+    public function deleteJobs(): bool
+    {
+        if ($total = DB::table('jobs')->where('queue', config('languages.queue_name'))
+            ->delete()) {
+            $this->emit('showToast', __('languages::global.jobs.delete_success', ['total' => $total]), LanguagesToastMessage::MESSAGE_TYPES['SUCCESS']);
+            return true;
+        }
+        $this->emit('showToast', __('languages::global.jobs.delete_not_found'), LanguagesToastMessage::MESSAGE_TYPES['WARNING']);
+        return false;
     }
 
     /**
@@ -144,7 +156,7 @@ class Languages extends AuthComponent
                 $total[] = -1;
         });
 
-        $total =  count(array_unique($total));
+        $total = count(array_unique($total));
 
         if ($total > 1) {
             $batchArray = [
