@@ -43,7 +43,13 @@
                                            class="block cursor-pointer py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">{{__('languages::translations.table.action.needs_translation')}}</a>
                                     </li>
                                 @endif
-                                @if(isset($action['restore_translation']) && !$item->approved && $item->old_content)
+                                @if(isset($action['restore_needs_translation']) && $item->needs_translation)
+                                    <li>
+                                        <a wire:click.prevent="restoreRequestTranslation({{$item->id}})"
+                                           class="block cursor-pointer py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">{{__('languages::translations.table.action.restore_needs_translation')}}</a>
+                                    </li>
+                                @endif
+                                @if(isset($action['restore_translation']) && !$item->approved && $item->old_value)
                                     <li>
                                         <a wire:click.prevent="restoreTranslation({{$item->id}})"
                                            class="block cursor-pointer py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">{{__('languages::translations.table.action.restore_translation')}}</a>

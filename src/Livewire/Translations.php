@@ -164,6 +164,15 @@ class Translations extends AuthComponent
      * @param int $id
      * @return void
      */
+    public function restoreRequestTranslation(int $id): void
+    {
+        Translation::findOrFail($id)->update(['needs_translation' => false]);
+    }
+
+    /**
+     * @param int $id
+     * @return void
+     */
     public function requestTranslation(int $id): void
     {
         Translation::findOrFail($id)->update(['needs_translation' => true]);

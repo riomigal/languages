@@ -29,6 +29,7 @@ return [
             'translate' => 'Translate',
             'approve' => 'Approve',
             'needs_translation' => 'Request translation',
+            'restore_needs_translation' => 'Remove translation request',
             'restore_translation' => 'Restore'
         ]
     ],
