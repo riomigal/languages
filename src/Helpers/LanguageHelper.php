@@ -53,12 +53,15 @@ class LanguageHelper
      * @param string $path
      * @return int
      */
-    function count_all_array_values_in_directory(string $path): int
+    function count_all_array_values_in_directory(string $path, bool $excludeVendor = true): int
     {
         $files = $this->get_dir_files_recursive($path);
 
         $total = 0;
         foreach ($files as $file) {
+            if($excludeVendor) {
+                if (str_starts_with($file, $path . '/vendor')) continue;
+            }
 
             $type = pathinfo($file, PATHINFO_EXTENSION);
             if ($type == 'php') {

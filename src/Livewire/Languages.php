@@ -84,7 +84,7 @@ class Languages extends AuthComponent
         if ($this->anotherJobIsRunning()) return;
 
         $batchArray = [
-            new ImportLanguagesJob($importLanguageService, $this->authUser)
+            new ImportLanguagesJob($importLanguageService)
         ];
 
         $languages = Language::pluck('id')->toArray();
@@ -227,7 +227,7 @@ class Languages extends AuthComponent
      */
     public function query(): LengthAwarePaginator
     {
-        if ($this->authUser->admin) {
+        if ($this->authUser?->admin) {
             $query = Language::query();
         } else {
             $query = $this->authUser->languages();

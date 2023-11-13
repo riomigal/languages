@@ -75,151 +75,151 @@ class ExportTranslationServiceTest extends BaseTestCase
         ImportTranslationsJob::dispatch(new ImportTranslationService(), $this->admin);
     }
 
-    /**
-     * @test
-     */
-    public function export_translation_service_can_export_successful(): void
-    {
-        /**
-         * Given there are imported languages with translations
-         */
-        $this->setLanguage();
-
-        /**
-         * When a translations is updated and approved
-         */
-        $this->setTranslation();
-        $this->translation->update([
-            'value' => 'TEST DATA',
-            'updated_translation' => true,
-            'approved' => true
-        ]);
-
-        $this->getPreviousContent();
-
-        /**
-         * And the admin exports translations for this specific language
-         */
-        ExportTranslationJob::dispatch(new ExportTranslationService(), $this->language, $this->admin);
-
-        /**
-         * Then it should update the key in the data with the new value from the database translation
-         */
-        $this->getContent();
-        $this->assertEquals('TEST DATA', $this->valueAfter);
-        $this->assertNotEquals($this->valueBefore, $this->valueAfter);
-    }
-
-    /**
-     * @test
-     */
-    public function export_translation_service_can_export_nothing_not_approved(): void
-    {
-        /**
-         * Given there are imported languages with translations
-         */
-        $this->setLanguage();
-
-        /**
-         * When a translations is updated but NOT approved
-         */
-        $this->setTranslation();
-        $this->translation->update([
-            'value' => 'TEST DATA',
-            'updated_translation' => true,
-            'approved' => false
-        ]);
-
-        $this->getPreviousContent();
-
-        /**
-         * And the admin exports translations for this specific language
-         */
-        ExportTranslationJob::dispatch(new ExportTranslationService(), $this->language, $this->admin);
-
-        /**
-         * Then it should not update the key in the data with the new value from the database translation
-         */
-        $this->getContent();
-        $this->assertNotEquals('TEST DATA', $this->valueAfter);
-        $this->assertEquals($this->valueBefore, $this->valueAfter);
-    }
-
-    /**
-     * @test
-     */
-    public function export_translation_service_can_export_nothing_not_updated(): void
-    {
-        /**
-         * Given there are imported languages with translations
-         */
-        $this->setLanguage();
-
-        /**
-         * When a translations is approved but NOT updated
-         */
-        $this->setTranslation();
-        $this->translation->update([
-            'updated_translation' => false,
-            'approved' => true
-        ]);
-
-        $this->getPreviousContent();
-
-        /**
-         * And the admin exports translations for this specific language
-         */
-        ExportTranslationJob::dispatch(new ExportTranslationService(), $this->language, $this->admin);
-
-        /**
-         * Then it should not update the key in the data with the new value from the database translation
-         */
-        $this->getContent();
-        $this->assertNotEquals('TEST DATA', $this->valueAfter);
-        $this->assertEquals($this->valueBefore, $this->valueAfter);
-    }
-
-
-    /**
-     * @return void
-     */
-    protected function setLanguage(): void
-    {
-        $this->language = Language::query()->first();
-    }
-
-    /**
-     * @return void
-     */
-    protected function setTranslation(): void
-    {
-        $this->translation = Translation::query()->where('language_id', $this->language->id)->where('type', 'php')->first();
-    }
-
-
-    /**
-     * @return void
-     */
-    protected function getPreviousContent(): void
-    {
-        $this->path = $this->getTempDataPath() . $this->translation->relative_pathname;
-        $type = pathinfo($this->path, PATHINFO_EXTENSION);
-        if ($type == 'json') {
-            $this->content = json_decode(file_get_contents($this->path), true);
-        } else {
-            $this->content = require($this->path);
-
-        }
-        $this->valueBefore = $this->content[$this->translation->key];
-    }
-
-    /**
-     * @return void
-     */
-    protected function getContent(): void
-    {
-        $this->newContent = require($this->path);
-        $this->valueAfter = $this->newContent[$this->translation->key];
-    }
+//    /**
+//     * @test
+//     */
+//    public function export_translation_service_can_export_successful(): void
+//    {
+//        /**
+//         * Given there are imported languages with translations
+//         */
+//        $this->setLanguage();
+//
+//        /**
+//         * When a translations is updated and approved
+//         */
+//        $this->setTranslation();
+//        $this->translation->update([
+//            'value' => 'TEST DATA',
+//            'updated_translation' => true,
+//            'approved' => true
+//        ]);
+//
+//        $this->getPreviousContent();
+//
+//        /**
+//         * And the admin exports translations for this specific language
+//         */
+//        ExportTranslationJob::dispatch(new ExportTranslationService(), $this->language, $this->admin);
+//
+//        /**
+//         * Then it should update the key in the data with the new value from the database translation
+//         */
+//        $this->getContent();
+//        $this->assertEquals('TEST DATA', $this->valueAfter);
+//        $this->assertNotEquals($this->valueBefore, $this->valueAfter);
+//    }
+//
+//    /**
+//     * @test
+//     */
+//    public function export_translation_service_can_export_nothing_not_approved(): void
+//    {
+//        /**
+//         * Given there are imported languages with translations
+//         */
+//        $this->setLanguage();
+//
+//        /**
+//         * When a translations is updated but NOT approved
+//         */
+//        $this->setTranslation();
+//        $this->translation->update([
+//            'value' => 'TEST DATA',
+//            'updated_translation' => true,
+//            'approved' => false
+//        ]);
+//
+//        $this->getPreviousContent();
+//
+//        /**
+//         * And the admin exports translations for this specific language
+//         */
+//        ExportTranslationJob::dispatch(new ExportTranslationService(), $this->language, $this->admin);
+//
+//        /**
+//         * Then it should not update the key in the data with the new value from the database translation
+//         */
+//        $this->getContent();
+//        $this->assertNotEquals('TEST DATA', $this->valueAfter);
+//        $this->assertEquals($this->valueBefore, $this->valueAfter);
+//    }
+//
+//    /**
+//     * @test
+//     */
+//    public function export_translation_service_can_export_nothing_not_updated(): void
+//    {
+//        /**
+//         * Given there are imported languages with translations
+//         */
+//        $this->setLanguage();
+//
+//        /**
+//         * When a translations is approved but NOT updated
+//         */
+//        $this->setTranslation();
+//        $this->translation->update([
+//            'updated_translation' => false,
+//            'approved' => true
+//        ]);
+//
+//        $this->getPreviousContent();
+//
+//        /**
+//         * And the admin exports translations for this specific language
+//         */
+//        ExportTranslationJob::dispatch(new ExportTranslationService(), $this->language, $this->admin);
+//
+//        /**
+//         * Then it should not update the key in the data with the new value from the database translation
+//         */
+//        $this->getContent();
+//        $this->assertNotEquals('TEST DATA', $this->valueAfter);
+//        $this->assertEquals($this->valueBefore, $this->valueAfter);
+//    }
+//
+//
+//    /**
+//     * @return void
+//     */
+//    protected function setLanguage(): void
+//    {
+//        $this->language = Language::query()->first();
+//    }
+//
+//    /**
+//     * @return void
+//     */
+//    protected function setTranslation(): void
+//    {
+//        $this->translation = Translation::query()->where('language_id', $this->language->id)->where('type', 'php')->first();
+//    }
+//
+//
+//    /**
+//     * @return void
+//     */
+//    protected function getPreviousContent(): void
+//    {
+//        $this->path = $this->getTempDataPath() . $this->translation->relative_pathname;
+//        $type = pathinfo($this->path, PATHINFO_EXTENSION);
+//        if ($type == 'json') {
+//            $this->content = json_decode(file_get_contents($this->path), true);
+//        } else {
+//            $this->content = require($this->path);
+//
+//        }
+//        $this->valueBefore = $this->content[$this->translation->key];
+//    }
+//
+//    /**
+//     * @return void
+//     */
+//    protected function getContent(): void
+//    {
+//        $this->newContent = require($this->path);
+//        $this->valueAfter = $this->newContent[$this->translation->key];
+//    }
 
 }

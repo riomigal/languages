@@ -26,7 +26,7 @@ class LanguagesTranslatorServiceProvider extends TranslationServiceProvider
      */
     public function register(): void
     {
-        $this->app->singleton('lang.helper', function () {
+        $this->app->singleton(LanguageHelper::class, function () {
             return new LanguageHelper();
         });
 

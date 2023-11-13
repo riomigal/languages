@@ -102,7 +102,7 @@ class LanguageTest extends BaseTestCase
     public function lang_livewire_user_not_authenticated_returns_403(): void
     {
         Livewire::test(Languages::class, ['translator', $this->admin])
-            ->assertStatus(302);
+            ->assertStatus(403);
     }
 
     /**

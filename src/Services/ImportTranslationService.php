@@ -5,10 +5,12 @@ namespace Riomigal\Languages\Services;
 use Illuminate\Bus\Batch;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\Log;
 use Riomigal\Languages\Exceptions\ImportTranslationsException;
+use Riomigal\Languages\Helpers\LanguageHelper;
 use Riomigal\Languages\Jobs\MassCreateTranslationsJob;
 use Riomigal\Languages\Models\Language;
 use Riomigal\Languages\Models\Setting;
@@ -85,6 +87,44 @@ class ImportTranslationService
 
         // Imports vendor translations
         $this->importVendorTranslations();
+
+        // Imports model translations
+        $this->importModelTranslations();
+    }
+
+    protected function importModelTranslations(): void
+    {
+        $models = config('languages.translatable_models');
+
+        foreach($models as $modelClass) {
+            $modelInstance = app($modelClass);
+            $tableId = $modelInstance->getKeyName();
+            DB::table($modelInstance->getTable())->chunkById(300,
+                function($models) use( $modelClass, $modelInstance, $tableId) {
+                    $content = [];
+                    foreach($this->languages as $language) {
+                        $languageCode = $language->code;
+                        $content[$languageCode] = [];
+                        foreach($models as $model) {
+                            foreach($modelInstance->translatable as $column) {
+                                $data = $model->$column;
+                                if(is_string($data)) $data = json_decode($data, true);
+                                if(is_object($data)) $data = (array) $data;
+                                if(isset($data[$languageCode])) {
+                                    $content[$languageCode][$column . '.' . $model->$tableId] = $data[$languageCode];
+                                }
+                            }
+                        }
+                        if ($this->batch) {
+                            $this->batch->add(new MassCreateTranslationsJob($content[$languageCode], '', 'model', $language->id, $language->code, $this->namespace,  $modelClass, $this->isVendor));
+                        } else {
+                            $this->massCreateTranslations($content[$languageCode], '', 'model', $language->id, $language->code, $this->namespace,  $modelClass, $this->isVendor);
+                        }
+                    }
+                }
+            );
+
+        }
     }
 
     /**
@@ -181,7 +221,7 @@ class ImportTranslationService
                 }
 
                 if (count($content) > 0) {
-                    $content = app('lang.helper')->array_convert_keys_to_dot_notation($content);
+                    $content = resolve(LanguageHelper::class)->array_convert_keys_to_dot_notation($content);
                     if ($this->batch) {
                         $this->batch->add(new MassCreateTranslationsJob($content, $sharedRelativePathname, $type, $this->language->id, $this->language->code, $this->namespace, $group, $this->isVendor));
                     } else {

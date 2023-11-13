@@ -6,11 +6,11 @@
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>{{__('languages::global.app_name') }}</title>
-    {{--    <link rel="stylesheet" href="{{ mix('css/app.css') }}">--}}
+{{--        <link rel="stylesheet" href="{{ mix('css/app.css') }}">--}}
     <link rel="stylesheet" href="{{ asset('vendor/languages/css/app.css') }}">
     @livewireStyles
     @stack('styles')
-    {{--    <script defer src="{{ mix('js/app.js') }}"></script>--}}
+{{--        <script defer src="{{ mix('js/app.js') }}"></script>--}}
     <script defer src="{{ asset('vendor/languages/js/app.js') }}"></script>
 </head>
 <body

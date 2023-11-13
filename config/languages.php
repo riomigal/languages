@@ -75,6 +75,7 @@ return [
 
     'auth_guard' => 'auth_translator',
 
+
     /*
     |--------------------------------------------------------------------------
     | General Settings
@@ -83,4 +84,28 @@ return [
     */
 
     'cache_key' => 'languages_cache',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Translatable models
+    |--------------------------------------------------------------------------
+    |
+    | Set the translatable models in the array each model must have the property
+    |
+    | public array $translatable:
+    |
+    | e.g. public array $translatable = ['label']; or
+    | public array $translatable = ['label', 'name']; for multiple implementations
+    |
+    | each DB table column (e.g. above label or name) must support json (LONGTEXT)
+    |
+    | each column will have the language codes as key and translates values as value
+    | e.g.: {"en":"English","it":"inglese","de":"English"}
+    |
+    | We suggest using it with the package: spatie/laravel-translatable
+    */
+
+    'translatable_models' => [
+//        \App\Models\User::class
+    ]
 ];

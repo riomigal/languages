@@ -111,6 +111,20 @@ class Translation extends Model
 
     /**
      * @param Builder $query
+     * @param array|string $value
+     * @return Builder
+     */
+    public function scopeType(Builder $query, array|string $value): Builder
+    {
+        if(is_array($value)) {
+            return $query->whereIn('type', $value);
+        } else {
+            return $query->where('type', $value);
+        }
+    }
+
+    /**
+     * @param Builder $query
      * @param bool $value
      * @return Builder
      */
