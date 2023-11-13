@@ -106,6 +106,7 @@ class ImportTranslationService
                         $languageCode = $language->code;
                         $content[$languageCode] = [];
                         foreach($models as $model) {
+                            if(!$modelInstance->translatable) continue;
                             foreach($modelInstance->translatable as $column) {
                                 $data = $model->$column;
                                 if(is_string($data)) $data = json_decode($data, true);

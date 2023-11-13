@@ -55,7 +55,7 @@ trait CanCreateTranslation
                             ->where('language_code', $rootLanguage->code)
                             ->groupBy('shared_identifier', 'namespace', 'group', 'is_vendor', 'type', 'key', 'value', 'language_code')
                             ->orderBy('shared_identifier')
-                            ->chunk(400, function ($translations) use ($language, $batch) {
+                            ->chunk(config('languages.enable_open_ai') ? 5 : 400, function ($translations) use ($language, $batch) {
                                 if($batch) {
                                     $batch->add(new MassCreateEloquentTranslationsJob($translations->toArray(), $language->id, $language->code));
                                 } else {
