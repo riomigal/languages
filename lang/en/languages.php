@@ -16,7 +16,7 @@ return [
         'import_languages' => 'Import Languages',
         'add_language' => 'Add Language',
         'find_missing_translations' => 'Find Missing Translations',
-        'delete_jobs' => 'Delete Jobs'
+        'delete_jobs' => 'Delete running Batch (Jobs)'
     ],
     'table' => [
         'head' => [

@@ -43,10 +43,10 @@ class BatchExecution extends Component
 
 
     /**
-     * @param string $id
+     * @param ?string $id
      * @return void
      */
-    public function progressBatch(string $id): void
+    public function progressBatch(?string $id): void
     {
         $this->batchId = $id;
     }
@@ -58,10 +58,10 @@ class BatchExecution extends Component
     {
         if ($this->batchId) {
             $batch = Bus::findBatch($this->batchId);
-            if ($batch->finished()) {
+            if ($batch?->finished()) {
                 $this->reset('batchId', 'progress');
             } else {
-                $this->progress = $batch->progress();
+                $this->progress = $batch ? $batch->progress() : 0;
             }
         }
     }

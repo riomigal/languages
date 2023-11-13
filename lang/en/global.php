@@ -10,7 +10,7 @@ return [
         'processing_no_action' => 'An import/export is running, no action allowed. Wait until the task finishes.'
     ],
     'jobs' => [
-        'delete_success' => ':total Jobs deleted.',
+        'delete_success' => ':batches Batches deleted. :jobs Jobs deleted.',
         'delete_not_found' => 'Nothing deleted. No jobs found.'
     ]
 ];

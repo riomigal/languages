@@ -74,12 +74,19 @@ class Languages extends AuthComponent
 
     public function deleteJobs(): bool
     {
-        if ($total = DB::table('jobs')->where('queue', config('languages.queue_name'))
-            ->delete()) {
-            $this->emit('showToast', __('languages::global.jobs.delete_success', ['total' => $total]), LanguagesToastMessage::MESSAGE_TYPES['SUCCESS']);
+        $jobs = DB::table('jobs')->where('queue', config('languages.queue_name'))
+                ->delete();
+        $batches = DB::table('job_batches')->where('name', config('languages.batch_name'))
+                ->whereNull('cancelled_at')
+                ->whereNull('finished_at')
+                ->delete();
+        if (($jobs + $batches)) {
+            $this->emit('showToast', __('languages::global.jobs.delete_success', ['batches' => $batches, 'jobs' => $jobs]), LanguagesToastMessage::MESSAGE_TYPES['SUCCESS']);
+            $this->emit('startBatchProgress', null);
             return true;
         }
         $this->emit('showToast', __('languages::global.jobs.delete_not_found'), LanguagesToastMessage::MESSAGE_TYPES['WARNING']);
+        $this->emit('startBatchProgress', null);
         return false;
     }
 
