@@ -112,13 +112,6 @@ class ImportTranslationService
                                 if(is_object($data)) $data = (array) $data;
                                 if(isset($data[$languageCode])) {
                                     $content[$languageCode][$column . '.' . $model->$tableId] = $data[$languageCode];
-                                } else {
-                                    if(isset($data[config('app.locale')])) {
-                                        $content[$languageCode][$column . '.' . $model->$tableId] = $data[$languageCode];
-                                    } else {
-                                        $column = str_replace('trans_', '', $column);
-                                        $content[$languageCode][$column . '.' . $model->$tableId] = $model->$column ?: '';
-                                    }
                                 }
                             }
                         }
