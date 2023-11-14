@@ -86,7 +86,9 @@ trait CanCreateTranslation
         try {
             DB::beginTransaction();
             $translationsArray = [];
-            $namespace = $group;
+            if($type == 'model') {
+                $namespace = $group;
+            }
             foreach ($content as $key => $value) {
                 $sharedIdentifier = $type . $namespace . $group . $key;
                 $sharedIdentifier = base64_encode($sharedIdentifier);

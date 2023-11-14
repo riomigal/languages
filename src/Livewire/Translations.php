@@ -152,7 +152,6 @@ class Translations extends AuthComponent
                     $query->type($this->types);
                 });
             })
-            ->orderBy('needs_translation', 'desc')
             ->paginate(20);
     }
 
