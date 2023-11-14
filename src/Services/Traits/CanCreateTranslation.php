@@ -49,17 +49,18 @@ trait CanCreateTranslation
                         // Get missing identifier for language
                         $missingIdentifier = array_diff($identifierArray, $identifierArrayTwo);
 
+                        $fromLanguageCode = $rootLanguage->code;
                         Translation::query()
-                            ->select('shared_identifier', 'namespace', 'group', 'is_vendor', 'type', 'key', 'value', 'language_code')
+                            ->select('shared_identifier', 'namespace', 'group', 'is_vendor', 'type', 'key', 'value')
                             ->whereIn('shared_identifier', $missingIdentifier)
-                            ->where('language_code', $rootLanguage->code)
-                            ->groupBy('shared_identifier', 'namespace', 'group', 'is_vendor', 'type', 'key', 'value', 'language_code')
+                            ->where('language_code', $fromLanguageCode)
+                            ->groupBy('shared_identifier', 'namespace', 'group', 'is_vendor', 'type', 'key', 'value')
                             ->orderBy('shared_identifier')
-                            ->chunk(Setting::getCached()->enable_open_ai_translations ? 5 : 400, function ($translations) use ($language, $batch) {
+                            ->chunk(Setting::getCached()->enable_open_ai_translations ? 5 : 400, function ($translations) use ($language, $batch, $fromLanguageCode) {
                                 if($batch) {
-                                    $batch->add(new MassCreateEloquentTranslationsJob($translations->toArray(), $language->id, $language->code));
+                                    $batch->add(new MassCreateEloquentTranslationsJob($translations->toArray(), $language->id, $language->code, $fromLanguageCode));
                                 } else {
-                                    $this->massCreateEloquentTranslations($translations->toArray(), $language->id, $language->code);
+                                    $this->massCreateEloquentTranslations($translations->toArray(), $language->id, $language->code, $fromLanguageCode);
                                 }
                             });
                     }
@@ -120,10 +121,11 @@ trait CanCreateTranslation
      * @param array $translations
      * @param int $languageId
      * @param string $languageCode
+     * @param string $fromLanguageCode
      * @return void
      * @throws MassCreateTranslationsException
      */
-    protected function massCreateEloquentTranslations(array $translations, int $languageId, string $languageCode): void
+    protected function massCreateEloquentTranslations(array $translations, int $languageId, string $languageCode, string $fromLanguageCode): void
     {
         try {
             DB::beginTransaction();
@@ -131,7 +133,7 @@ trait CanCreateTranslation
             foreach ($translations as $translation) {
 //                try {
 //                    $translation['value'] = resolve(OpenAITranslationService::class)->translateString(
-//                        $translation['language_code'],
+//                        $fromLanguageCode,
 //                        $languageCode,
 //                        $translation['value']
 //                    );
@@ -157,15 +159,15 @@ trait CanCreateTranslation
             try {
                 try {
                     $translatedArrayResult = resolve(OpenAITranslationService::class)->translateArray(
-                        $translation['language_code'],
+                        $fromLanguageCode,
                         $languageCode,
                         array_map(fn($translation) => $translation['value'], $translationsArray)
                     );
                 } catch(\Exception $e) {
                     try {
-                        $translatedArrayResult = collect($translationsArray)->map(function ($translation, $languageCode) {
+                        $translatedArrayResult = collect($translationsArray)->map(function ($translation, $languageCode,$fromLanguageCode) {
                             return resolve(OpenAITranslationService::class)->translateString(
-                                $translation['language_code'],
+                                $fromLanguageCode,
                                 $languageCode,
                                 $translation['value']
                             );
@@ -192,8 +194,8 @@ trait CanCreateTranslation
                 throw $e;
             } else {
                 $errorId = Str::random();
-                $languageCode = $translations[0]['language_code'];
-                Log::error('Something went wrong while mass creating eloquent translations: ' . $languageCode, [
+
+                Log::error('Something went wrong while mass creating eloquent translations: ' . $fromLanguageCode, [
                     'error_id' => $errorId,
                     'shared_identifier' => collect($translations)->pluck('shared_identifier')->all()
                 ]);
