@@ -20,7 +20,10 @@ class Settings extends AuthComponent
     {
         return [
             'setting.db_loader' => 'boolean',
-            'setting.import_vendor' => 'boolean'
+            'setting.import_vendor' => 'boolean',
+            'setting.enable_pending_notifications' => 'boolean',
+            'setting.enable_automatic_pending_notifications' => 'boolean',
+            'setting.enable_open_ai_translations' => 'boolean',
         ];
     }
 

@@ -3,12 +3,13 @@
 namespace Riomigal\Languages\Services;
 
 use OpenAI\Laravel\Facades\OpenAI;
+use Riomigal\Languages\Models\Setting;
 
 class OpenAITranslationService
 {
    public function translateString(string $fromLanguageCode, string $toLanguageCode, string $text): string
    {
-       if(!config('languages.enable_open_ai')) return $text;
+       if(!Setting::getCached()->enable_open_ai_translations) return $text;
 
        $result = OpenAI::chat()->create([
            'model' => config('languages.open_ai_model'),
@@ -24,7 +25,7 @@ class OpenAITranslationService
 
     public function translateArray(string $fromLanguageCode, string $toLanguageCode, array $array): array
     {
-        if(!config('languages.enable_open_ai')) return $array;
+        if(!Setting::getCached()->enable_open_ai_translations) return $array;
 
         $result = OpenAI::chat()->create([
             'model' => config('languages.open_ai_model'),

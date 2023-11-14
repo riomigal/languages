@@ -13,8 +13,8 @@ return [
             'is_vendor' => 'Vendor',
             'namespace' => 'Namespace',
             'group' => 'Group',
-            'approved_by' => 'Approver',
-            'updated_by' => 'Updated',
+            'approved_by' => 'Approved By',
+            'updated_by' => 'Updated By',
             'exported' => 'Exported',
             'path' => 'Path',
             'file' => 'File Name',
@@ -50,6 +50,7 @@ return [
         'info' => 'The Language from which to translate from. If no translation it will use the fallback language: :language.'
     ],
     'action_update' => 'Update Translation',
+    'action_update_with_open_ai' => 'Translate with OPEN AI',
     'update_success_message' => 'Translation updated.',
     'no_translation_example' => 'ATTENTION: This is not an example. There is no translation for this key!',
     'export_language_success' => 'Export finished. Languages exported: :language - Total Exports: :total',
