@@ -4,7 +4,6 @@ namespace Riomigal\Languages\Services;
 
 use Illuminate\Bus\Batch;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\Log;
 use Riomigal\Languages\Jobs\FindMissingTranslationsByLanguage;
 use Riomigal\Languages\Models\Language;
 use Riomigal\Languages\Services\Traits\CanCreateTranslation;
