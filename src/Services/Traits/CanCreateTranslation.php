@@ -140,19 +140,21 @@ trait CanCreateTranslation
 //                } catch(\Exception $e) {
 //
 //                }
-                $translationsArray[] = $this->getTranslationArray(
-                    $languageId,
-                    $languageCode,
-                    $translation['shared_identifier'],
-                    $translation['type'],
-                    $translation['key'],
-                    $translation['value'],
-                    $translation['namespace'],
-                    $translation['group'],
-                    $translation['is_vendor'],
-                    false,
-                    true
-                );
+                if (!$this->translationExists($translation['shared_identifier'], $languageCode)) {
+                    $translationsArray[] = $this->getTranslationArray(
+                        $languageId,
+                        $languageCode,
+                        $translation['shared_identifier'],
+                        $translation['type'],
+                        $translation['key'],
+                        $translation['value'],
+                        $translation['namespace'],
+                        $translation['group'],
+                        $translation['is_vendor'],
+                        false,
+                        true
+                    );
+                }
             }
 
             // Get Open Api translated array
