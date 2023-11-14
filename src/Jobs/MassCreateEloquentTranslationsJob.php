@@ -18,6 +18,7 @@ class MassCreateEloquentTranslationsJob implements ShouldQueue
         protected array  $translations,
         protected int $languageId,
         protected string $languageCode,
+        protected string $fromLanguageCode
     )
     {
         $this->onQueue(config('languages.queue_name'));
@@ -29,6 +30,6 @@ class MassCreateEloquentTranslationsJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $this->massCreateEloquentTranslations($this->translations, $this->languageId, $this->languageCode);
+        $this->massCreateEloquentTranslations($this->translations, $this->languageId, $this->languageCode, $this->fromLanguageCode);
     }
 }
