@@ -47,7 +47,7 @@ class Settings extends AuthComponent
      */
     public function updated($key, $value): void
     {
-        $this->validate();
+        $this->validateOnly($key);
         $this->setting->{str_replace('setting.', '',$key)} = $value;
         $this->setting->save();
         Setting::getFreshCached();
