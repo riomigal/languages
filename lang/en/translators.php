@@ -31,7 +31,8 @@ return [
             'edit' => 'Edit',
             'close' => 'Close',
             'update' => 'Update',
-            'update_password' => 'Update Password'
+            'update_password' => 'Update Password',
+            'pending_translations_notification' => 'Send pending translations notification'
         ],
         'info' => [
             'admin' => 'If checked the Translator will have full access to the Translation UI.',

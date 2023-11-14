@@ -123,6 +123,14 @@
                               ]
                           )
                 @endif
+                @if($this->translator && \Riomigal\Languages\Models\Setting::getCached()->enable_pending_notifications)
+                    @include('languages::component.button',
+                              [
+                              'clickEvent' => 'notifyPendingTranslations',
+                              'text' =>  __('languages::translators.form.button.pending_translations_notification')
+                              ]
+                          )
+                @endif
             </form>
         @endif
     @if($showUpdatePasswordForm && $this->translator)

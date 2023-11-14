@@ -17,19 +17,17 @@
             @endphp
         @endif
         @foreach($data as $item)
-            <tr class="responsive border-b dark:border-gray-700">
+            <tr class="responsive border-b @if($item->needs_translation) dark:bg-gray-900 bg-gray-100 @endif">
                 @foreach($tbody as $key => $field)
-                    <td class="responsive px-4 py-3">
-                        <span class="responsive-th font-bold">{!! $thead[$key] . ':&nbsp;' !!}</span>
-                        <span>
+                    <td class="responsive px-4 py-3 break-all">
+{{--                        <span class="responsive-th font-bold">{!! $thead[$key] . ':&nbsp;' !!}</span>--}}
                         @if(isset($relations[$field]))
-                                {{ implode(', ', $item->{$field}()->pluck($relations[$field])->all()) }}
-                            @elseif(is_bool($item->{$field}))
-                                @include('languages::component.boolean-icon', ['boolean' =>$item->{$field}])
-                            @else
-                                {{ $item->{$field} }}
-                            @endif
-                        </span>
+                            <p>{{ trim(implode(', ', $item->{$field}()->pluck($relations[$field])->all())) }}
+                        @elseif(is_bool($item->{$field}))
+                            @include('languages::component.boolean-icon', ['boolean' => $item->{$field}])
+                        @else
+                            <p>{{ trim($item->{$field}) }}</p>
+                        @endif
                     </td>
                 @endforeach
                 @if(isset($action) || isset($route))

@@ -8,10 +8,10 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use PHPUnit\Logging\Exception;
 use Riomigal\Languages\Exceptions\MassCreateTranslationsException;
 use Riomigal\Languages\Jobs\MassCreateEloquentTranslationsJob;
 use Riomigal\Languages\Models\Language;
+use Riomigal\Languages\Models\Setting;
 use Riomigal\Languages\Models\Translation;
 use Riomigal\Languages\Services\OpenAITranslationService;
 
@@ -55,7 +55,7 @@ trait CanCreateTranslation
                             ->where('language_code', $rootLanguage->code)
                             ->groupBy('shared_identifier', 'namespace', 'group', 'is_vendor', 'type', 'key', 'value', 'language_code')
                             ->orderBy('shared_identifier')
-                            ->chunk(config('languages.enable_open_ai') ? 5 : 400, function ($translations) use ($language, $batch) {
+                            ->chunk(Setting::getCached()->enable_open_ai_translations ? 5 : 400, function ($translations) use ($language, $batch) {
                                 if($batch) {
                                     $batch->add(new MassCreateEloquentTranslationsJob($translations->toArray(), $language->id, $language->code));
                                 } else {

@@ -12,6 +12,7 @@ use Riomigal\Languages\Models\Translation;
 use Riomigal\Languages\Models\Translator;
 use Riomigal\Languages\Notifications\FlashMessage;
 use Riomigal\Languages\Services\ExportTranslationService;
+use Riomigal\Languages\Services\OpenAITranslationService;
 
 class Translations extends AuthComponent
 {
@@ -35,12 +36,22 @@ class Translations extends AuthComponent
     /**
      * @var int
      */
+    public int $currentLanguageId;
+
+    /**
+     * @var int
+     */
     public int $translateLanguageExampleId;
 
     /**
      * @var int
      */
     public int $translateLanguageFallbackExampleId;
+
+    /**
+     * @var int
+     */
+    public ?int $openAiTranslateLanguageId = null;
 
     /**
      * @var string
@@ -91,6 +102,7 @@ class Translations extends AuthComponent
     {
         parent::init();
         $this->language = $language;
+        $this->currentLanguageId = $this->language->id;
         if (!$this->isAdministrator) {
             $languages = $this->authUser->languages()->pluck(config('languages.table_languages') . '.id')->all();
             if (!in_array($this->language->id, $languages)) {
@@ -140,7 +152,8 @@ class Translations extends AuthComponent
                     $query->type($this->types);
                 });
             })
-            ->paginate(10);
+            ->orderBy('needs_translation', 'desc')
+            ->paginate(20);
     }
 
     /**
@@ -152,12 +165,36 @@ class Translations extends AuthComponent
         $this->translation = Translation::findOrFail($id);
         $this->translationExample = Translation::where('shared_identifier', $this->translation->shared_identifier)
             ->where('language_id', $this->translateLanguageExampleId)->first();
+        $this->openAiTranslateLanguageId = $this->translateLanguageExampleId;
         if (!$this->translationExample || !$this->translationExample->value) {
             $this->translationExample = Translation::where('shared_identifier', $this->translation->shared_identifier)
                 ->where('language_id', $this->translateLanguageFallbackExampleId)->first();
+            $this->openAiTranslateLanguageId = $this->translateLanguageExampleId;
         }
         $this->translatedValue = $this->translation->value;
         $this->dispatchBrowserEvent('showTranslationModal');
+    }
+
+    /**
+     * @return void
+     */
+    public function openAITranslate(): void
+    {
+
+        if(!$this->translationExample?->value) return;
+        $languageCodeFrom = Language::find($this->openAiTranslateLanguageId)?->code;
+        if(!$languageCodeFrom) return;
+        $languageCodeTo = Language::find($this->currentLanguageId)?->code;
+        if(!$languageCodeTo) return;
+        try {
+            $this->translatedValue = resolve(OpenAITranslationService::class)->translateString(
+                $languageCodeFrom,
+                $languageCodeTo,
+                $this->translationExample->value
+            );
+        } catch(\Exception $e) {
+
+        }
     }
 
     /**

@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Riomigal\Languages\Models\Language;
 use Riomigal\Languages\Models\Translator;
+use Riomigal\Languages\Notifications\PendingTranslationsNotification;
 
 class Translators extends AuthComponent
 {
@@ -274,6 +275,14 @@ class Translators extends AuthComponent
         $this->translator->save();
         $this->toggleUpdatePasswordForm();
         $this->emit('showToast', __('languages::translators.password_updated_success', ['email'=> $this->translator->email]), LanguagesToastMessage::MESSAGE_TYPES['SUCCESS']);
+    }
+
+    public function notifyPendingTranslations(): void
+    {
+        $this->translator->languages()->each(function(Language $language) {
+            $this->translator->notify(new PendingTranslationsNotification($language));
+        });
+        $this->emit('showToast', __('languages::pending-translations-notification.success', ['email' => $this->translator->email]), LanguagesToastMessage::MESSAGE_TYPES['SUCCESS']);
     }
 
 

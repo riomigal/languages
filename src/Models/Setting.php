@@ -3,22 +3,14 @@
 namespace Riomigal\Languages\Models;
 
 use Illuminate\Contracts\Database\Eloquent\Builder;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 
 /**
  * @mixin Builder
  */
-class Setting extends Authenticatable
+class Setting extends Model
 {
-    use Notifiable;
-
-    /**
-     * @var string
-     */
-    protected $guard = "translator";
-
     /**
      * The attributes that are mass assignable.
      *
@@ -34,6 +26,9 @@ class Setting extends Authenticatable
     protected $casts = [
         'db_loader' => 'boolean',
         'import_vendor' => 'boolean',
+        'enable_pending_notifications' => 'boolean',
+        'enable_automatic_pending_notifications' => 'boolean',
+        'enable_open_ai_translations' => 'boolean',
     ];
 
     /**
