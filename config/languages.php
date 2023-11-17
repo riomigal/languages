@@ -116,5 +116,7 @@ return [
     |
     | Here you can change the open api model: gpt-3.5-turbo should do a good job for a good price
     */
-    'open_ai_model' => 'gpt-3.5-turbo'
+    'open_ai_model' => 'gpt-3.5-turbo-1106',
+
+    'max_open_ai_missing_trans' => 50 // the translator translates multiple array values if you have longer text reduce this number
 ];
