@@ -56,7 +56,7 @@ trait CanCreateTranslation
                             ->where('language_code', $fromLanguageCode)
                             ->groupBy('shared_identifier', 'namespace', 'group', 'is_vendor', 'type', 'key', 'value')
                             ->orderBy('shared_identifier')
-                            ->chunk(Setting::getCached()->enable_open_ai_translations ? 5 : 400, function ($translations) use ($language, $batch, $fromLanguageCode) {
+                            ->chunk(Setting::getCached()->enable_open_ai_translations ? config('languages.max_open_ai_missing_trans') : 400, function ($translations) use ($language, $batch, $fromLanguageCode) {
                                 if($batch) {
                                     $batch->add(new MassCreateEloquentTranslationsJob($translations->toArray(), $language->id, $language->code, $fromLanguageCode));
                                 } else {
@@ -165,24 +165,26 @@ trait CanCreateTranslation
                     $translatedArrayResult = resolve(OpenAITranslationService::class)->translateArray(
                         $fromLanguageCode,
                         $languageCode,
-                        array_map(fn($translation) => $translation['value'], $translationsArray)
+                        collect($translationsArray)->mapWithKeys(function($translation, $index) {
+                            return ['t_' . $index => $translation['value']];
+                        })->toArray()
                     );
                 } catch(\Exception $e) {
                     try {
-                        $translatedArrayResult = collect($translationsArray)->map(function ($translation, $languageCode,$fromLanguageCode) {
-                            return resolve(OpenAITranslationService::class)->translateString(
-                                $fromLanguageCode,
-                                $languageCode,
-                                $translation['value']
-                            );
-                        })->toArray();
+//                        $translatedArrayResult = collect($translationsArray)->map(function ($translation, $languageCode,$fromLanguageCode) {
+//                            return resolve(OpenAITranslationService::class)->translateString(
+//                                $fromLanguageCode,
+//                                $languageCode,
+//                                $translation['value']
+//                            );
+//                        })->toArray();
                     } catch(\Exception $e) {
 
                     }
                 }
 
                 $translationsArray = collect($translationsArray)->map(function ($translation, $index) use ($translatedArrayResult) {
-                    $translation['value'] = $translatedArrayResult[$index];
+                    $translation['value'] = $translatedArrayResult['t_' . $index];
                     return $translation;
                 })->toArray();
 
