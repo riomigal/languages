@@ -154,7 +154,8 @@ trait CanCreateTranslation
                         $translation['group'],
                         $translation['is_vendor'],
                         false,
-                        true
+                        true,
+                        false
                     );
                 }
             }
@@ -249,7 +250,7 @@ trait CanCreateTranslation
      * @param bool $isVendor
      * @return array
      */
-    protected function getTranslationArray(int $languageId, string $languageCode, string $sharedIdentifier, string $type, string $key, string $value, string $namespace, string $group, bool $isVendor, bool $approved = true, ?bool $needsTranslation = null): array
+    protected function getTranslationArray(int $languageId, string $languageCode, string $sharedIdentifier, string $type, string $key, string $value, string $namespace, string $group, bool $isVendor, bool $approved = true, ?bool $needsTranslation = null, bool $exported = true): array
     {
         return [
             'language_id' => $languageId,
@@ -264,6 +265,7 @@ trait CanCreateTranslation
             'approved' => $approved,
             'needs_translation' => ($needsTranslation !== null) ? $needsTranslation : !$value,
             'updated_translation' => false,
+            'exported' => $exported,
             'created_at' => now(),
             'updated_at' => now()
         ];
