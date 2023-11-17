@@ -62,7 +62,7 @@
                     @include('languages::component.button',
                        [
                        'clickEvent' => 'findMissingTranslations',
-                      'text' => __('languages::languages.button.find_missing_translations')
+                      'text' => __('languages::languages.button.find_missing_translations') . ' ' . __('languages::languages.button.chat_gpt_enabled')
                        ]
                    )
                 <button type="button"

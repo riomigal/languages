@@ -16,6 +16,7 @@ return [
         'import_languages' => 'Import Languages',
         'add_language' => 'Add Language',
         'find_missing_translations' => 'Find Missing Translations',
+        'chat_gpt_enabled' => '(OPEN AI ENABLED!)',
         'delete_jobs' => 'Delete running Batch (Jobs)'
     ],
     'table' => [
