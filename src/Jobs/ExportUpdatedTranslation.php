@@ -2,17 +2,12 @@
 
 namespace Riomigal\Languages\Jobs;
 
-use Illuminate\Bus\Batchable;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Riomigal\Languages\Jobs\Traits\HandlesFailedJobs;
+use Riomigal\Languages\Jobs\Job\BaseJob;
 use Riomigal\Languages\Services\Traits\CanExportTranslation;
 
-class ExportUpdatedTranslation implements ShouldQueue
+class ExportUpdatedTranslation extends BaseJob
 {
-    use Batchable, Dispatchable, InteractsWithQueue, Queueable, CanExportTranslation, HandlesFailedJobs;
+    use CanExportTranslation;
 
     public function __construct(
         protected string $type,
@@ -22,7 +17,7 @@ class ExportUpdatedTranslation implements ShouldQueue
         protected string $group = ''
     )
     {
-        $this->onQueue(config('languages.queue_name'));
+        parent::__construct();
     }
 
     /**

@@ -2,18 +2,12 @@
 
 namespace Riomigal\Languages\Jobs;
 
-use Illuminate\Bus\Batchable;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Riomigal\Languages\Jobs\Traits\HandlesFailedJobs;
+use Riomigal\Languages\Jobs\Job\BaseJob;
 use Riomigal\Languages\Services\Traits\CanCreateTranslation;
 
-class MassCreateEloquentTranslationsJob implements ShouldQueue
+class MassCreateEloquentTranslationsJob extends BaseJob
 {
-    use Batchable, Dispatchable, InteractsWithQueue, Queueable, CanCreateTranslation, HandlesFailedJobs;
-
+    use CanCreateTranslation;
     public function __construct(
         protected array  $translations,
         protected int $languageId,
@@ -21,7 +15,7 @@ class MassCreateEloquentTranslationsJob implements ShouldQueue
         protected string $fromLanguageCode
     )
     {
-        $this->onQueue(config('languages.queue_name'));
+        parent::__construct();
     }
 
     /**

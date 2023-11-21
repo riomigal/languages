@@ -7,19 +7,12 @@ use Riomigal\Languages\Services\ImportTranslationService;
 
 class ImportTranslationsJob extends BaseJob
 {
-    public function __construct(
-        protected ImportTranslationService $importTranslationService,
-    )
-    {
-
-    }
-
     /**
      * @return void
      * @throws \Exception
      */
     public function handle(): void
     {
-        $this->importTranslationService->importTranslations($this->batch());
+        resolve(ImportTranslationService::class)->importTranslations($this->batch());
     }
 }

@@ -17,9 +17,6 @@ use Riomigal\Languages\Models\Language;
 use Riomigal\Languages\Models\Translation;
 use Riomigal\Languages\Models\Translator;
 use Riomigal\Languages\Notifications\FlashMessage;
-use Riomigal\Languages\Services\ImportLanguageService;
-use Riomigal\Languages\Services\ImportTranslationService;
-use Riomigal\Languages\Services\MissingTranslationService;
 
 class Languages extends AuthComponent
 {
@@ -93,17 +90,16 @@ class Languages extends AuthComponent
     /**
      * Creates new languages from folders present in root "lang" folder. (Folder names must be valid language codes)
      *
-     * @param ImportLanguageService $importLanguageService
      * @param BatchProcessor $batchProcessor
      * @return void
      * @throws \Throwable
      */
-    public function importLanguages(ImportLanguageService $importLanguageService, BatchProcessor $batchProcessor): void
+    public function importLanguages(BatchProcessor $batchProcessor): void
     {
         if ($this->anotherJobIsRunning()) return;
 
         $batchArray = [
-            new ImportLanguagesJob($importLanguageService)
+            new ImportLanguagesJob()
         ];
 
         $languages = Language::pluck('id')->toArray();
@@ -121,17 +117,16 @@ class Languages extends AuthComponent
     }
 
     /**
-     * @param ImportTranslationService $importTranslationService
      * @param BatchProcessor $batchProcessor
      * @return void
      * @throws \Throwable
      */
-    public function importTranslations(ImportTranslationService $importTranslationService, BatchProcessor $batchProcessor): void
+    public function importTranslations(BatchProcessor $batchProcessor): void
     {
         if ($this->anotherJobIsRunning()) return;
 
         $batchArray = [
-            new ImportTranslationsJob($importTranslationService)
+            new ImportTranslationsJob()
         ];
 
         $totalTranslationsBefore = Translation::count();
@@ -149,11 +144,10 @@ class Languages extends AuthComponent
     /**
      * Finds Missing Translations for every language shared identifier
      *
-     * @param MissingTranslationService $missingTranslationService
      * @param BatchProcessor $batchProcessor
      * @return void
      */
-    public function findMissingTranslations(MissingTranslationService $missingTranslationService, BatchProcessor $batchProcessor): void
+    public function findMissingTranslations(BatchProcessor $batchProcessor): void
     {
         if ($this->anotherJobIsRunning()) return;
 
@@ -167,7 +161,7 @@ class Languages extends AuthComponent
 
         if ($total > 1) {
             $batchArray = [
-                new FindMissingTranslationsJob($missingTranslationService)
+                new FindMissingTranslationsJob()
             ];
 
             $totalTranslationsBefore = Translation::count();

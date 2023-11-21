@@ -9,10 +9,10 @@ use Riomigal\Languages\Services\ExportTranslationService;
 class ExportTranslationJob extends BaseJob
 {
     public function __construct(
-        protected ExportTranslationService $exportTranslationService,
         protected Language                 $language,
     )
     {
+        parent::__construct();
     }
 
     /**
@@ -21,7 +21,7 @@ class ExportTranslationJob extends BaseJob
      */
     public function handle(): void
     {
-        $this->exportTranslationService->exportTranslationForLanguage($this->language, $this->batch());
+        resolve(ExportTranslationService::class)->exportTranslationForLanguage($this->language, $this->batch());
     }
 
 }

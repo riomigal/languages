@@ -7,20 +7,12 @@ use Riomigal\Languages\Services\ImportLanguageService;
 
 class ImportLanguagesJob extends BaseJob
 {
-
-    public function __construct(
-        protected ImportLanguageService $importLanguageService,
-
-    )
-    {
-    }
-
     /**
      * @return void
      * @throws \Exception
      */
     public function handle(): void
     {
-        $this->importLanguageService->importLanguages();
+        resolve(ImportLanguageService::class)->importLanguages();
     }
 }

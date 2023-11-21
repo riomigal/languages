@@ -297,11 +297,10 @@ class Translations extends AuthComponent
     }
 
     /**
-     * @param ExportTranslationService $exportTranslationService
      * @param BatchProcessor $batchProcessor
      * @return void
      */
-    public function exportTranslationsForLanguage(ExportTranslationService $exportTranslationService, BatchProcessor $batchProcessor): void
+    public function exportTranslationsForLanguage(BatchProcessor $batchProcessor): void
     {
         if ($this->anotherJobIsRunning()) return;
 
@@ -311,7 +310,7 @@ class Translations extends AuthComponent
 
         if ($updatedTranslationsTotal) {
             $batchArray = [
-                new ExportTranslationJob($exportTranslationService, $this->language)
+                new ExportTranslationJob($this->language)
             ];
 
             $total = Translation::query()->where('language_id', $this->language->id)
@@ -332,11 +331,10 @@ class Translations extends AuthComponent
     }
 
     /**
-     * @param ExportTranslationService $exportTranslationService
      * @param BatchProcessor $batchProcessor
      * @return void
      */
-    public function exportTranslationsForAllLanguages(ExportTranslationService $exportTranslationService, BatchProcessor $batchProcessor): void
+    public function exportTranslationsForAllLanguages(BatchProcessor $batchProcessor): void
     {
         if ($this->anotherJobIsRunning()) return;
 
@@ -347,8 +345,8 @@ class Translations extends AuthComponent
         if ($languages->count() > 0) {
 
             $batchArray = [];
-            $languages->each(function (Language $language) use (&$batchArray, $exportTranslationService) {
-                $batchArray[] = new ExportTranslationJob($exportTranslationService, $language);
+            $languages->each(function (Language $language) use (&$batchArray) {
+                $batchArray[] = new ExportTranslationJob($language);
             });
 
             $total = Translation::query()
