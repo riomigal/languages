@@ -6,7 +6,7 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Contracts\View\View;
 use Riomigal\Languages\Jobs\Batch\BatchProcessor;
 use Riomigal\Languages\Jobs\ExportTranslationJob;
-use Riomigal\Languages\Livewire\Traits\HasBatchProcess;
+use Riomigal\Languages\Livewire\Traits\ChecksForRunningJobs;
 use Riomigal\Languages\Models\Language;
 use Riomigal\Languages\Models\Translation;
 use Riomigal\Languages\Models\Translator;
@@ -16,7 +16,7 @@ use Riomigal\Languages\Services\OpenAITranslationService;
 
 class Translations extends AuthComponent
 {
-    use HasBatchProcess;
+    use ChecksForRunningJobs;
 
     /**
      * @var Language

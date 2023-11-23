@@ -12,7 +12,7 @@ use Riomigal\Languages\Jobs\Batch\BatchProcessor;
 use Riomigal\Languages\Jobs\FindMissingTranslationsJob;
 use Riomigal\Languages\Jobs\ImportLanguagesJob;
 use Riomigal\Languages\Jobs\ImportTranslationsJob;
-use Riomigal\Languages\Livewire\Traits\HasBatchProcess;
+use Riomigal\Languages\Livewire\Traits\ChecksForRunningJobs;
 use Riomigal\Languages\Models\Language;
 use Riomigal\Languages\Models\Translation;
 use Riomigal\Languages\Models\Translator;
@@ -20,7 +20,7 @@ use Riomigal\Languages\Notifications\FlashMessage;
 
 class Languages extends AuthComponent
 {
-    use HasBatchProcess;
+    use ChecksForRunningJobs;
 
     /**
      * @var bool

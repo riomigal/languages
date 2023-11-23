@@ -12,7 +12,7 @@ class SettingsController extends Controller
     public function jobsOnOtherDBRunning(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'api_key' => 'string',
+            'api_key' => 'required|string',
         ]);
 
         if($data['api_key'] !== config('languages.api_shared_api_key')) {

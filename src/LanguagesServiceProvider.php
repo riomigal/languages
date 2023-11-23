@@ -153,12 +153,7 @@ class LanguagesServiceProvider extends ServiceProvider
     protected function loadRoutes(): void
     {
         $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
-//        if(config('languages.api.enabled')) {
-//            $this->loadRoutesFrom(__DIR__ . '/../routes/api.php');
-//            Route::middleware(config('languages.api.middleware'))
-//                ->prefix(config('languages.api.prefix'))
-//                ->group(__DIR__ . '/../routes/api.php');
-//        }
+        $this->loadRoutesFrom(__DIR__ . '/../routes/api.php');
     }
 
     /**
