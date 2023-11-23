@@ -3,13 +3,16 @@
 namespace Riomigal\Languages\Console\Commands;
 
 use Illuminate\Console\Command;
+use Riomigal\Languages\Livewire\Traits\ChecksForRunningJobs;
 use Riomigal\Languages\Models\Language;
 use Riomigal\Languages\Models\Setting;
 use Riomigal\Languages\Models\Translation;
+use Riomigal\Languages\Models\Translator;
 use Riomigal\Languages\Services\MissingTranslationService;
 
 class FindMissingTranslations extends Command
 {
+    use ChecksForRunningJobs;
     /**
      * The name and signature of the console command.
      *
@@ -29,6 +32,7 @@ class FindMissingTranslations extends Command
      */
     public function handle(MissingTranslationService $missingTranslationService): void
     {
+        if($this->anotherJobIsRunning(true)) return;
         try {
             Setting::setJobsRunning();
 
@@ -42,10 +46,10 @@ class FindMissingTranslations extends Command
 
             if ($total > 1) {
                 $totalTranslationsBefore = Translation::count();
-
                 $this->info('Existing Translations: ' . $totalTranslationsBefore . '.');
                 $this->info('Importing translations...');
                 $missingTranslationService->findMissingTranslations();
+                Translator::notifyAdminImportedMissingTranslations($totalTranslationsBefore);
                 $total = Translation::count() - $totalTranslationsBefore;
                 $this->info('New missing translations created: ' . $total . '.');
             } else {

@@ -13,13 +13,15 @@ trait ChecksForRunningJobs
     /** Checks if another job is running
      * @return bool
      */
-    protected function anotherJobIsRunning(): bool
+    protected function anotherJobIsRunning(bool $fromCommandLine = false): bool
     {
-
         if (DB::table('jobs')
             ->where('queue', config('languages.queue_name'))
+            ->exists() || DB::table('job_batches')->where('name', config('languages.batch_name'))
+            ->whereNull('cancelled_at')
+            ->whereNull('finished_at')
             ->exists()) {
-            $this->jobIsRunningMessage();
+            $this->jobIsRunningMessage($fromCommandLine);
             return true;
         }
 
@@ -37,31 +39,36 @@ trait ChecksForRunningJobs
             });
             foreach($responses as $response) {
                 if(!$response->ok()) {
-                    $this->jobIsRunningMessage();
+                    $this->jobIsRunningMessage($fromCommandLine);
                     return true;
                 }
+
                 try{
                     if($response['process_running']) {
-                        $this->jobIsRunningMessage();
+                        $this->jobIsRunningMessage($fromCommandLine);
                         return true;
                     }
                 } catch(\Exception $e) {
-                    $this->jobIsRunningMessage();
+                    $this->jobIsRunningMessage($fromCommandLine);
                     return true;
                 }
             }
         }
 
-        $this->jobIsRunningMessage(false);
+        $this->jobIsRunningMessage($fromCommandLine, false);
         return false;
     }
 
-    protected function jobIsRunningMessage(bool $isRunning = true): void
+    protected function jobIsRunningMessage(bool $fromCommandLine, bool $isRunning = true): void
     {
-        if($isRunning) {
-            $this->emit('showToast', __('languages::global.import.processing_no_action'), LanguagesToastMessage::MESSAGE_TYPES['WARNING']);
+        if($fromCommandLine) {
+            if($isRunning) $this->info('Another Process is running.');
         } else {
-            $this->emit('showToast', __('languages::global.import.start_message'), LanguagesToastMessage::MESSAGE_TYPES['SUCCESS'], 6000);
+            if ($isRunning) {
+                $this->emit('showToast', __('languages::global.import.processing_no_action'), LanguagesToastMessage::MESSAGE_TYPES['WARNING']);
+            } else {
+                $this->emit('showToast', __('languages::global.import.start_message'), LanguagesToastMessage::MESSAGE_TYPES['SUCCESS'], 6000);
+            }
         }
 
     }

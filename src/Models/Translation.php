@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Cache;
+use Riomigal\Languages\Notifications\FlashMessage;
 
 /**
  * @mixin Builder
@@ -193,5 +194,4 @@ class Translation extends Model
     {
         return $this->updatedBy ? $this->updatedBy->first_name . ' ' . $this->updatedBy->last_name : '';
     }
-
 }

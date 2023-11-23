@@ -4,14 +4,17 @@ namespace Riomigal\Languages\Console\Commands;
 
 
 use Illuminate\Console\Command;
+use Riomigal\Languages\Livewire\Traits\ChecksForRunningJobs;
 use Riomigal\Languages\Models\Language;
 use Riomigal\Languages\Models\Setting;
 use Riomigal\Languages\Models\Translation;
+use Riomigal\Languages\Models\Translator;
 use Riomigal\Languages\Services\ExportTranslationService;
-use Riomigal\Languages\Services\MissingTranslationService;
 
 class ExportTranslations extends Command
 {
+    use ChecksForRunningJobs;
+
     /**
      * The name and signature of the console command.
      *
@@ -31,6 +34,7 @@ class ExportTranslations extends Command
      */
     public function handle(ExportTranslationService $exportTranslationService): void
     {
+        if($this->anotherJobIsRunning(true)) return;
         try {
             Setting::setJobsRunning(true);
             $languages = Language::find(Translation::query()
@@ -44,6 +48,7 @@ class ExportTranslations extends Command
                     ->count();
                 $this->info('Exporting translations...');
                 $exportTranslationService->exportAllTranslations(Language::all());
+                Translator::notifyAdminExportedTranslationsAllLanguages($total, $languages);
                 $total -= Translation::query()
                     ->isUpdated(false)->exported(false)
                     ->approved()

@@ -14,6 +14,7 @@ use Riomigal\Languages\Jobs\ImportLanguagesJob;
 use Riomigal\Languages\Jobs\ImportTranslationsJob;
 use Riomigal\Languages\Livewire\Traits\ChecksForRunningJobs;
 use Riomigal\Languages\Models\Language;
+use Riomigal\Languages\Models\Setting;
 use Riomigal\Languages\Models\Translation;
 use Riomigal\Languages\Models\Translator;
 use Riomigal\Languages\Notifications\FlashMessage;
@@ -82,6 +83,9 @@ class Languages extends AuthComponent
             $this->emit('startBatchProgress', null);
             return true;
         }
+        if(!$this->anotherJobIsRunning()) {
+            Setting::setJobsRunning(false);
+        }
         $this->emit('showToast', __('languages::global.jobs.delete_not_found'), LanguagesToastMessage::MESSAGE_TYPES['WARNING']);
         $this->emit('startBatchProgress', null);
         return false;
@@ -104,13 +108,7 @@ class Languages extends AuthComponent
 
         $languages = Language::pluck('id')->toArray();
         $finally = function () use (&$languages) {
-            $newLanguages = Language::all()
-                ->reject(function (Language $language) use ($languages) {
-                    return in_array($language->id, $languages);
-                })->pluck('name')->all();
-            Translator::query()->admin()->each(function (Translator $translator) use ($newLanguages) {
-                $translator->notify(new FlashMessage($newLanguages ? __('languages::languages.import_languages_success', ['languages' => implode(', ', $newLanguages)]) . __('languages::global.reload_suggestion') : __('languages::global.import.nothing_imported')));
-            });
+            Translator::notifyAdminImportedLanguages($languages);
         };
 
         $this->emit('startBatchProgress', $batchProcessor->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
@@ -131,11 +129,7 @@ class Languages extends AuthComponent
 
         $totalTranslationsBefore = Translation::count();
         $finally = function () use (&$totalTranslationsBefore) {
-
-            $total = Translation::count() - $totalTranslationsBefore;
-            Translator::query()->admin()->each(function (Translator $translator) use ($total) {
-                $translator->notify(new FlashMessage($total ? __('languages::languages.import_translations_success', ['total' => $total]) . __('languages::global.reload_suggestion') : __('languages::global.import.nothing_imported')));
-            });
+            Translator::notifyAdminImportedTranslations($totalTranslationsBefore);
         };
 
         $this->emit('startBatchProgress', $batchProcessor->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
@@ -163,14 +157,9 @@ class Languages extends AuthComponent
             $batchArray = [
                 new FindMissingTranslationsJob()
             ];
-
             $totalTranslationsBefore = Translation::count();
             $finally = function () use (&$totalTranslationsBefore) {
-
-                $total = Translation::count() - $totalTranslationsBefore;
-                Translator::query()->admin()->where('admin', true)->each(function (Translator $translator) use ($total) {
-                    $translator->notify(new FlashMessage($total ? __('languages::languages.find_missing_translations_success', ['total' => $total]) . __('languages::global.reload_suggestion') : __('languages::global.import.nothing_imported')));
-                });
+                Translator::notifyAdminImportedMissingTranslations($totalTranslationsBefore);
             };
 
             $this->emit('startBatchProgress', $batchProcessor->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
