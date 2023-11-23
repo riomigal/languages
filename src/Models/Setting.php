@@ -29,6 +29,7 @@ class Setting extends Model
         'enable_pending_notifications' => 'boolean',
         'enable_automatic_pending_notifications' => 'boolean',
         'enable_open_ai_translations' => 'boolean',
+        'process_running' => 'boolean',
     ];
 
     /**

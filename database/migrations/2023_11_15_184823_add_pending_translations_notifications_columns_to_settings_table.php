@@ -11,10 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::connection(config('languages.db_connection'))->table(config('languages.table_settings'), function (Blueprint $table) {
-            $table->boolean('enable_pending_notifications')->default(false)->after('import_vendor');
-            $table->boolean('enable_automatic_pending_notifications')->default(false)->after('enable_pending_notifications');
-        });
+        if(!Schema::connection(config('languages.db_connection'))->hasColumns(config('languages.table_settings'), ['enable_pending_notifications', 'enable_automatic_pending_notifications'])) {
+            Schema::connection(config('languages.db_connection'))->table(config('languages.table_settings'), function (Blueprint $table) {
+                $table->boolean('enable_pending_notifications')->default(false)->after('import_vendor');
+                $table->boolean('enable_automatic_pending_notifications')->default(false)->after('enable_pending_notifications');
+            });
+        }
 
     }
 
@@ -23,8 +25,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::connection(config('languages.db_connection'))->table(config('languages.table_settings'), function (Blueprint $table) {
-                Schema::connection(config('languages.db_connection'))->dropColumns(config('languages.table_settings'), ['enable_pending_notifications','enable_automatic_pending_notifications']);
-        });
+        if(Schema::connection(config('languages.db_connection'))->hasColumns(config('languages.table_settings'), ['enable_pending_notifications', 'enable_automatic_pending_notifications'])) {
+            Schema::connection(config('languages.db_connection'))->table(config('languages.table_settings'), function (Blueprint $table) {
+                Schema::connection(config('languages.db_connection'))->dropColumns(config('languages.table_settings'), ['enable_pending_notifications', 'enable_automatic_pending_notifications']);
+            });
+        }
     }
 };
