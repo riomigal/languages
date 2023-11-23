@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create(config('languages.table_translations'), function (Blueprint $table) {
+        Schema::connection(config('languages.db_connection'))->create(config('languages.table_translations'), function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->unsignedBigInteger('language_id');
             $table->foreign('language_id')->references('id')
@@ -40,6 +40,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists(config('languages.table_translations'));
+        Schema::connection(config('languages.db_connection'))->dropIfExists(config('languages.table_translations'));
     }
 };

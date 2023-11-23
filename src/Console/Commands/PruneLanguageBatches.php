@@ -27,7 +27,7 @@ class PruneLanguageBatches extends Command
      */
     public function handle(): void
     {
-        DB::table('job_batches')->where('name', config('languages.batch_name'))
+        DB::connection(config('languages.db_connection'))->table('job_batches')->where('name', config('languages.batch_name'))
             ->where(function ($query) {
                 $query->where('finished_at', '<', now()->subHours(config('languages.prune_batch_hours'))->timestamp)
                     ->orWhere('cancelled_at', '<', now()->subHours(config('languages.prune_batch_hours'))->timestamp);

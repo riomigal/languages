@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table(config('languages.table_settings'), function (Blueprint $table) {
+        Schema::connection(config('languages.db_connection'))->table(config('languages.table_settings'), function (Blueprint $table) {
             $table->boolean('enable_open_ai_translations')->default(false)->after('import_vendor');
         });
 
@@ -22,8 +22,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table(config('languages.table_settings'), function (Blueprint $table) {
-                Schema::dropColumns(config('languages.table_settings'), ['enable_open_ai_translations']);
+        Schema::connection(config('languages.db_connection'))->table(config('languages.table_settings'), function (Blueprint $table) {
+                Schema::connection(config('languages.db_connection'))->dropColumns(config('languages.table_settings'), ['enable_open_ai_translations']);
         });
     }
 };

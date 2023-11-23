@@ -176,6 +176,7 @@ class Language extends Model
     public function __construct(array $attributes = [])
     {
         $this->table = config('languages.table_languages');
+        $this->connection = config('languages.db_connection');
         parent::__construct($attributes);
     }
 

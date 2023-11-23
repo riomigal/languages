@@ -49,6 +49,7 @@ class Translator extends Authenticatable
     public function __construct(array $attributes = [])
     {
         $this->table = config('languages.table_translators');
+        $this->connection = config('languages.db_connection');
         parent::__construct($attributes);
     }
 

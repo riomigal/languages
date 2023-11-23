@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if(!Schema::hasTable('notifications')) {
-            Schema::create('notifications', function (Blueprint $table) {
+        if(!Schema::connection(config('languages.db_connection'))->hasTable('notifications')) {
+            Schema::connection(config('languages.db_connection'))->create('notifications', function (Blueprint $table) {
                 $table->uuid('id')->primary();
                 $table->string('type');
                 $table->morphs('notifiable');
@@ -28,6 +28,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-
+        if(config('database.default') != config('languages.db_connection')) {
+            Schema::connection(config('languages.db_connection'))->dropIfExists('notifications');
+        }
     }
 };

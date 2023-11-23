@@ -40,6 +40,7 @@ class Setting extends Model
     public function __construct(array $attributes = [])
     {
         $this->table = config('languages.table_settings');
+        $this->connection = config('languages.db_connection');
         parent::__construct($attributes);
     }
 

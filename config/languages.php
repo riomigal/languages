@@ -5,6 +5,8 @@
  */
 return [
 
+    'db_connection' => env('LANGUAGES_DB_CONNECTION', config('database.default')),
+
     /*
     |--------------------------------------------------------------------------
     | Route

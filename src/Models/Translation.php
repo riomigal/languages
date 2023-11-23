@@ -42,6 +42,7 @@ class Translation extends Model
     public function __construct(array $attributes = [])
     {
         $this->table = config('languages.table_translations');
+        $this->connection = config('languages.db_connection');
         parent::__construct($attributes);
     }
 

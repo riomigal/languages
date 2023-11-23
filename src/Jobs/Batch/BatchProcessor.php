@@ -2,17 +2,13 @@
 
 namespace Riomigal\Languages\Jobs\Batch;
 
+use Closure;
 use Illuminate\Bus\Batch;
+use Illuminate\Bus\DatabaseBatchRepository;
 use Illuminate\Bus\PendingBatch;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Log;
-use Closure;
-use Riomigal\Languages\Exceptions\ExportTranslationException;
-use Riomigal\Languages\Exceptions\ImportTranslationsException;
-use Riomigal\Languages\Exceptions\MassCreateTranslationsException;
 use Riomigal\Languages\Models\Translator;
-use Riomigal\Languages\Notifications\FlashMessage;
 use Throwable;
 
 class BatchProcessor
