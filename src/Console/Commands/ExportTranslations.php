@@ -5,6 +5,7 @@ namespace Riomigal\Languages\Console\Commands;
 
 use Illuminate\Console\Command;
 use Riomigal\Languages\Models\Language;
+use Riomigal\Languages\Models\Setting;
 use Riomigal\Languages\Models\Translation;
 use Riomigal\Languages\Services\ExportTranslationService;
 use Riomigal\Languages\Services\MissingTranslationService;
@@ -30,24 +31,31 @@ class ExportTranslations extends Command
      */
     public function handle(ExportTranslationService $exportTranslationService): void
     {
-        $languages = Language::find(Translation::query()
-            ->isUpdated(false)->exported(false)
-            ->approved()->distinct()->pluck('language_id')->toArray());
+        try {
+            Setting::setJobsRunning(true);
+            $languages = Language::find(Translation::query()
+                ->isUpdated(false)->exported(false)
+                ->approved()->distinct()->pluck('language_id')->toArray());
 
-        if(count($languages)) {
-            $total = Translation::query()
-                ->isUpdated(false)->exported(false)
-                ->approved()
-                ->count();
-            $this->info('Exporting translations...');
-            $exportTranslationService->exportAllTranslations(Language::all());
-            $total -= Translation::query()
-                ->isUpdated(false)->exported(false)
-                ->approved()
-                ->count();
-            $this->info('Total translations exported: ' . $total . '.');
-        } else {
-            $this->info('Nothing to export.');
+            if (count($languages)) {
+                $total = Translation::query()
+                    ->isUpdated(false)->exported(false)
+                    ->approved()
+                    ->count();
+                $this->info('Exporting translations...');
+                $exportTranslationService->exportAllTranslations(Language::all());
+                $total -= Translation::query()
+                    ->isUpdated(false)->exported(false)
+                    ->approved()
+                    ->count();
+                $this->info('Total translations exported: ' . $total . '.');
+            } else {
+                $this->info('Nothing to export.');
+            }
+            Setting::setJobsRunning(false);
+        } catch(\Exception $e) {
+            Setting::setJobsRunning(false);
+            throw $e;
         }
     }
 }

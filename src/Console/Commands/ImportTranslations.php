@@ -5,6 +5,7 @@ namespace Riomigal\Languages\Console\Commands;
 
 use Illuminate\Console\Command;
 use Riomigal\Languages\Models\Language;
+use Riomigal\Languages\Models\Setting;
 use Riomigal\Languages\Models\Translation;
 use Riomigal\Languages\Services\ImportTranslationService;
 
@@ -29,13 +30,22 @@ class ImportTranslations extends Command
      */
     public function handle(ImportTranslationService $importTranslationService): void
     {
-        $totalTranslationsBefore = Translation::count();
+        try {
+            Setting::setJobsRunning();
 
-        $this->info('Existing Translations: ' . $totalTranslationsBefore . '.');
+            $totalTranslationsBefore = Translation::count();
 
-        $this->info('Importing translations...');
-        $importTranslationService->importTranslations();
-        $total = Translation::count() - $totalTranslationsBefore;
-        $this->info('New translations imported: ' . $total . '.');
+            $this->info('Existing Translations: ' . $totalTranslationsBefore . '.');
+
+            $this->info('Importing translations...');
+            $importTranslationService->importTranslations();
+            $total = Translation::count() - $totalTranslationsBefore;
+            $this->info('New translations imported: ' . $total . '.');
+
+            Setting::setJobsRunning(false);
+        } catch(\Exception $e) {
+            Setting::setJobsRunning(false);
+            throw $e;
+        }
     }
 }

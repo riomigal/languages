@@ -17,7 +17,12 @@ class Setting extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        'db_loader', 'import_vendor'
+        'db_loader',
+        'import_vendor',
+        'enable_pending_notifications',
+        'enable_automatic_pending_notifications',
+        'enable_open_ai_translations',
+        'process_running'
     ];
 
     /**
@@ -66,5 +71,13 @@ class Setting extends Model
     {
         Cache::forget(config('languages.cache_key') . '_settings');
         return self::getCached();
+    }
+
+    public static function setJobsRunning(bool $value = true): Setting
+    {
+        $setting = Setting::first();
+        $setting->process_running = $value;
+        $setting->save();
+        return $setting;
     }
 }

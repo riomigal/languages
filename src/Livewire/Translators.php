@@ -100,8 +100,8 @@ class Translators extends AuthComponent
     public function getRules(): array
     {
         return [
-            'email' => ['required', 'email', Rule::unique(config('languages.table_translators'), 'email')->ignore(($this->translator) ? $this->translator->id : 0)],
-            'phone' => ['nullable', 'string', Rule::unique(config('languages.table_translators'), 'phone')->ignore(($this->translator) ? $this->translator->id : 0)],
+            'email' => ['required', 'email', Rule::unique(config('languages.db_connection') . '.' . config('languages.table_translators'), 'email')->ignore(($this->translator) ? $this->translator->id : 0)],
+            'phone' => ['nullable', 'string', Rule::unique(config('languages.db_connection') . '.' . config('languages.table_translators'), 'phone')->ignore(($this->translator) ? $this->translator->id : 0)],
             'admin' => 'nullable|bool',
             'first_name' => 'required|string|min:2',
             'last_name' => 'required|string|min:2',

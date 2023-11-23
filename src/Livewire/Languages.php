@@ -64,7 +64,7 @@ class Languages extends AuthComponent
     {
         return [
             'language' => [
-                Rule::in($this->languageCodes), Rule::notIn(Language::query()->pluck('code')->all()), Rule::unique(config('languages.table_languages'), 'code')
+                Rule::in($this->languageCodes), Rule::notIn(Language::query()->pluck('code')->all()), Rule::unique(config('languages.db_connection') . '.' . config('languages.table_languages'), 'code')
             ]
         ];
     }
