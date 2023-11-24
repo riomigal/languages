@@ -2,27 +2,20 @@
 
 namespace Riomigal\Languages\Jobs;
 
-use Illuminate\Bus\Batch;
-use Illuminate\Bus\Batchable;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Support\Facades\Log;
-use Riomigal\Languages\Jobs\Traits\HandlesFailedJobs;
+use Riomigal\Languages\Jobs\Job\BaseJob;
 use Riomigal\Languages\Models\Language;
 use Riomigal\Languages\Services\Traits\CanCreateTranslation;
 
-class FindMissingTranslationsByLanguage implements ShouldQueue
+class FindMissingTranslationsByLanguage extends BaseJob
 {
-    use Batchable, Dispatchable, InteractsWithQueue, Queueable, CanCreateTranslation, HandlesFailedJobs;
+    use CanCreateTranslation;
 
     public function __construct(
         protected array $languageIds,
         protected int $languageId,
     )
     {
-        $this->onQueue(config('languages.queue_name'));
+        parent::__construct();
     }
 
     /**

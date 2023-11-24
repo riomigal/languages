@@ -48,7 +48,7 @@ class FlashMessage extends Component
      * @return void
      */
     public function markAllAsRead(): void {
-        DB::table('notifications')->whereIn('id', array_keys($this->notifications))->update([
+        DB::connection(config('languages.db_connection'))->table('notifications')->whereIn('id', array_keys($this->notifications))->update([
             'read_at' => now()
         ]);
         $this->updateNotifications();
@@ -60,7 +60,7 @@ class FlashMessage extends Component
      */
     public function updateNotifications(): void
     {
-        $this->notifications = DB::table('notifications')->where('notifiable_id', $this->notifiable)
+        $this->notifications = DB::connection(config('languages.db_connection'))->table('notifications')->where('notifiable_id', $this->notifiable)
             ->whereNull('read_at')->orderBy('created_at', 'DESC')->pluck('data', 'id')->all();
 
         $this->totalNotifications = count($this->notifications);
@@ -72,7 +72,7 @@ class FlashMessage extends Component
      */
     public function markAsRead(string $id): void
     {
-       DB::table('notifications')->where('id', $id)->update(
+       DB::connection(config('languages.db_connection'))->table('notifications')->where('id', $id)->update(
             [
                 'read_at' => now()
             ]

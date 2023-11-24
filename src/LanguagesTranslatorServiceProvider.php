@@ -42,7 +42,7 @@ class LanguagesTranslatorServiceProvider extends TranslationServiceProvider
     {
         if(app()->runningInConsole()) {
             try {
-                DB::connection()->getDatabaseName();
+                DB::connection(config('languages.db_connection'))->connection()->getDatabaseName();
                 $this->loadTranslationsArray();
             } catch (\Exception) {
                 parent::registerLoader();
@@ -57,7 +57,7 @@ class LanguagesTranslatorServiceProvider extends TranslationServiceProvider
      */
     protected function loadTranslationsArray(): void
     {
-        if(Schema::hasTable(config('languages.table_settings')) && DB::table(config('languages.table_settings'))->first()->db_loader) {
+        if(Schema::connection(config('languages.db_connection'))->hasTable(config('languages.table_settings')) && DB::connection(config('languages.db_connection'))->table(config('languages.table_settings'))->first()->db_loader) {
             $this->app->singleton('translation.loader', function ($app) {
                 return new TranslationLoader($app['files'], $app['path.lang']);
             });

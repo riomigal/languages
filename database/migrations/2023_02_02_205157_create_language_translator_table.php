@@ -12,16 +12,18 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create(config('languages.table_translator_language'), function (Blueprint $table) {
-            $table->bigIncrements('id');
-            $table->unsignedBigInteger('language_id');
-            $table->unsignedBigInteger('translator_id');
-            $table->foreign('language_id')->references('id')
-                ->on(config('languages.table_languages'))->cascadeOnDelete();
-            $table->foreign('translator_id')->references('id')
-                ->on(config('languages.table_translators'))->cascadeOnDelete();
-            $table->timestamps();
-        });
+        if(!Schema::connection(config('languages.db_connection'))->hasTable(config('languages.table_translator_language'))) {
+            Schema::connection(config('languages.db_connection'))->create(config('languages.table_translator_language'), function (Blueprint $table) {
+                $table->bigIncrements('id');
+                $table->unsignedBigInteger('language_id');
+                $table->unsignedBigInteger('translator_id');
+                $table->foreign('language_id')->references('id')
+                    ->on(config('languages.table_languages'))->cascadeOnDelete();
+                $table->foreign('translator_id')->references('id')
+                    ->on(config('languages.table_translators'))->cascadeOnDelete();
+                $table->timestamps();
+            });
+        }
     }
 
     /**
@@ -31,6 +33,8 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists(config('languages.table_translator_language'));
+        if(Schema::connection(config('languages.db_connection'))->hasTable(config('languages.table_translator_language'))) {
+            Schema::connection(config('languages.db_connection'))->dropIfExists(config('languages.table_translator_language'));
+        }
     }
 };

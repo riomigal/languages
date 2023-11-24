@@ -17,36 +17,8 @@
                     {{ __('languages::translations.example_language.info', ['language' => config('app.fallback_locale')]) }}            </p>
             </div>
         </div>
-        <div class="flex flex-col md:flex-row items-center justify-between space-y-3 md:space-y-0 md:space-x-4 p-4">
+        <div class="flex flex-col md:flex-row items-center justify-start space-y-3 md:space-y-0 md:space-x-4 p-4">
             @include('languages::component.search')
-
-            @if($isAdministrator)
-
-                @if(!Setting::getCached()->db_loader)
-                @include('languages::component.button',
-                  [
-                  'clickEvent' => 'exportTranslationsForLanguage',
-                 'text' => __('languages::translations.button.export_translation')
-                  ]
-                )
-                @endif
-
-                @include('languages::component.button',
-                      [
-                      'clickEvent' => 'approveAllTranslations',
-                       'text' => __('languages::translations.button.approve_all')
-                      ]
-                  )
-
-                  @if(!Setting::getCached()->db_loader)
-                        @include('languages::component.button',
-                          [
-                          'clickEvent' => 'exportTranslationsForAllLanguages',
-                         'text' => __('languages::translations.button.export_all_translations')
-                          ]
-                           )
-                @endif
-            @endif
 
             @include('languages::component.select-checkbox-multiple',
                [
@@ -60,6 +32,21 @@
                        ]
                   ])
 
+            @include('languages::component.select-checkbox-multiple',
+               [
+                   'id' => 'translations_select_updated_by',
+                   'text' =>__('languages::translations.filter.updated_by'),
+                   'model' => 'updatedBy',
+                   'data' => $this->translators
+                  ])
+            @include('languages::component.select-checkbox-multiple',
+               [
+                   'id' => 'translations_select_updated_by',
+                   'text' =>__('languages::translations.filter.approved_by'),
+                   'model' => 'approvedBy',
+                   'data' => $this->translators
+                  ])
+
             @include('languages::component.select-checkbox-three-states',
              [
                  'id' => 'translations_filters_checkbox',
@@ -69,8 +56,57 @@
                      'approved' => __('languages::translations.filter.approved'),
                      'updated_translation' => __('languages::translations.filter.updated_translation'),
                      'is_vendor' => __('languages::translations.filter.is_vendor'),
+                     'exported' => __('languages::translations.filter.exported'),
                     ]
                 ])
+        </div>
+        <div class="flex flex-col md:flex-row items-center justify-end p-4">
+            @if($isAdministrator)
+                    @if(!Setting::getCached()->db_loader)
+                        @include('languages::component.button',
+                          [
+                            'clickEvent' => 'exportTranslationsForLanguage',
+                            'text' => __('languages::translations.button.export_translation'),
+                            'showLoader' => '1'
+                          ]
+                        )
+                    @else
+                        @include('languages::component.button',
+                          [
+                            'clickEvent' => 'exportTranslationsForLanguage("1")',
+                            'text' => __('languages::translations.button.export_translation_models'),
+                            'showLoader' => '1'
+                          ]
+                        )
+                    @endif
+
+
+                    @if(!Setting::getCached()->db_loader)
+                        @include('languages::component.button',
+                          [
+                          'clickEvent' => 'exportTranslationsForAllLanguages',
+                           'text' => __('languages::translations.button.export_all_translations'),
+                           'showLoader' => '1'
+                          ]
+                        )
+                    @else
+                        @include('languages::component.button',
+                          [
+                            'clickEvent' => 'exportTranslationsForAllLanguages("1")',
+                            'text' => __('languages::translations.button.export_all_translations_models'),
+                            'showLoader' => '1'
+                          ]
+                        )
+                    @endif
+
+                    @include('languages::component.button',
+                        [
+                         'clickEvent' => 'approveAllTranslations',
+                         'text' => __('languages::translations.button.approve_all'),
+                         'showLoader' => '1'
+                        ]
+                     )
+                    @endif
         </div>
         @include('languages::component.table', [
                       'thead' => [

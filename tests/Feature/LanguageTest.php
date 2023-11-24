@@ -51,7 +51,7 @@ class LanguageTest extends BaseTestCase
             'name' => $language->name,
             'native_name' => $language->native_name,
             'code' => $language->code
-        ]);
+        ], config('languages.db_connection'));
     }
 
     /**

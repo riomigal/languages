@@ -12,19 +12,21 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create(config('languages.table_settings'), function (Blueprint $table) {
-            $table->bigIncrements('id');
-            $table->boolean('db_loader')->default(false);
-            $table->boolean('import_vendor')->default(false);
-            $table->timestamps();
-        });
+        if(!Schema::connection(config('languages.db_connection'))->hasTable(config('languages.table_settings'))) {
+            Schema::connection(config('languages.db_connection'))->create(config('languages.table_settings'), function (Blueprint $table) {
+                $table->bigIncrements('id');
+                $table->boolean('db_loader')->default(false);
+                $table->boolean('import_vendor')->default(false);
+                $table->timestamps();
+            });
 
-        /**
-         * Creates first setting
-         */
-        Setting::query()->create(
-            ['db_loader' => false]
-        );
+            /**
+             * Creates first setting
+             */
+            Setting::query()->create(
+                ['db_loader' => false]
+            );
+        }
 
     }
 
@@ -33,6 +35,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists(config('languages.table_settings'));
+        if(Schema::connection(config('languages.db_connection'))->hasTable(config('languages.table_settings'))) {
+            Schema::connection(config('languages.db_connection'))->dropIfExists(config('languages.table_settings'));
+        }
     }
 };

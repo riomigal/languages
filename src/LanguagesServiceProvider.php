@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
+use Riomigal\Languages\Console\Commands\DeveloperDownloadToLocalCommand;
 use Riomigal\Languages\Console\Commands\ExportTranslations;
 use Riomigal\Languages\Console\Commands\FindMissingTranslations;
 use Riomigal\Languages\Console\Commands\ImportLanguages;
@@ -21,6 +22,7 @@ use Riomigal\Languages\Livewire\Login;
 use Riomigal\Languages\Livewire\Settings;
 use Riomigal\Languages\Livewire\Translations;
 use Riomigal\Languages\Livewire\Translators;
+use Riomigal\Languages\Middleware\AuthApi;
 use Riomigal\Languages\Middleware\AuthTranslator;
 use Riomigal\Languages\Models\Translator;
 use Riomigal\Languages\Services\OpenAITranslationService;
@@ -36,8 +38,8 @@ class LanguagesServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        if(Schema::hasTable(config('languages.table_settings'))) {
-            $this->settings = DB::table(config('languages.table_settings'))->first();
+        if(Schema::connection(config('languages.db_connection'))->hasTable(config('languages.table_settings'))) {
+            $this->settings = DB::connection(config('languages.db_connection'))->table(config('languages.table_settings'))->first();
         }
         $this->publishes([
             __DIR__ . '/../config/languages.php' => config_path('languages.php'),
@@ -111,6 +113,7 @@ class LanguagesServiceProvider extends ServiceProvider
     {
         $translatorGuard = config('languages.translator_guard');
         app('router')->aliasMiddleware(config('languages.auth_guard'), AuthTranslator::class);
+        app('router')->aliasMiddleware('laravel-languages-auth-api', AuthApi::class);
         app('router')->pushMiddlewareToGroup($translatorGuard, \Illuminate\Cookie\Middleware\EncryptCookies::class);
         app('router')->pushMiddlewareToGroup($translatorGuard, \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class);
         app('router')->pushMiddlewareToGroup($translatorGuard, \Illuminate\Session\Middleware\StartSession::class);
@@ -153,12 +156,7 @@ class LanguagesServiceProvider extends ServiceProvider
     protected function loadRoutes(): void
     {
         $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
-//        if(config('languages.api.enabled')) {
-//            $this->loadRoutesFrom(__DIR__ . '/../routes/api.php');
-//            Route::middleware(config('languages.api.middleware'))
-//                ->prefix(config('languages.api.prefix'))
-//                ->group(__DIR__ . '/../routes/api.php');
-//        }
+        $this->loadRoutesFrom(__DIR__ . '/../routes/api.php');
     }
 
     /**
@@ -205,7 +203,12 @@ class LanguagesServiceProvider extends ServiceProvider
                 ImportTranslations::class,
                 FindMissingTranslations::class,
                 ExportTranslations::class,
-                SendAutomaticPendingNotifications::class
+                SendAutomaticPendingNotifications::class,
+                DeveloperDownloadToLocalCommand::class
+            ]);
+        } else {
+            $this->commands([
+                ExportTranslations::class,
             ]);
         }
     }

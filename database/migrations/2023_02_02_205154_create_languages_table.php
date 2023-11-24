@@ -14,13 +14,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create(config('languages.table_languages'), function (Blueprint $table) {
-            $table->bigIncrements('id');
-            $table->string('name');
-            $table->string('native_name');
-            $table->string('code')->unique();
-            $table->timestamps();
-        });
+        if(!Schema::connection(config('languages.db_connection'))->hasTable(config('languages.table_languages'))) {
+            Schema::connection(config('languages.db_connection'))->create(config('languages.table_languages'), function (Blueprint $table) {
+                $table->bigIncrements('id');
+                $table->string('name');
+                $table->string('native_name');
+                $table->string('code')->unique();
+                $table->timestamps();
+            });
+        }
     }
 
     /**
@@ -30,6 +32,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists(config('languages.table_languages'));
+        if(Schema::connection(config('languages.db_connection'))->hasTable(config('languages.table_languages'))) {
+            Schema::connection(config('languages.db_connection'))->dropIfExists(config('languages.table_languages'));
+        }
     }
 };

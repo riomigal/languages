@@ -2,6 +2,7 @@
 
 namespace Riomigal\Languages\Livewire;
 
+use Illuminate\Bus\DatabaseBatchRepository;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;

@@ -3,7 +3,9 @@
 return [
     'button' => [
         'export_all_translations' => 'Export All Languages',
+        'export_all_translations_models' => 'Export All Translated Models',
         'export_translation' => 'Export Language',
+        'export_translation_models' => 'Export Translated Models',
         'approve_all' => 'Approve ALL Translations'
     ],
     'title' => 'Translations :language (:code)',
@@ -38,7 +40,10 @@ return [
         'approved' => 'Approved',
         'updated_translation' => 'Updated',
         'is_vendor' => 'Is Vendor',
+        'exported' => 'Exported',
         'type' => 'Type',
+        'updated_by' => 'Updated by',
+        'approved_by' => 'Approved by',
         'type_selection' => [
             'php' => 'PHP',
             'json' => 'JSON',
@@ -55,5 +60,8 @@ return [
     'no_translation_example' => 'ATTENTION: This is not an example. There is no translation for this key!',
     'export_language_success' => 'Export finished. Languages exported: :language - Total Exports: :total',
     'export_languages_success' => 'Export finished. Languages exported: :languages - Total Exports: :total',
+    'export_on_other_host_success' => 'Export on :host finished.',
+    'export_on_other_host_started' => 'Export on :host started.',
+    'export_on_other_host_start_failed' => 'Export on :host couldn\'t start, something went wrong.',
     'nothing_exported' => 'Nothing exported.',
 ];

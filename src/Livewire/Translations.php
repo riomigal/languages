@@ -6,7 +6,7 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Contracts\View\View;
 use Riomigal\Languages\Jobs\Batch\BatchProcessor;
 use Riomigal\Languages\Jobs\ExportTranslationJob;
-use Riomigal\Languages\Livewire\Traits\HasBatchProcess;
+use Riomigal\Languages\Livewire\Traits\ChecksForRunningJobs;
 use Riomigal\Languages\Models\Language;
 use Riomigal\Languages\Models\Translation;
 use Riomigal\Languages\Models\Translator;
@@ -16,7 +16,7 @@ use Riomigal\Languages\Services\OpenAITranslationService;
 
 class Translations extends AuthComponent
 {
-    use HasBatchProcess;
+    use ChecksForRunningJobs;
 
     /**
      * @var Language
@@ -32,6 +32,11 @@ class Translations extends AuthComponent
      * @var Translation|null
      */
     public Translation|null $translationExample = null;
+
+    /**
+     * @var array
+     */
+    public array $translators = [];
 
     /**
      * @var int
@@ -66,7 +71,7 @@ class Translations extends AuthComponent
     /**
      * @var string[]
      */
-    protected $queryString = ['search', 'page', 'needs_translation', 'approved', 'updated_translation', 'types'];
+    protected $queryString = ['search', 'page', 'needs_translation', 'approved', 'updated_translation', 'types', 'exported'];
 
 
     /**
@@ -90,9 +95,24 @@ class Translations extends AuthComponent
     public bool|null $is_vendor = null;
 
     /**
+     * @var bool|null
+     */
+    public bool|null $exported = null;
+
+    /**
      * @var array
      */
     public array $types = [];
+
+    /**
+     * @var array
+     */
+    public array $updatedBy = [];
+
+    /**
+     * @var array
+     */
+    public array $approvedBy = [];
 
     /**
      * @param Language $language
@@ -112,6 +132,7 @@ class Translations extends AuthComponent
         $this->translateLanguageFallbackExampleId = Language::query()->where('code', config('app.fallback_locale'))->firstOrFail()->id;
         $this->translateLanguageExampleId = $this->translateLanguageFallbackExampleId;
         $this->languages = Language::query()->get()->toArray();
+        $this->translators = Translator::pluck('email', 'id')->toArray();
     }
 
     /**
@@ -150,6 +171,18 @@ class Translations extends AuthComponent
             })->when(!empty($this->types), function ($query) {
                 $query->where(function ($query) {
                     $query->type($this->types);
+                });
+            })->when($this->exported !== null, function ($query) {
+                $query->where(function ($query) {
+                    $query->exported($this->exported);
+                });
+            })->when(!empty($this->updatedBy), function ($query) {
+                $query->where(function ($query) {
+                    $query->updatedBy($this->updatedBy);
+                });
+            })->when(!empty($this->approvedBy), function ($query) {
+                $query->where(function ($query) {
+                    $query->approvedBy($this->approvedBy);
                 });
             })
             ->paginate(20);
@@ -202,7 +235,7 @@ class Translations extends AuthComponent
      */
     public function restoreRequestTranslation(int $id): void
     {
-        Translation::findOrFail($id)->update(['needs_translation' => false]);
+        Translation::findOrFail($id)->update(['needs_translation' => false, 'approved' => true]);
     }
 
     /**
@@ -211,7 +244,7 @@ class Translations extends AuthComponent
      */
     public function requestTranslation(int $id): void
     {
-        Translation::findOrFail($id)->update(['needs_translation' => true]);
+        Translation::findOrFail($id)->update(['needs_translation' => true,'approved' => false]);
     }
 
     /**
@@ -253,15 +286,8 @@ class Translations extends AuthComponent
     public function approveTranslation(int $id): void
     {
         $translation =  Translation::findOrFail($id);
-        $translation->approved = true;
-        $translation->updated_translation = false;
-        $translation->old_value = null;
-        $translation->approved_by = $this->authUser->id;
-        $translation->previous_updated_by = null;
-        $translation->previous_approved_by = null;
-        $translation->save();
-        Translation::unsetCachedTranslation($translation->language_code, $translation->group ?? null, $translation->namespace ?? null);
-        Translation::getCachedTranslations($translation->language_code, $translation->group ?? null, $translation->namespace ?? null);
+        $translation->update($this->approvedTranslationUpdateArray());
+        $this->resetTranslationCache($translation);
     }
 
     /**
@@ -270,9 +296,31 @@ class Translations extends AuthComponent
     public function approveAllTranslations(): void
     {
         $this->language->translations()->where('approved', false)
-            ->each(function(Translation $translation) {
-                $this->approveTranslation($translation->id);
+            ->chunkById(200, function($translations) {
+                Translation::query()->whereIn('id', $translations->pluck('id')->all())->update($this->approvedTranslationUpdateArray());
+                foreach ($translations as $translation) {
+                    $this->resetTranslationCache($translation);
+                }
             });
+    }
+
+    protected function approvedTranslationUpdateArray(): array
+    {
+        return [
+            'approved' => true,
+            'updated_translation' => false,
+            'needs_translation' => false,
+            'old_value' => null,
+            'approved_by' => $this->authUser->id,
+            'previous_updated_by' => null,
+            'previous_approved_by' => null,
+        ];
+    }
+
+    protected function resetTranslationCache(Translation $translation): void
+    {
+        Translation::unsetCachedTranslation($translation->language_code, $translation->group ?? null, $translation->namespace ?? null);
+        Translation::getCachedTranslations($translation->language_code, $translation->group ?? null, $translation->namespace ?? null);
     }
 
     /**
@@ -297,71 +345,79 @@ class Translations extends AuthComponent
     }
 
     /**
-     * @param ExportTranslationService $exportTranslationService
-     * @param BatchProcessor $batchProcessor
+     * @param bool $exportOnlyModels
      * @return void
      */
-    public function exportTranslationsForLanguage(ExportTranslationService $exportTranslationService, BatchProcessor $batchProcessor): void
+    public function exportTranslationsForLanguage(bool $exportOnlyModels = false): void
     {
         if ($this->anotherJobIsRunning()) return;
 
         $updatedTranslationsTotal = $this->language->translations()
             ->isUpdated(false)->exported(false)
+            ->when($exportOnlyModels, function($query) {
+                $query->type('model');
+            })
             ->approved()->count();
 
         if ($updatedTranslationsTotal) {
             $batchArray = [
-                new ExportTranslationJob($exportTranslationService, $this->language)
+                new ExportTranslationJob($this->language, $exportOnlyModels)
             ];
 
             $total = Translation::query()->where('language_id', $this->language->id)
                 ->isUpdated(false)->exported(false)
+                ->when($exportOnlyModels, function($query) {
+                    $query->type('model');
+                })
                 ->approved()
                 ->count();
             $language = $this->language;
             $finally = function () use (&$total, &$language) {
-                Translator::query()->admin()->each(function (Translator $translator) use ($total, $language) {
-                    $translator->notify(new FlashMessage($total ? __('languages::translations.export_language_success', ['language' => $language->name, 'total' => $total]) . __('languages::global.reload_suggestion') : __('languages::translations.nothing_exported')));
-                });
+                Translator::notifyAdminExportedTranslationsPerLanguage($total, $language);
+                resolve(ExportTranslationService::class)->exportTranslationsOnOtherHosts();
             };
 
-            $this->emit('startBatchProgress', $batchProcessor->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
+            $this->emit('startBatchProgress', resolve(BatchProcessor::class)->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
         } else {
             $this->authUser->notify(new FlashMessage(__('languages::translations.nothing_exported')));
         }
     }
 
     /**
-     * @param ExportTranslationService $exportTranslationService
-     * @param BatchProcessor $batchProcessor
+     * @param bool $exportOnlyModels
      * @return void
      */
-    public function exportTranslationsForAllLanguages(ExportTranslationService $exportTranslationService, BatchProcessor $batchProcessor): void
+    public function exportTranslationsForAllLanguages(bool $exportOnlyModels = false): void
     {
         if ($this->anotherJobIsRunning()) return;
 
         $languages = Language::find(Translation::query()
             ->isUpdated(false)->exported(false)
+            ->when($exportOnlyModels, function($query) {
+                $query->type('model');
+            })
             ->approved()->distinct()->pluck('language_id')->toArray());
 
         if ($languages->count() > 0) {
 
             $batchArray = [];
-            $languages->each(function (Language $language) use (&$batchArray, $exportTranslationService) {
-                $batchArray[] = new ExportTranslationJob($exportTranslationService, $language);
+            $languages->each(function (Language $language) use (&$batchArray) {
+                $batchArray[] = new ExportTranslationJob($language);
             });
 
             $total = Translation::query()
                 ->isUpdated(false)->exported(false)
+                ->when($exportOnlyModels, function($query) {
+                    $query->type('model');
+                })
                 ->approved()
                 ->count();
 
             $finally = function () use (&$total, &$languages) {
-                Translator::query()->admin()->each(function (Translator $translator) use ($total, $languages) {
-                    $translator->notify(new FlashMessage($total ? __('languages::translations.export_languages_success', ['languages' => implode(', ', $languages->pluck('name')->all()), 'total' => $total]) . __('languages::global.reload_suggestion') : __('languages::translations.nothing_exported')));
-                });
+               Translator::notifyAdminExportedTranslationsAllLanguages($total, $languages);
+               resolve(ExportTranslationService::class)->exportTranslationsOnOtherHosts();
             };
-            $this->emit('startBatchProgress', $batchProcessor->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
+            $this->emit('startBatchProgress', resolve(BatchProcessor::class)->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
 
         } else {
             $this->authUser->notify(new FlashMessage(__('languages::translations.nothing_exported')));

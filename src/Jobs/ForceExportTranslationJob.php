@@ -6,7 +6,7 @@ use Riomigal\Languages\Jobs\Job\BaseJob;
 use Riomigal\Languages\Models\Language;
 use Riomigal\Languages\Services\ExportTranslationService;
 
-class ExportTranslationJob extends BaseJob
+class ForceExportTranslationJob extends BaseJob
 {
     public function __construct(
         protected Language                 $language,
@@ -22,7 +22,7 @@ class ExportTranslationJob extends BaseJob
      */
     public function handle(): void
     {
-        resolve(ExportTranslationService::class)->exportTranslationForLanguage($this->language, $this->batch(), $this->exportOnlyModels);
+        resolve(ExportTranslationService::class)->forceExportTranslationForLanguage($this->language, $this->batch(), $this->exportOnlyModels);
     }
 
 }

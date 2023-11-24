@@ -5,7 +5,6 @@ namespace Riomigal\Languages\Models;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Cache;
 
 /**
@@ -42,6 +41,7 @@ class Translation extends Model
     public function __construct(array $attributes = [])
     {
         $this->table = config('languages.table_translations');
+        $this->connection = config('languages.db_connection');
         parent::__construct($attributes);
     }
 
@@ -125,6 +125,35 @@ class Translation extends Model
 
     /**
      * @param Builder $query
+     * @param array|string $value
+     * @return Builder
+     */
+    public function scopeUpdatedBy(Builder $query, array|string $value): Builder
+    {
+        if(is_array($value)) {
+            return $query->whereIn('updated_by', $value);
+        } else {
+            return $query->where('updated_by', $value);
+        }
+    }
+
+
+    /**
+     * @param Builder $query
+     * @param array|string $value
+     * @return Builder
+     */
+    public function scopeApprovedBy(Builder $query, array|string $value): Builder
+    {
+        if(is_array($value)) {
+            return $query->whereIn('approved_by', $value);
+        } else {
+            return $query->where('approved_by', $value);
+        }
+    }
+
+    /**
+     * @param Builder $query
      * @param bool $value
      * @return Builder
      */
@@ -192,5 +221,4 @@ class Translation extends Model
     {
         return $this->updatedBy ? $this->updatedBy->first_name . ' ' . $this->updatedBy->last_name : '';
     }
-
 }

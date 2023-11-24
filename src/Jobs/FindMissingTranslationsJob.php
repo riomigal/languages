@@ -7,17 +7,11 @@ use Riomigal\Languages\Services\MissingTranslationService;
 
 class FindMissingTranslationsJob extends BaseJob
 {
-    public function __construct(
-        protected MissingTranslationService $missingTranslationsService,
-    )
-    {
-    }
-
     /**
      * @return void
      */
     public function handle(): void
     {
-        $this->missingTranslationsService->findMissingTranslations($this->batch());
+        resolve(MissingTranslationService::class)->findMissingTranslations($this->batch());
     }
 }

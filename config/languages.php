@@ -7,6 +7,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Handles Decentralised DB
+    |--------------------------------------------------------------------------
+    |
+    | LANGUAGES_DB_CONNECTION: DB Connection set a custom connection in your config/database.php
+    | LANGUAGES_API_SHARED_SECRET: Add the same shared key env on each server
+    | LANGUAGES_MULTIPLE_DB_HOSTS: Add a comma separated list of domains where running the app
+    */
+
+    'db_connection' => env('LANGUAGES_DB_CONNECTION', config('database.default')),
+
+    'api_shared_api_key' => env('LANGUAGES_API_SHARED_SECRET', 'eq9TDNfrGX66o=(3qy{;Em)J&@i(Nk'),
+
+    'multiple_db_hosts' => env('LANGUAGES_MULTIPLE_DB_HOSTS', ''),
+
+    /*
+    |--------------------------------------------------------------------------
     | Route
     |--------------------------------------------------------------------------
     |

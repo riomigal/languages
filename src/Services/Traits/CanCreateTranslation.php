@@ -84,7 +84,7 @@ trait CanCreateTranslation
     protected function massCreateTranslations(array $content, string $sharedRelativePathname, string $type, int $languageId, string $languageCode, string $namespace, string $group, bool $isVendor): void
     {
         try {
-            DB::beginTransaction();
+            DB::connection(config('languages.db_connection'))->beginTransaction();
             $translationsArray = [];
             if($type == 'model') {
                 $namespace = $group;
@@ -101,10 +101,10 @@ trait CanCreateTranslation
             if (count($translationsArray) > 0) {
                 $this->massInsertTranslations($translationsArray);
             }
-            DB::commit();
+            DB::connection(config('languages.db_connection'))->commit();
             Translation::unsetCachedTranslation($languageCode, $group ?? null, $namespace ?? null);
         } catch (\Exception|MassCreateTranslationsException $e) {
-            DB::rollBack();
+            DB::connection(config('languages.db_connection'))->rollBack();
             if ($e::class == MassCreateTranslationsException::class) {
                 throw $e;
             } else {
@@ -130,7 +130,7 @@ trait CanCreateTranslation
     protected function massCreateEloquentTranslations(array $translations, int $languageId, string $languageCode, string $fromLanguageCode): void
     {
         try {
-            DB::beginTransaction();
+            DB::connection(config('languages.db_connection'))->beginTransaction();
             $translationsArray = [];
             foreach ($translations as $translation) {
 //                try {
@@ -195,9 +195,9 @@ trait CanCreateTranslation
             }
 
             $this->massInsertTranslations($translationsArray);
-            DB::commit();
+            DB::connection(config('languages.db_connection'))->commit();
         } catch (\Exception|MassCreateTranslationsException $e) {
-            DB::rollBack();
+            DB::connection(config('languages.db_connection'))->rollBack();
             if ($e::class == MassCreateTranslationsException::class) {
                 throw $e;
             } else {
