@@ -4,6 +4,7 @@ namespace Riomigal\Languages\Console\Commands;
 
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 use Riomigal\Languages\Livewire\Traits\ChecksForRunningJobs;
 use Riomigal\Languages\Models\Language;
 use Riomigal\Languages\Models\Setting;
@@ -47,7 +48,9 @@ class ExportTranslations extends Command
                     ->approved()
                     ->count();
                 $this->info('Exporting translations...');
-                $exportTranslationService->exportAllTranslations(Language::all());
+                Language::query()->each(function (Language $language) use ($exportTranslationService) {
+                    $exportTranslationService->exportTranslationForLanguage($language, null, (bool)Setting::getCached()->db_loader);
+                });
                 Translator::notifyAdminExportedTranslationsAllLanguages($total, $languages);
                 $total -= Translation::query()
                     ->isUpdated(false)->exported(false)

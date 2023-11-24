@@ -18,10 +18,11 @@ trait CanExportTranslation
      * @param bool $isVendor
      * @param string $namespace
      * @param string $group
+     * @param bool $forceExportAll
      * @return void
-     * @throws ExportTranslationException
+     * @throws ExportFileException
      */
-    protected function updateTranslation(string $type, string $languageCode, bool $isVendor, string $namespace = '', string $group = ''): void
+    protected function updateTranslation(string $type, string $languageCode, bool $isVendor, string $namespace = '', string $group = '', bool $forceExportAll = false): void
     {
         try {
             $query = Translation::where([
@@ -33,7 +34,9 @@ trait CanExportTranslation
             ])
                 ->isUpdated(false)
                 ->approved()
-                ->exported(false);
+                ->when(!$forceExportAll, function($query) {
+                    $query->exported(false);
+                });
 
             $translations = $query
                 ->pluck('value', 'key')->all();

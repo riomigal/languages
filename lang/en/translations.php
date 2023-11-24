@@ -3,7 +3,9 @@
 return [
     'button' => [
         'export_all_translations' => 'Export All Languages',
+        'export_all_translations_models' => 'Export All Translated Models',
         'export_translation' => 'Export Language',
+        'export_translation_models' => 'Export Translated Models',
         'approve_all' => 'Approve ALL Translations'
     ],
     'title' => 'Translations :language (:code)',

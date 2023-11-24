@@ -8,7 +8,9 @@ use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Riomigal\Languages\Models\Language;
+use Riomigal\Languages\Models\Setting;
 use Riomigal\Languages\Models\Translation;
+use Riomigal\Languages\Services\ExportTranslationService;
 
 class DeveloperDownloadToLocalCommand extends Command
 {
@@ -69,6 +71,10 @@ class DeveloperDownloadToLocalCommand extends Command
             $DB->statement('SET FOREIGN_KEY_CHECKS=1;');
             throw $e;
         }
+        $exportTranslationService = resolve(ExportTranslationService::class);
+        Language::query()->each(function (Language $language) use ($exportTranslationService) {
+            $exportTranslationService->forceExportTranslationForLanguage($language, null, (bool) Setting::getCached()->db_loader);
+        });
     }
 
     protected function sendGetPaginatedTranslationsRequest(array $params = []): Response

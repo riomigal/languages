@@ -10,6 +10,7 @@ class ExportTranslationJob extends BaseJob
 {
     public function __construct(
         protected Language                 $language,
+        protected bool $exportOnlyModels = false
     )
     {
         parent::__construct();
@@ -21,7 +22,7 @@ class ExportTranslationJob extends BaseJob
      */
     public function handle(): void
     {
-        resolve(ExportTranslationService::class)->exportTranslationForLanguage($this->language, $this->batch());
+        resolve(ExportTranslationService::class)->exportTranslationForLanguage($this->language, $this->batch(), $this->exportOnlyModels);
     }
 
 }

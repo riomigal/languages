@@ -14,7 +14,8 @@ class ExportUpdatedTranslation extends BaseJob
         protected string $languageCode,
         protected bool $isVendor,
         protected string $namespace = '',
-        protected string $group = ''
+        protected string $group = '',
+        protected bool $forceExportAll = false
     )
     {
         parent::__construct();
@@ -26,7 +27,7 @@ class ExportUpdatedTranslation extends BaseJob
      */
     public function handle(): void
     {
-        $this->updateTranslation($this->type, $this->languageCode, $this->isVendor, $this->namespace, $this->group);
+        $this->updateTranslation($this->type, $this->languageCode, $this->isVendor, $this->namespace, $this->group, $this->forceExportAll);
     }
 
 }

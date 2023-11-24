@@ -23,29 +23,49 @@
             @if($isAdministrator)
 
                 @if(!Setting::getCached()->db_loader)
-                @include('languages::component.button',
-                  [
-                  'clickEvent' => 'exportTranslationsForLanguage',
-                 'text' => __('languages::translations.button.export_translation')
-                  ]
-                )
-                @endif
-
-                @include('languages::component.button',
+                    @include('languages::component.button',
                       [
-                      'clickEvent' => 'approveAllTranslations',
-                       'text' => __('languages::translations.button.approve_all')
+                        'clickEvent' => 'exportTranslationsForLanguage',
+                        'text' => __('languages::translations.button.export_translation'),
+                        'showLoader' => '1'
                       ]
-                  )
-
-                  @if(!Setting::getCached()->db_loader)
-                        @include('languages::component.button',
-                          [
-                          'clickEvent' => 'exportTranslationsForAllLanguages',
-                         'text' => __('languages::translations.button.export_all_translations')
-                          ]
-                           )
+                    )
+                @else
+                    @include('languages::component.button',
+                      [
+                        'clickEvent' => 'exportTranslationsForLanguage("1")',
+                        'text' => __('languages::translations.button.export_translation_models'),
+                        'showLoader' => '1'
+                      ]
+                    )
                 @endif
+
+
+               @if(!Setting::getCached()->db_loader)
+                    @include('languages::component.button',
+                      [
+                      'clickEvent' => 'exportTranslationsForAllLanguages',
+                       'text' => __('languages::translations.button.export_all_translations'),
+                       'showLoader' => '1'
+                      ]
+                    )
+                @else
+                    @include('languages::component.button',
+                      [
+                        'clickEvent' => 'exportTranslationsForAllLanguages("1")',
+                        'text' => __('languages::translations.button.export_all_translations_models'),
+                        'showLoader' => '1'
+                      ]
+                    )
+                @endif
+
+                @include('languages::component.button',
+                    [
+                     'clickEvent' => 'approveAllTranslations',
+                     'text' => __('languages::translations.button.approve_all'),
+                     'showLoader' => '1'
+                    ]
+                 )
             @endif
 
             @include('languages::component.select-checkbox-multiple',

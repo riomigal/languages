@@ -27,36 +27,43 @@ class ExportTranslationService
      */
     protected string $tempLangFolder = 'temp-language-dir';
 
+    /**
+     * @var bool
+     */
+    protected bool $forceExportAll = false;
+
 
     /**
-     * Exports all languages
-     *
-     * @param $languages
-     * @param null|Batch $batch
+     * @param Language $language
+     * @param Batch|null $batch
+     * @param bool $exportOnlyModels
      * @return void
      * @throws ExportTranslationException
      */
-    public function exportAllTranslations($languages, null|Batch $batch = null): void
+    public function forceExportTranslationForLanguage(Language $language, null|Batch $batch = null, bool $exportOnlyModels = false): void
     {
-        $this->batch = $batch;
-        $languages->each(function ($language) {
-            $this->exportTranslationForLanguage($language, $this->batch);
-        });
-
+        $this->forceExportAll = true;
+        $this->exportTranslationForLanguage($language, $batch, $exportOnlyModels);
     }
 
+
     /**
-     * Exports a single language
-     *
      * @param Language $language
-     * @param null|Batch $batch
+     * @param Batch|null $batch
+     * @param bool $exportOnlyModels
      * @return void
      * @throws ExportTranslationException
      */
-    public function exportTranslationForLanguage(Language $language, null|Batch $batch = null): void
+    public function exportTranslationForLanguage(Language $language, null|Batch $batch = null, bool $exportOnlyModels = false): void
     {
-        $this->exportFileTranslationForLanguage($language, $batch);
-        $this->exportModelTranslationForLanguage($language, $batch);
+        try {
+            if (!$exportOnlyModels) {
+                $this->exportFileTranslationForLanguage($language, $batch);
+            }
+            $this->exportModelTranslationForLanguage($language, $batch);
+        } catch(\Exception $e) {
+            throw new ExportTranslationException($e->getMessage(), __('languages::exceptions.export_language_error', ['language' => $language->native_name]), 0);
+        }
 
     }
 
@@ -82,15 +89,17 @@ class ExportTranslationService
                 ->where('type', '!=', 'model')
                 ->isUpdated(false)
                 ->approved()
-                ->exported(false)
+                ->when(!$this->forceExportAll, function($query) {
+                    $query->exported(false);
+                })
                 ->groupBy('namespace', 'group', 'is_vendor', 'type')
                 ->orderBy('group')
                 ->chunk(200, function ($translations) use ($language) {
                     foreach ($translations as $translation) {
                         if ($this->batch) {
-                            $this->batch->add([new ExportUpdatedTranslation($translation->type, $language->code, $translation->is_vendor, $translation->namespace, $translation->group)]);
+                            $this->batch->add([new ExportUpdatedTranslation($translation->type, $language->code, $translation->is_vendor, $translation->namespace, $translation->group, $this->forceExportAll)]);
                         } else {
-                            $this->updateTranslation($translation->type, $language->code, $translation->is_vendor, $translation->namespace, $translation->group);
+                            $this->updateTranslation($translation->type, $language->code, $translation->is_vendor, $translation->namespace, $translation->group, $this->forceExportAll);
                         }
                     }
                 });
@@ -98,7 +107,7 @@ class ExportTranslationService
             File::deleteDirectory($languageDirectory);
             File::copyDirectory($tempLangDirectory, $languageDirectory);
             File::deleteDirectory($tempDirectory);
-            throw new ExportTranslationException($e->getMessage(), __('languages::exceptions.export_language_error', ['language' => $language->native_name]), 0);
+            throw $e;
         }
         File::deleteDirectory($tempDirectory);
     }
@@ -136,7 +145,7 @@ class ExportTranslationService
             DB::commit();
         } catch(\Exception $e) {
             DB::rollBack();
-            throw new ExportTranslationException($e->getMessage(), __('languages::exceptions.export_language_error', ['language' => $language->native_name]), 0);
+            throw $e;
         }
     }
 }

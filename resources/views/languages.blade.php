@@ -22,13 +22,15 @@
             @include('languages::component.button',
                    [
                    'clickEvent' => 'create',
-                   'text' => __('languages::languages.form.button.add')
+                   'text' => __('languages::languages.form.button.add'),
+                    'showLoader' => '1'
                    ]
                )
             @include('languages::component.button',
                [
                'clickEvent' => 'closeForm',
-               'text' => __('languages::languages.form.button.close')
+               'text' => __('languages::languages.form.button.close'),
+                'showLoader' => '1'
                ]
            )
         </form>
@@ -42,27 +44,31 @@
                 @include('languages::component.button',
                    [
                    'clickEvent' => 'importLanguages',
-                  'text' => __('languages::languages.button.import_languages')
+                  'text' => __('languages::languages.button.import_languages'),
+                       'showLoader' => '1'
                    ]
                )
                 @if($data->items())
                     @include('languages::component.button',
                    [
                    'clickEvent' => 'importTranslations',
-                  'text' => __('languages::languages.button.import_translations')
+                  'text' => __('languages::languages.button.import_translations'),
+                       'showLoader' => '1'
                    ]
                )
                     @include('languages::component.button',
                        [
                        'clickEvent' => 'showForm',
-                       'text' => __('languages::languages.button.add_language')
+                       'text' => __('languages::languages.button.add_language'),
+                       'showLoader' => '1'
                        ]
                    )
                     @endif
                     @include('languages::component.button',
                        [
                        'clickEvent' => 'findMissingTranslations',
-                      'text' => __('languages::languages.button.find_missing_translations') .  ( \Riomigal\Languages\Models\Setting::getCached()->enable_open_ai_translations ? ' ' . __('languages::languages.button.chat_gpt_enabled') : '')
+                      'text' => __('languages::languages.button.find_missing_translations') .  ( \Riomigal\Languages\Models\Setting::getCached()->enable_open_ai_translations ? ' ' . __('languages::languages.button.chat_gpt_enabled') : ''),
+                       'showLoader' => '1'
                        ]
                    )
                 <button type="button"
