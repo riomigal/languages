@@ -127,6 +127,35 @@ class Translation extends Model
 
     /**
      * @param Builder $query
+     * @param array|string $value
+     * @return Builder
+     */
+    public function scopeUpdatedBy(Builder $query, array|string $value): Builder
+    {
+        if(is_array($value)) {
+            return $query->whereIn('updated_by', $value);
+        } else {
+            return $query->where('updated_by', $value);
+        }
+    }
+
+
+    /**
+     * @param Builder $query
+     * @param array|string $value
+     * @return Builder
+     */
+    public function scopeApprovedBy(Builder $query, array|string $value): Builder
+    {
+        if(is_array($value)) {
+            return $query->whereIn('approved_by', $value);
+        } else {
+            return $query->where('approved_by', $value);
+        }
+    }
+
+    /**
+     * @param Builder $query
      * @param bool $value
      * @return Builder
      */

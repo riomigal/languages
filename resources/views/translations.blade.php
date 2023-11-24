@@ -80,6 +80,21 @@
                        ]
                   ])
 
+            @include('languages::component.select-checkbox-multiple',
+               [
+                   'id' => 'translations_select_updated_by',
+                   'text' =>__('languages::translations.filter.updated_by'),
+                   'model' => 'updatedBy',
+                   'data' => $this->translators
+                  ])
+            @include('languages::component.select-checkbox-multiple',
+               [
+                   'id' => 'translations_select_updated_by',
+                   'text' =>__('languages::translations.filter.approved_by'),
+                   'model' => 'approvedBy',
+                   'data' => $this->translators
+                  ])
+
             @include('languages::component.select-checkbox-three-states',
              [
                  'id' => 'translations_filters_checkbox',
@@ -89,6 +104,7 @@
                      'approved' => __('languages::translations.filter.approved'),
                      'updated_translation' => __('languages::translations.filter.updated_translation'),
                      'is_vendor' => __('languages::translations.filter.is_vendor'),
+                     'exported' => __('languages::translations.filter.exported'),
                     ]
                 ])
         </div>

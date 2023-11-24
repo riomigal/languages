@@ -34,6 +34,11 @@ class Translations extends AuthComponent
     public Translation|null $translationExample = null;
 
     /**
+     * @var array
+     */
+    public array $translators = [];
+
+    /**
      * @var int
      */
     public int $currentLanguageId;
@@ -66,7 +71,7 @@ class Translations extends AuthComponent
     /**
      * @var string[]
      */
-    protected $queryString = ['search', 'page', 'needs_translation', 'approved', 'updated_translation', 'types'];
+    protected $queryString = ['search', 'page', 'needs_translation', 'approved', 'updated_translation', 'types', 'exported'];
 
 
     /**
@@ -90,9 +95,24 @@ class Translations extends AuthComponent
     public bool|null $is_vendor = null;
 
     /**
+     * @var bool|null
+     */
+    public bool|null $exported = null;
+
+    /**
      * @var array
      */
     public array $types = [];
+
+    /**
+     * @var array
+     */
+    public array $updatedBy = [];
+
+    /**
+     * @var array
+     */
+    public array $approvedBy = [];
 
     /**
      * @param Language $language
@@ -112,6 +132,7 @@ class Translations extends AuthComponent
         $this->translateLanguageFallbackExampleId = Language::query()->where('code', config('app.fallback_locale'))->firstOrFail()->id;
         $this->translateLanguageExampleId = $this->translateLanguageFallbackExampleId;
         $this->languages = Language::query()->get()->toArray();
+        $this->translators = Translator::pluck('email', 'id')->toArray();
     }
 
     /**
@@ -150,6 +171,18 @@ class Translations extends AuthComponent
             })->when(!empty($this->types), function ($query) {
                 $query->where(function ($query) {
                     $query->type($this->types);
+                });
+            })->when($this->exported !== null, function ($query) {
+                $query->where(function ($query) {
+                    $query->exported($this->exported);
+                });
+            })->when(!empty($this->updatedBy), function ($query) {
+                $query->where(function ($query) {
+                    $query->updatedBy($this->updatedBy);
+                });
+            })->when(!empty($this->approvedBy), function ($query) {
+                $query->where(function ($query) {
+                    $query->approvedBy($this->approvedBy);
                 });
             })
             ->paginate(20);

@@ -40,7 +40,10 @@ return [
         'approved' => 'Approved',
         'updated_translation' => 'Updated',
         'is_vendor' => 'Is Vendor',
+        'exported' => 'Exported',
         'type' => 'Type',
+        'updated_by' => 'Updated by',
+        'approved_by' => 'Approved by',
         'type_selection' => [
             'php' => 'PHP',
             'json' => 'JSON',
