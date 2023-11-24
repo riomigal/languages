@@ -60,5 +60,8 @@ return [
     'no_translation_example' => 'ATTENTION: This is not an example. There is no translation for this key!',
     'export_language_success' => 'Export finished. Languages exported: :language - Total Exports: :total',
     'export_languages_success' => 'Export finished. Languages exported: :languages - Total Exports: :total',
+    'export_on_other_host_success' => 'Export on :host finished.',
+    'export_on_other_host_started' => 'Export on :host started.',
+    'export_on_other_host_start_failed' => 'Export on :host couldn\'t start, something went wrong.',
     'nothing_exported' => 'Nothing exported.',
 ];

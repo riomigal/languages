@@ -5,9 +5,7 @@ namespace Riomigal\Languages\Models;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Cache;
-use Riomigal\Languages\Notifications\FlashMessage;
 
 /**
  * @mixin Builder

@@ -206,6 +206,10 @@ class LanguagesServiceProvider extends ServiceProvider
                 SendAutomaticPendingNotifications::class,
                 DeveloperDownloadToLocalCommand::class
             ]);
+        } else {
+            $this->commands([
+                ExportTranslations::class,
+            ]);
         }
     }
 }

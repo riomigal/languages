@@ -6,12 +6,17 @@ use Illuminate\Bus\Batch;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Riomigal\Languages\Exceptions\ExportTranslationException;
 use Riomigal\Languages\Jobs\ExportUpdatedModelTranslation;
 use Riomigal\Languages\Jobs\ExportUpdatedTranslation;
 use Riomigal\Languages\Models\Language;
 use Riomigal\Languages\Models\Translation;
+use Riomigal\Languages\Models\Translator;
+use Riomigal\Languages\Notifications\FlashMessage;
 use Riomigal\Languages\Services\Traits\CanExportTranslation;
+use Illuminate\Http\Client\Pool;
 
 class ExportTranslationService
 {
@@ -32,6 +37,35 @@ class ExportTranslationService
      */
     protected bool $forceExportAll = false;
 
+    public function exportTranslationsOnOtherHosts(): void
+    {
+        $hosts = explode(',', config('languages.multiple_db_hosts'));
+        if(count($hosts) < 1) return;
+
+        $hosts = array_diff($hosts, [request()->getSchemeAndHttpHost()]);
+
+        $path = route('languages.api.force-export', [], false);
+        $responses = Http::pool(function (Pool $pool) use ($hosts, $path) {
+            $poolArray = [];
+            foreach($hosts as $host) {
+                $poolArray[] = $pool->post($host . $path, ['api_key' => config('languages.api_shared_api_key')]);
+            }
+            return $poolArray;
+        });
+
+        $index = 0;
+        foreach($responses as $response) {
+            if(!$response->ok()) {
+                $message = __('languages::translations.export_on_other_host_started', ['host' => $hosts[$index]]);
+            } else {
+                $message = __('languages::translations.export_on_other_host_start_failed', ['host' => $hosts[$index]]);
+            }
+            Translator::query()->admin()->each(function (Translator $translator) use ($message) {
+                $translator->notify(new FlashMessage($message));
+            });
+            $index++;
+        }
+    }
 
     /**
      * @param Language $language
@@ -73,7 +107,7 @@ class ExportTranslationService
      * @return void
      * @throws ExportTranslationException
      */
-    public function exportFileTranslationForLanguage(Language $language, null|Batch $batch = null): void
+    protected function exportFileTranslationForLanguage(Language $language, null|Batch $batch = null): void
     {
         if ($batch) {
             $this->batch = $batch;

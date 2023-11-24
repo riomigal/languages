@@ -374,6 +374,7 @@ class Translations extends AuthComponent
             $language = $this->language;
             $finally = function () use (&$total, &$language) {
                 Translator::notifyAdminExportedTranslationsPerLanguage($total, $language);
+                resolve(ExportTranslationService::class)->exportTranslationsOnOtherHosts();
             };
 
             $this->emit('startBatchProgress', resolve(BatchProcessor::class)->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
@@ -414,6 +415,7 @@ class Translations extends AuthComponent
 
             $finally = function () use (&$total, &$languages) {
                Translator::notifyAdminExportedTranslationsAllLanguages($total, $languages);
+               resolve(ExportTranslationService::class)->exportTranslationsOnOtherHosts();
             };
             $this->emit('startBatchProgress', resolve(BatchProcessor::class)->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
 
