@@ -20,7 +20,13 @@ class ImportLanguageService
             $directories = array_map('basename', File::directories(App::langPath()));
             $directories = array_diff($directories, Language::pluck('code')->all());
             if ($directories) {
-                $languageArray = collect(Language::LANGUAGES)->whereIn('code', $directories)->toArray();
+                $languageArray = collect(Language::LANGUAGES)->whereIn('code', $directories)
+                    ->map(function($language) {
+                    $language['created_at'] = now();
+                    $language['updated_at'] = now();
+                    return $language;
+                })->toArray();
+
                 if ($languageArray) Language::insert($languageArray);
             }
         });

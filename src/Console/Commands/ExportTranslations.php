@@ -36,7 +36,7 @@ class ExportTranslations extends Command
     {
         if($this->anotherJobIsRunning(true)) return;
         try {
-            Setting::setJobsRunning(true);
+            Setting::setJobsRunning();
             $languages = Language::find(Translation::query()
                 ->isUpdated(false)->exported(false)
                 ->approved()->distinct()->pluck('language_id')->toArray());

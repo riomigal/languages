@@ -132,10 +132,10 @@ class Translator extends Authenticatable
 
     /**
      * @param int $total
-     * @param array $languages
+     * @param Collection $languages
      * @return int
      */
-    public static function notifyAdminExportedTranslationsAllLanguages(int $total, array $languages): int
+    public static function notifyAdminExportedTranslationsAllLanguages(int $total, Collection $languages): int
     {
         Translator::query()->admin()->each(function (Translator $translator) use ($total, $languages) {
             $translator->notify(new FlashMessage($total ? __('languages::translations.export_languages_success', ['languages' => implode(', ', $languages->pluck('name')->all()), 'total' => $total]) . __('languages::global.reload_suggestion') : __('languages::translations.nothing_exported')));

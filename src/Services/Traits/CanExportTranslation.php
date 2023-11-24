@@ -3,6 +3,7 @@
 namespace Riomigal\Languages\Services\Traits;
 
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Riomigal\Languages\Exceptions\ExportFileException;
@@ -102,5 +103,25 @@ trait CanExportTranslation
         }
 
         File::put($fullPath, $content);
+    }
+
+
+    protected function updateModelTranslation(Translation $translation, string $languageCode): void
+    {
+        $modelInstance = app($translation->namespace);
+        $tableId = $modelInstance->getKeyName();
+        $modelQuery = DB::table($modelInstance->getTable())->where($tableId, $translation->key);
+        $model = $modelQuery->first();
+        $column = $translation->group;
+        $data = $model->$column;
+        if (is_string($data)) $data = json_decode($data, true);
+        if (is_object($data)) $data = (array)$data;
+        $data[$languageCode] = $translation->value;
+        $modelQuery->update([
+            $column => json_encode($data)
+        ]);
+        $translation->update([
+            'exported' => true,
+        ]);
     }
 }

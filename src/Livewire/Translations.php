@@ -202,7 +202,7 @@ class Translations extends AuthComponent
      */
     public function restoreRequestTranslation(int $id): void
     {
-        Translation::findOrFail($id)->update(['needs_translation' => false]);
+        Translation::findOrFail($id)->update(['needs_translation' => false, 'approved' => true]);
     }
 
     /**
@@ -211,7 +211,7 @@ class Translations extends AuthComponent
      */
     public function requestTranslation(int $id): void
     {
-        Translation::findOrFail($id)->update(['needs_translation' => true]);
+        Translation::findOrFail($id)->update(['needs_translation' => true,'approved' => false]);
     }
 
     /**
@@ -253,15 +253,8 @@ class Translations extends AuthComponent
     public function approveTranslation(int $id): void
     {
         $translation =  Translation::findOrFail($id);
-        $translation->approved = true;
-        $translation->updated_translation = false;
-        $translation->old_value = null;
-        $translation->approved_by = $this->authUser->id;
-        $translation->previous_updated_by = null;
-        $translation->previous_approved_by = null;
-        $translation->save();
-        Translation::unsetCachedTranslation($translation->language_code, $translation->group ?? null, $translation->namespace ?? null);
-        Translation::getCachedTranslations($translation->language_code, $translation->group ?? null, $translation->namespace ?? null);
+        $translation->update($this->approvedTranslationUpdateArray());
+        $this->resetTranslationCache($translation);
     }
 
     /**
@@ -270,9 +263,31 @@ class Translations extends AuthComponent
     public function approveAllTranslations(): void
     {
         $this->language->translations()->where('approved', false)
-            ->each(function(Translation $translation) {
-                $this->approveTranslation($translation->id);
+            ->chunkById(200, function($translations) {
+                Translation::query()->whereIn('id', $translations->pluck('id')->all())->update($this->approvedTranslationUpdateArray());
+                foreach ($translations as $translation) {
+                    $this->resetTranslationCache($translation);
+                }
             });
+    }
+
+    protected function approvedTranslationUpdateArray(): array
+    {
+        return [
+            'approved' => true,
+            'updated_translation' => false,
+            'needs_translation' => false,
+            'old_value' => null,
+            'approved_by' => $this->authUser->id,
+            'previous_updated_by' => null,
+            'previous_approved_by' => null,
+        ];
+    }
+
+    protected function resetTranslationCache(Translation $translation): void
+    {
+        Translation::unsetCachedTranslation($translation->language_code, $translation->group ?? null, $translation->namespace ?? null);
+        Translation::getCachedTranslations($translation->language_code, $translation->group ?? null, $translation->namespace ?? null);
     }
 
     /**

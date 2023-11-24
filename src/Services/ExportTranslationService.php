@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Riomigal\Languages\Exceptions\ExportTranslationException;
+use Riomigal\Languages\Jobs\ExportUpdatedModelTranslation;
 use Riomigal\Languages\Jobs\ExportUpdatedTranslation;
 use Riomigal\Languages\Models\Language;
 use Riomigal\Languages\Models\Translation;
@@ -39,7 +40,7 @@ class ExportTranslationService
     {
         $this->batch = $batch;
         $languages->each(function ($language) {
-            $this->exportTranslationForLanguage($language);
+            $this->exportTranslationForLanguage($language, $this->batch);
         });
 
     }
@@ -53,6 +54,19 @@ class ExportTranslationService
      * @throws ExportTranslationException
      */
     public function exportTranslationForLanguage(Language $language, null|Batch $batch = null): void
+    {
+        $this->exportFileTranslationForLanguage($language, $batch);
+        $this->exportModelTranslationForLanguage($language, $batch);
+
+    }
+
+    /**
+     * @param Language $language
+     * @param Batch|null $batch
+     * @return void
+     * @throws ExportTranslationException
+     */
+    public function exportFileTranslationForLanguage(Language $language, null|Batch $batch = null): void
     {
         if ($batch) {
             $this->batch = $batch;
@@ -80,33 +94,6 @@ class ExportTranslationService
                         }
                     }
                 });
-
-            Translation::query()
-                ->select('id','namespace', 'group', 'key', 'value')
-                ->where('language_id', $language->id)
-                ->where('type', '=', 'model')
-                ->isUpdated(false)
-                ->approved()
-                ->exported(false)
-                ->chunkById(200, function ($translations) use ($language) {
-                    foreach ($translations as $translation) {
-                        $modelInstance = app($translation->namespace);
-                        $tableId = $modelInstance->getKeyName();
-                        $modelQuery = DB::table($modelInstance->getTable())->where($tableId, $translation->key);
-                        $model = $modelQuery->first();
-                        $column = $translation->group;
-                        $data = $model->$column;
-                        if(is_string($data)) $data = json_decode($data, true);
-                        if(is_object($data)) $data = (array) $data;
-                        $data[$language->code] = $translation->value;
-                        $modelQuery->update([
-                            $column => json_encode($data)
-                        ]);
-                        $translation->update([
-                            'exported' => true
-                        ]);
-                    }
-                });
         } catch (\Exception $e) {
             File::deleteDirectory($languageDirectory);
             File::copyDirectory($tempLangDirectory, $languageDirectory);
@@ -114,5 +101,42 @@ class ExportTranslationService
             throw new ExportTranslationException($e->getMessage(), __('languages::exceptions.export_language_error', ['language' => $language->native_name]), 0);
         }
         File::deleteDirectory($tempDirectory);
+    }
+
+
+    /**
+     * @param Language $language
+     * @param Batch|null $batch
+     * @return void
+     * @throws ExportTranslationException
+     */
+    public function exportModelTranslationForLanguage(Language $language, null|Batch $batch = null): void
+    {
+        if ($batch) {
+            $this->batch = $batch;
+        }
+        try {
+            DB::beginTransaction();
+            Translation::query()
+                ->select('id', 'namespace', 'group', 'key', 'value')
+                ->where('language_id', $language->id)
+                ->where('type', '=', 'model')
+                ->isUpdated(false)
+                ->approved()
+                ->exported(false)
+                ->chunkById(200, function ($translations) use ($language) {
+                    foreach ($translations as $translation) {
+                        if ($this->batch) {
+                            $this->batch->add(new ExportUpdatedModelTranslation($translation->id, $language->code));
+                        } else {
+                            $this->updateModelTranslation($translation, $language->code);
+                        }
+                    }
+                });
+            DB::commit();
+        } catch(\Exception $e) {
+            DB::rollBack();
+            throw new ExportTranslationException($e->getMessage(), __('languages::exceptions.export_language_error', ['language' => $language->native_name]), 0);
+        }
     }
 }

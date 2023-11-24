@@ -51,7 +51,6 @@ class ImportLanguages extends Command
             } else {
                 $this->info('Nothing imported.');
             }
-            Language::notifyAdminImportedLanguages($languages);
 
             Setting::setJobsRunning(false);
         } catch(\Exception $e) {

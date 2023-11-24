@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
+use Riomigal\Languages\Console\Commands\DeveloperDownloadToLocalCommand;
 use Riomigal\Languages\Console\Commands\ExportTranslations;
 use Riomigal\Languages\Console\Commands\FindMissingTranslations;
 use Riomigal\Languages\Console\Commands\ImportLanguages;
@@ -21,6 +22,7 @@ use Riomigal\Languages\Livewire\Login;
 use Riomigal\Languages\Livewire\Settings;
 use Riomigal\Languages\Livewire\Translations;
 use Riomigal\Languages\Livewire\Translators;
+use Riomigal\Languages\Middleware\AuthApi;
 use Riomigal\Languages\Middleware\AuthTranslator;
 use Riomigal\Languages\Models\Translator;
 use Riomigal\Languages\Services\OpenAITranslationService;
@@ -111,6 +113,7 @@ class LanguagesServiceProvider extends ServiceProvider
     {
         $translatorGuard = config('languages.translator_guard');
         app('router')->aliasMiddleware(config('languages.auth_guard'), AuthTranslator::class);
+        app('router')->aliasMiddleware('laravel-languages-auth-api', AuthApi::class);
         app('router')->pushMiddlewareToGroup($translatorGuard, \Illuminate\Cookie\Middleware\EncryptCookies::class);
         app('router')->pushMiddlewareToGroup($translatorGuard, \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class);
         app('router')->pushMiddlewareToGroup($translatorGuard, \Illuminate\Session\Middleware\StartSession::class);
@@ -200,7 +203,8 @@ class LanguagesServiceProvider extends ServiceProvider
                 ImportTranslations::class,
                 FindMissingTranslations::class,
                 ExportTranslations::class,
-                SendAutomaticPendingNotifications::class
+                SendAutomaticPendingNotifications::class,
+                DeveloperDownloadToLocalCommand::class
             ]);
         }
     }
