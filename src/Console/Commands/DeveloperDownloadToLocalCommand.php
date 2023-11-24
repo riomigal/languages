@@ -43,38 +43,51 @@ class DeveloperDownloadToLocalCommand extends Command
             $DB->statement('SET FOREIGN_KEY_CHECKS=0;');
             $DB->beginTransaction();
 
+            $this->info('Request all languages.');
             $response = Http::post(config('languages.main_server_domain') . route('languages.api.get-languages', [], false), $this->apiKeyParams);
             if ($response->status() !== 200) {
                 throw new \Exception('DeveloperDownloadToLocalCommand: Couldn\'t import languages');
             }
+            $this->info('Deleting all languages in DB');
             Language::query()->delete();
+            $this->info('Inserting all languages in DB');
             Language::insert($response['data']);
 
+            $this->info('Requesting Translations 1');
             $response = $this->sendGetPaginatedTranslationsRequest();
             if ($response->status() !== 200) {
                 $this->throwException();
             }
+            $this->info('Deleting All Translations in DB');
             Translation::query()->delete();
+
+            $this->info('Inserting Translations 1 in DB');
             Translation::insert($response['data']);
             for($page = 2; $page <= $response['meta']['last_page']; $page++) {
+                $this->info('Requesting Translations 2');
                 $response = $this->sendGetPaginatedTranslationsRequest(['page' => $page]);
                 if ($response->status() !== 200) {
                     $this->throwException($page);
                 }
+                $this->info('Inserting Translations 2 in DB');
                 Translation::insert($response['data']);
             }
-
             $DB->commit();
+            $this->info('All translation inserted');
             $DB->statement('SET FOREIGN_KEY_CHECKS=1;');
         } catch(\Exception $e) {
             $DB->rollBack();
             $DB->statement('SET FOREIGN_KEY_CHECKS=1;');
+            $this->info('Something went wrong resetting database.');
             throw $e;
         }
+        $this->info('Start language export to file.');
         $exportTranslationService = resolve(ExportTranslationService::class);
         Language::query()->each(function (Language $language) use ($exportTranslationService) {
+            $this->info('Exporting language : ' . $language->code . ' to file.');
             $exportTranslationService->forceExportTranslationForLanguage($language, null, (bool) Setting::getCached()->db_loader);
         });
+        $this->info('Download finished.');
     }
 
     protected function sendGetPaginatedTranslationsRequest(array $params = []): Response
