@@ -6,6 +6,16 @@
 return [
 
     /*
+   |--------------------------------------------------------------------------
+   | MAIN SERVER URL
+   |--------------------------------------------------------------------------
+   |
+   | If handling translations on multiple server add here your primary server.
+   | This will also be the primary entry for developer DB content download
+   */
+    'main_server_domain' => env('LANGUAGES_MAIN_SERVER_DOMAIN', config('app.url')),
+
+    /*
     |--------------------------------------------------------------------------
     | Handles Decentralised DB
     |--------------------------------------------------------------------------
