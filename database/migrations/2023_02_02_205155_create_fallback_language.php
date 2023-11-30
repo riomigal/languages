@@ -13,7 +13,7 @@ return new class extends Migration
     public function up(): void
     {
         $language = collect(Language::LANGUAGES)->where('code', config('app.fallback_locale'))->first();
-        Language::query()->create(
+        Language::query()->firstOrCreate(
             [
                 'code' => $language['code'],
                 'name' => $language['name'],
