@@ -13,15 +13,18 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        $translator = Translator::create(
-            [
-                'email' => 'admin@admin.com',
-                'password' => Hash::make('aaaaaaaa'),
-                'admin' => true,
-                'first_name' => 'admin',
-                'last_name' => 'admin'
-            ]
-        );
+        if(!Translator::query()->first()) {
+            $translator = Translator::create(
+                [
+                    'email' => 'admin@admin.com',
+                    'password' => Hash::make('aaaaaaaa'),
+                    'admin' => true,
+                    'first_name' => 'admin',
+                    'last_name' => 'admin'
+                ]
+            );
+        }
+
         $translator->languages()->attach(Language::first()->id);
     }
 
