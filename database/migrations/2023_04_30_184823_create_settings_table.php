@@ -23,9 +23,11 @@ return new class extends Migration
             /**
              * Creates first setting
              */
-            Setting::query()->create(
-                ['db_loader' => false]
-            );
+            if(!Setting::query()->first()) {
+                Setting::query()->create(
+                    ['db_loader' => false]
+                );
+            }
         }
 
     }

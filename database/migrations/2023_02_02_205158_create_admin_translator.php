@@ -13,7 +13,7 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        $translator = Translator::create(
+        $translator = Translator::firstOrCreate(
             [
                 'email' => 'admin@admin.com',
                 'password' => Hash::make('aaaaaaaa'),
