@@ -13,7 +13,8 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        if(!Translator::query()->first()) {
+        $translator = Translator::query()->first();
+        if(!$translator) {
             $translator = Translator::create(
                 [
                     'email' => 'admin@admin.com',
@@ -23,9 +24,8 @@ return new class extends Migration {
                     'last_name' => 'admin'
                 ]
             );
+            $translator->languages()->attach(Language::first()->id);
         }
-
-        $translator->languages()->attach(Language::first()->id);
     }
 
     /**
