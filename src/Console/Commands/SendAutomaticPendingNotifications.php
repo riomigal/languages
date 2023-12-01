@@ -6,6 +6,7 @@ namespace Riomigal\Languages\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Riomigal\Languages\Models\Language;
+use Riomigal\Languages\Models\Setting;
 use Riomigal\Languages\Models\Translator;
 use Riomigal\Languages\Notifications\PendingTranslationsNotification;
 
@@ -30,10 +31,12 @@ class SendAutomaticPendingNotifications extends Command
      */
     public function handle(): void
     {
-        Translator::query()->each(function(Translator $translator) {
-            $translator->languages()->each(function(Language $language) use ($translator) {
-                $translator->notify(new PendingTranslationsNotification($language));
+        if(Setting::getCached()->enable_automatic_pending_notifications) {
+            Translator::query()->each(function (Translator $translator) {
+                $translator->languages()->each(function (Language $language) use ($translator) {
+                    $translator->notify(new PendingTranslationsNotification($language));
+                });
             });
-        });
+        }
     }
 }
