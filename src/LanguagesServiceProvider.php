@@ -57,13 +57,13 @@ class LanguagesServiceProvider extends ServiceProvider
         $this->loadCommands();
 
         // Delete Batches
-        $this->app->booted(function () {
-            $schedule = $this->app->make(Schedule::class);
-            $schedule->command('languages:prune-batches')->everyMinute();
-            if($this->settings && isset($this->settings->enable_automatic_pending_notifications) && $this->settings->enable_automatic_pending_notifications) {
-                $schedule->command('languages:send-automatic-pending-translations-notification')->daily();
-            }
-        });
+//        $this->app->booted(function () {
+//            $schedule = $this->app->make(Schedule::class);
+//            $schedule->command('languages:prune-batches')->everyMinute();
+//            if($this->settings && isset($this->settings->enable_automatic_pending_notifications) && $this->settings->enable_automatic_pending_notifications) {
+//                $schedule->command('languages:send-automatic-pending-translations-notification')->daily();
+//            }
+//        });
     }
 
     /**

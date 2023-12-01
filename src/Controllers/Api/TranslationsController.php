@@ -2,12 +2,10 @@
 
 namespace Riomigal\Languages\Controllers\Api;
 
-use Illuminate\Bus\Batch;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\Bus;
 use Riomigal\Languages\Jobs\Batch\BatchProcessor;
 use Riomigal\Languages\Jobs\ForceExportTranslationJob;
 use Riomigal\Languages\Models\Language;
