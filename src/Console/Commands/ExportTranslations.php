@@ -73,7 +73,6 @@ class ExportTranslations extends Command
                 $this->info('Nothing to export.');
             }
             Setting::setJobsRunning(false);
-            $exportTranslationService->exportTranslationsOnOtherHosts();
         } catch(\Exception $e) {
             Setting::setJobsRunning(false);
             throw $e;
