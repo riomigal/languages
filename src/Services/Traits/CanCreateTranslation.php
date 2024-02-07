@@ -172,6 +172,7 @@ trait CanCreateTranslation
                         })->toArray()
                     );
                 } catch(\Exception $e) {
+                    Log::warning('Warning: ' . $e->getMessage());
                     try {
 //                        $translatedArrayResult = collect($translationsArray)->map(function ($translation, $languageCode,$fromLanguageCode) {
 //                            return resolve(OpenAITranslationService::class)->translateString(

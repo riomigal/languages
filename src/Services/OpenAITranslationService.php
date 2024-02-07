@@ -2,6 +2,7 @@
 
 namespace Riomigal\Languages\Services;
 
+use Illuminate\Support\Facades\Log;
 use OpenAI\Laravel\Facades\OpenAI;
 use Riomigal\Languages\Models\Setting;
 
@@ -26,8 +27,11 @@ class OpenAITranslationService
 
     public function translateArray(string $fromLanguageCode, string $toLanguageCode, array $array): array
     {
-        if(!Setting::getCached()->enable_open_ai_translations) return $array;
-
+        if(!Setting::getCached()->enable_open_ai_translations) {
+            Log::info('OpenAI disabled');
+            return $array;
+        }
+        Log::info('OPenAI enabled');
         $result = OpenAI::chat()->create([
             'model' => config('languages.open_ai_model'),
             'response_format' => ['type' => 'json_object'],
