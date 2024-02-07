@@ -36,14 +36,14 @@ class TranslationsController extends Controller
             $batchArray[] = new ForceExportTranslationJob($language);
         });
 
-        $finally = function () use ($host) {
+        $then = function () use ($host) {
             Translator::query()->admin()->each(function (Translator $translator) use ($host) {
                 $translator->notify(new FlashMessage(__('languages::translations.export_on_other_host_success', ['host' => $host])));
             });
         };
 
-        resolve(BatchProcessor::class)->execute($batchArray,null, null, $finally)->dispatchAfterResponse();
+        resolve(BatchProcessor::class)->execute($batchArray,$then, null, null)->dispatchAfterResponse();
 
-        return response()->json(['message' => 'Export started.']);
+        return response()->json(['message' => __('languages::translations.export_on_other_host_started', ['host' => $host])]);
     }
 }

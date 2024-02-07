@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use Riomigal\Languages\Exceptions\ExportTranslationException;
 use Riomigal\Languages\Jobs\ExportUpdatedModelTranslation;
 use Riomigal\Languages\Jobs\ExportUpdatedTranslation;
@@ -16,7 +15,6 @@ use Riomigal\Languages\Models\Translation;
 use Riomigal\Languages\Models\Translator;
 use Riomigal\Languages\Notifications\FlashMessage;
 use Riomigal\Languages\Services\Traits\CanExportTranslation;
-use Illuminate\Http\Client\Pool;
 
 class ExportTranslationService
 {
@@ -45,25 +43,18 @@ class ExportTranslationService
         $hosts = array_diff($hosts, [request()->getSchemeAndHttpHost()]);
 
         $path = route('languages.api.force-export', [], false);
-        $responses = Http::pool(function (Pool $pool) use ($hosts, $path) {
-            $poolArray = [];
-            foreach($hosts as $host) {
-                $poolArray[] = $pool->post($host . $path, ['api_key' => config('languages.api_shared_api_key')]);
-            }
-            return $poolArray;
-        });
 
-        $index = 0;
-        foreach($responses as $response) {
-            if(!$response->ok()) {
-                $message = __('languages::translations.export_on_other_host_started', ['host' => $hosts[$index]]);
+        foreach($hosts as $host) {
+            $response = Http::post($host . $path, ['api_key' => config('languages.api_shared_api_key')]);
+            if($response->ok()) {
+                $message = $response->json()['message'];
             } else {
-                $message = __('languages::translations.export_on_other_host_start_failed', ['host' => $hosts[$index]]);
+                $message = __('languages::translations.export_on_other_host_start_failed', ['host' => $host]);
+                $response->throw();
             }
             Translator::query()->admin()->each(function (Translator $translator) use ($message) {
-                $translator->notify(new FlashMessage($message));
+                $translator->notify(new FlashMessage( $message));
             });
-            $index++;
         }
     }
 
