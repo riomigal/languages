@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
 use Riomigal\Languages\Console\Commands\DeveloperDownloadToLocalCommand;
+use Riomigal\Languages\Console\Commands\ExportTranslationAfterDeployment;
 use Riomigal\Languages\Console\Commands\ExportTranslations;
 use Riomigal\Languages\Console\Commands\FindMissingTranslations;
 use Riomigal\Languages\Console\Commands\ImportLanguages;
@@ -204,7 +205,8 @@ class LanguagesServiceProvider extends ServiceProvider
                 FindMissingTranslations::class,
                 ExportTranslations::class,
                 SendAutomaticPendingNotifications::class,
-                DeveloperDownloadToLocalCommand::class
+                DeveloperDownloadToLocalCommand::class,
+                ExportTranslationAfterDeployment::class
             ]);
         } else {
             $this->commands([

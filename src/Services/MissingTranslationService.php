@@ -38,6 +38,15 @@ class MissingTranslationService
         }
         $this->languages = Language::all();
 
+        $defaultLocale = config('app.locale') ?? 'en';
+        $this->languages = $this->languages->sortBy('code')
+        ->values()
+        ->sortBy(function ($item, $index) use ($defaultLocale) {
+            if ($item->code == $defaultLocale) return -1;
+            return $index;
+        });
+
+
         foreach($this->languages as $language) {
             if ($this->batch) {
                 $this->batch->add(new FindMissingTranslationsByLanguage($this->languages->pluck('id')->toArray(), $language->id));
