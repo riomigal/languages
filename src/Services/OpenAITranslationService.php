@@ -16,7 +16,7 @@ class OpenAITranslationService
            'model' => config('languages.open_ai_model'),
            'response_format' => ['type' => 'json_object'],
            'messages' => [
-               ['role' => 'system', 'content' => 'You are an universal translator and return only translated values and designed to output JSON.'],
+               ['role' => 'system', 'content' => 'You are an universal translator and return only translated values and designed to output JSON. The translations are for Laravel, words starting with a colon (e.g. :word) are placeholder and should not be translated.'],
                ['role' => 'user', 'content' => $text],
                ['role' => 'user', 'content' => 'From ' . $fromLanguageCode . ' to ' . $toLanguageCode . '.'],
            ],
@@ -28,15 +28,14 @@ class OpenAITranslationService
     public function translateArray(string $fromLanguageCode, string $toLanguageCode, array $array): array
     {
         if(!Setting::getCached()->enable_open_ai_translations) {
-            Log::info('OpenAI disabled');
             return $array;
         }
-        Log::info('OPenAI enabled');
+
         $result = OpenAI::chat()->create([
             'model' => config('languages.open_ai_model'),
             'response_format' => ['type' => 'json_object'],
             'messages' => [
-                ['role' => 'system', 'content' => 'You are an universal translator and return only translated values and designed to output JSON.'],
+                ['role' => 'system', 'content' => 'You are an universal translator and return only translated values and designed to output JSON. The translations are for Laravel, words starting with a colon (e.g. :word) are placeholder and should not be translated.'],
                 ['role' => 'user', 'content' => json_encode(array_filter($array))],
                 ['role' => 'user', 'content' => 'Translate from ' . $fromLanguageCode . ' to ' . $toLanguageCode . '.'],
             ],
