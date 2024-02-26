@@ -16,7 +16,7 @@ class OpenAITranslationService
            'model' => config('languages.open_ai_model'),
            'response_format' => ['type' => 'json_object'],
            'messages' => [
-               ['role' => 'system', 'content' => 'You are an universal translator and return only translated values and designed to output JSON. The translations are for Laravel, words starting with a colon (e.g. :word) are placeholder and should not be translated.'],
+               ['role' => 'system', 'content' => 'You are an universal translator and return only translated values and designed to output JSON.'],
                ['role' => 'user', 'content' => $text],
                ['role' => 'user', 'content' => 'From ' . $fromLanguageCode . ' to ' . $toLanguageCode . '.'],
            ],
@@ -35,7 +35,7 @@ class OpenAITranslationService
             'model' => config('languages.open_ai_model'),
             'response_format' => ['type' => 'json_object'],
             'messages' => [
-                ['role' => 'system', 'content' => 'You are an universal translator and return only translated values and designed to output JSON. The translations are for Laravel, words starting with a colon (e.g. :word) are placeholder and should not be translated.'],
+                ['role' => 'system', 'content' => 'You are an universal translator and return only translated values and designed to output JSON.'],
                 ['role' => 'user', 'content' => json_encode(array_filter($array))],
                 ['role' => 'user', 'content' => 'Translate from ' . $fromLanguageCode . ' to ' . $toLanguageCode . '.'],
             ],
