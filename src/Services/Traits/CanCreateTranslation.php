@@ -176,7 +176,7 @@ trait CanCreateTranslation
                 );
 
                 $translationsArray = collect($translationsArray)->map(function ($translation, $index) use ($translatedArrayResult) {
-                    $translation['value'] = $translatedArrayResult['t_' . $index];
+                    $translation['value'] = $translatedArrayResult['t_' . $index] ?? $translation['value'];
                     return $translation;
                 })->toArray();
             } catch(\Exception $e) {
@@ -185,19 +185,21 @@ trait CanCreateTranslation
                     'translatedArrayResult' => $translatedArrayResult
                 ]);
                 $translationsArray = $tempTranslationsArray;
-                try {
+
                     $translationsArray = collect($translationsArray)->map(function ($translation, $index) use ($openTranslateService, $rootLanguage,
                         $language) {
-                        $translation['value'] = $openTranslateService->translateString($rootLanguage, $language,  $translation['value']);
-                        return $translation;
+                        try {
+                            $tempValue =  $translation['value'];
+                            $translation['value'] = $openTranslateService->translateString($rootLanguage, $language,  $translation['value']);
+                            return $translation;
+                        } catch(\Exception $e) {
+                            Log::warning('CanCreateTranslation::massCreateEloquentTranslations() StringTranslations failed -> ' . $e->getMessage(), [
+                                'value' => $translation['value'],
+                            ]);
+                            $translation['value'] = $tempValue;
+                        }
                     })->toArray();
-                } catch(\Exception $e) {
-                    Log::warning('CanCreateTranslation::massCreateEloquentTranslations() StringTranslations failed -> ' . $e->getMessage(), [
-                        'translationsArray' => $translationsArray,
-                        'translatedArrayResult' => $translatedArrayResult
-                    ]);
-                    $translationsArray = $tempTranslationsArray;
-                }
+
             }
 
             $this->massInsertTranslations($translationsArray);
