@@ -3,6 +3,7 @@
 namespace Riomigal\Languages\Jobs;
 
 use Riomigal\Languages\Jobs\Job\BaseJob;
+use Riomigal\Languages\Models\Language;
 use Riomigal\Languages\Services\Traits\CanCreateTranslation;
 
 class MassCreateEloquentTranslationsJob extends BaseJob
@@ -11,8 +12,7 @@ class MassCreateEloquentTranslationsJob extends BaseJob
     public function __construct(
         protected array  $translations,
         protected int $languageId,
-        protected string $languageCode,
-        protected string $fromLanguageCode
+        protected string $fromLanguageId
     )
     {
         parent::__construct();
@@ -24,6 +24,6 @@ class MassCreateEloquentTranslationsJob extends BaseJob
      */
     public function handle(): void
     {
-        $this->massCreateEloquentTranslations($this->translations, $this->languageId, $this->languageCode, $this->fromLanguageCode);
+        $this->massCreateEloquentTranslations($this->translations, Language::find($this->languageId), Language::find($this->fromLanguageId));
     }
 }

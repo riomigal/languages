@@ -56,11 +56,11 @@ trait CanCreateTranslation
                             ->where('language_code', $fromLanguageCode)
                             ->groupBy('shared_identifier', 'namespace', 'group', 'is_vendor', 'type', 'key', 'value')
                             ->orderBy('shared_identifier')
-                            ->chunk(Setting::getCached()->enable_open_ai_translations ? config('languages.max_open_ai_missing_trans') : 400, function ($translations) use ($language, $batch, $fromLanguageCode) {
+                            ->chunk(Setting::getCached()->enable_open_ai_translations ? config('languages.max_open_ai_missing_trans') : 400, function ($translations) use ($language, $batch, $rootLanguage) {
                                 if($batch) {
-                                    $batch->add(new MassCreateEloquentTranslationsJob($translations->toArray(), $language->id, $language->code, $fromLanguageCode));
+                                    $batch->add(new MassCreateEloquentTranslationsJob($translations->toArray(), $language->id, $rootLanguage->id));
                                 } else {
-                                    $this->massCreateEloquentTranslations($translations->toArray(), $language->id, $language->code, $fromLanguageCode);
+                                    $this->massCreateEloquentTranslations($translations->toArray(), $language, $rootLanguage);
                                 }
                             });
                     }
@@ -127,7 +127,7 @@ trait CanCreateTranslation
      * @return void
      * @throws MassCreateTranslationsException
      */
-    protected function massCreateEloquentTranslations(array $translations, int $languageId, string $languageCode, string $fromLanguageCode): void
+    protected function massCreateEloquentTranslations(array $translations, Language $language, Language $rootLanguage): void
     {
         try {
             DB::connection(config('languages.db_connection'))->beginTransaction();
@@ -142,10 +142,10 @@ trait CanCreateTranslation
 //                } catch(\Exception $e) {
 //
 //                }
-                if (!$this->translationExists($translation['shared_identifier'], $languageCode)) {
+                if (!$this->translationExists($translation['shared_identifier'], $language->code)) {
                     $generatedTranslation = $this->getTranslationArray(
-                        $languageId,
-                        $languageCode,
+                        $language->id,
+                        $language->code,
                         $translation['shared_identifier'],
                         $translation['type'],
                         $translation['key'],
@@ -161,55 +161,58 @@ trait CanCreateTranslation
                 }
             }
 
-            // Get Open Api translated array
+            $openTranslateService = resolve(OpenAITranslationService::class);
             try {
-                try {
-                    $translatedArrayResult = resolve(OpenAITranslationService::class)->translateArray(
-                        $fromLanguageCode,
-                        $languageCode,
-                        collect($translationsArray)->mapWithKeys(function($translation, $index) {
-                            return ['t_' . $index => $translation['value']];
-                        })->toArray()
-                    );
-                } catch(\Exception $e) {
-                    Log::warning('Warning: ' . $e->getMessage());
-                    try {
-//                        $translatedArrayResult = collect($translationsArray)->map(function ($translation, $languageCode,$fromLanguageCode) {
-//                            return resolve(OpenAITranslationService::class)->translateString(
-//                                $fromLanguageCode,
-//                                $languageCode,
-//                                $translation['value']
-//                            );
-//                        })->toArray();
-                    } catch(\Exception $e) {
+                $tempTranslationsArray = $translationsArray;
 
-                    }
-                }
+                // Get Open Api translated array
+                $translatedArrayResult = [];
+                $translatedArrayResult = $openTranslateService->translateArray(
+                    $rootLanguage,
+                    $language,
+                    collect($translationsArray)->mapWithKeys(function($translation, $index) {
+                        return ['t_' . $index => $translation['value']];
+                    })->toArray()
+                );
 
                 $translationsArray = collect($translationsArray)->map(function ($translation, $index) use ($translatedArrayResult) {
                     $translation['value'] = $translatedArrayResult['t_' . $index];
                     return $translation;
                 })->toArray();
-
-            } catch (\Exception $e) {
-
+            } catch(\Exception $e) {
+                Log::warning('CanCreateTranslation::massCreateEloquentTranslations() ArrayTranslations failed -> ' . $e->getMessage(), [
+                    'translationsArray' => $translationsArray,
+                    'translatedArrayResult' => $translatedArrayResult
+                ]);
+                $translationsArray = $tempTranslationsArray;
+                try {
+                    $translationsArray = collect($translationsArray)->map(function ($translation, $index) use ($openTranslateService, $rootLanguage,
+                        $language) {
+                        $translation['value'] = $openTranslateService->translateString($rootLanguage, $language,  $translation['value']);
+                        return $translation;
+                    })->toArray();
+                } catch(\Exception $e) {
+                    Log::warning('CanCreateTranslation::massCreateEloquentTranslations() StringTranslations failed -> ' . $e->getMessage(), [
+                        'translationsArray' => $translationsArray,
+                        'translatedArrayResult' => $translatedArrayResult
+                    ]);
+                    $translationsArray = $tempTranslationsArray;
+                }
             }
 
             $this->massInsertTranslations($translationsArray);
             DB::connection(config('languages.db_connection'))->commit();
         } catch (\Exception|MassCreateTranslationsException $e) {
             DB::connection(config('languages.db_connection'))->rollBack();
-            if ($e::class == MassCreateTranslationsException::class) {
-                throw $e;
-            } else {
-                $errorId = Str::random();
-
-                Log::error('Something went wrong while mass creating eloquent translations: ' . $fromLanguageCode, [
-                    'error_id' => $errorId,
-                    'shared_identifier' => collect($translations)->pluck('shared_identifier')->all()
-                ]);
-                throw new MassCreateTranslationsException($e->getMessage(), __('languages::exceptions.mass_create_eloquent_fails', ['errorId' => $errorId]));
-            }
+            $errorId = Str::random();
+            Log::error('Something went wrong while mass creating eloquent translations: ', [
+                'error_id' => $errorId,
+                'message' => $e->getMessage(),
+                'fromLanguage' => $rootLanguage->code,
+                'toLanguage' => $language->code,
+                'shared_identifier' => collect($translations)->pluck('shared_identifier')->all()
+            ]);
+            throw new MassCreateTranslationsException($e->getMessage(), __('languages::exceptions.mass_create_eloquent_fails', ['errorId' => $errorId]));
         }
 
     }

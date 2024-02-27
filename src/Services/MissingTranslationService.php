@@ -31,7 +31,13 @@ class MissingTranslationService
      * @param null|Batch $batch
      * @return int
      */
-    public function findMissingTranslations(null|Batch $batch = null): int
+    /**
+     * @param Batch|null $batch
+     * @param Language|null $singleLanguage - Pass this parameter if you want only run through a single language
+     * @return int
+     * @throws \Riomigal\Languages\Exceptions\MassCreateTranslationsException
+     */
+    public function findMissingTranslations(null|Batch $batch = null, Language|null $singleLanguage = null): int
     {
         if ($batch) {
             $this->batch = $batch;
@@ -39,6 +45,10 @@ class MissingTranslationService
         $this->languages = Language::all();
 
         $language = $this->languages->where('code', config('app.locale') ?? 'en')->first();
+
+        if($singleLanguage) {
+           $this->languages = $this->languages->filter(fn(Language $filteredLanguage) => $singleLanguage->id === $filteredLanguage->id);
+        }
 
         if ($this->batch) {
             $this->batch->add(new FindMissingTranslationsByLanguage($this->languages->pluck('id')->toArray(), $language->id));
