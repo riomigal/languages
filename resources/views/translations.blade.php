@@ -102,7 +102,7 @@
                     @include('languages::component.button',
                         [
                          'clickEvent' => 'approveAllTranslations',
-                         'text' => __('languages::translations.button.approve_all'),
+                         'text' => __('languages::translations.button.approve_all', ['language_code' => $this->language->code]),
                          'showLoader' => '1'
                         ]
                      )
