@@ -45,7 +45,9 @@ class OpenAITranslationService
                 ],
             ]);
 
-            return json_decode($result->choices[0]->message->content, true);
+            $res = $result->choices[0]->message->content;
+            if(!$res || !json_validate($res)) return [];
+            return json_decode($res, true);
         } catch(\Exception $e) {
             Log::warning('Translation Failed -> OpenAITranslationService::translateArray ' . $e->getMessage(), [
                 'rootLanguage' => $rootLanguage->code,

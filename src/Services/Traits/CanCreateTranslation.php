@@ -173,6 +173,7 @@ trait CanCreateTranslation
                         return ['t_' . $index => $translation['value']];
                     })->toArray()
                 );
+                if(empty($translatedArrayResult)) throw new \Exception('Open AI returned null value');
 
                 $translationsArray = collect($translationsArray)->map(function ($translation, $index) use (
                     $translatedArrayResult,
@@ -183,7 +184,10 @@ trait CanCreateTranslation
                     if(isset($translatedArrayResult['t_' . $index])) {
                         $translation['value'] = $translatedArrayResult['t_' . $index];
                     } else {
-                        $translation['value'] = $openTranslateService->translateString($rootLanguage, $language,  $translation['value']);
+                        $res = $openTranslateService->translateString($rootLanguage, $language,  $translation['value']);
+                        if(!empty($res)) {
+                            $translation['value'] = $res;
+                        }
                     }
                     return $translation;
                 })->toArray();

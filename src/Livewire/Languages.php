@@ -145,7 +145,7 @@ class Languages extends AuthComponent
     {
         if ($this->anotherJobIsRunning()) return;
 
-        $total =Translation::selectRaw('count(*) as total')->groupBy('language_id')->orderBy('language_id')->pluck('total')->all();
+        $total = Translation::selectRaw('count(*) as total')->groupBy('language_id')->orderBy('language_id')->pluck('total')->all();
 
         Language::query()->whereDoesntHave('translations')->each(function(Language $language) use (&$total) {
                 $total[] = -1;
