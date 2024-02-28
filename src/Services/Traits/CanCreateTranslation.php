@@ -32,9 +32,9 @@ trait CanCreateTranslation
     {
         $this->missingLanguages = $languages->reject(fn($language) => $language->id == $rootLanguage->id);
 
-        Translation::query()->select('shared_identifier')->where('language_code', $rootLanguage->code)
-            ->groupBy('shared_identifier')
-            ->orderBy('shared_identifier')->chunk(400,
+        Translation::query()
+            ->where('language_code', $rootLanguage->code)
+            ->chunkById(300,
                 function ($records) use ($rootLanguage, $batch) {
                     foreach ($this->missingLanguages as $language) {
 
@@ -42,7 +42,7 @@ trait CanCreateTranslation
                         $identifierArray = $records->pluck('shared_identifier')->all();
 
                         // Get array of language identifier found
-                        $identifierArrayTwo = Translation::query()->select('shared_identifier')
+                        $identifierArrayTwo = Translation::query()
                             ->where('language_id', $language->id)
                             ->whereIn('shared_identifier', $identifierArray)->pluck('shared_identifier')->all();
 
@@ -51,18 +51,17 @@ trait CanCreateTranslation
 
                         $fromLanguageCode = $rootLanguage->code;
                         Translation::query()
-                            ->select('shared_identifier', 'namespace', 'group', 'is_vendor', 'type', 'key', 'value')
                             ->whereIn('shared_identifier', $missingIdentifier)
                             ->where('language_code', $fromLanguageCode)
-                            ->groupBy('shared_identifier', 'namespace', 'group', 'is_vendor', 'type', 'key', 'value')
-                            ->orderBy('shared_identifier')
-                            ->chunk(Setting::getCached()->enable_open_ai_translations ? config('languages.max_open_ai_missing_trans') : 400, function ($translations) use ($language, $batch, $rootLanguage) {
-                                if($batch) {
-                                    $batch->add(new MassCreateEloquentTranslationsJob($translations->toArray(), $language->id, $rootLanguage->id));
-                                } else {
-                                    $this->massCreateEloquentTranslations($translations->toArray(), $language, $rootLanguage);
+                            ->chunkById(Setting::getCached()->enable_open_ai_translations ? config('languages.max_open_ai_missing_trans') : 400,
+                                function ($translations) use ($language, $batch, $rootLanguage) {
+                                    if($batch) {
+                                        $batch->add(new MassCreateEloquentTranslationsJob($translations->toArray(), $language->id, $rootLanguage->id));
+                                    } else {
+                                        $this->massCreateEloquentTranslations($translations->toArray(), $language, $rootLanguage);
+                                    }
                                 }
-                            });
+                            );
                     }
                 }
             );
@@ -175,8 +174,17 @@ trait CanCreateTranslation
                     })->toArray()
                 );
 
-                $translationsArray = collect($translationsArray)->map(function ($translation, $index) use ($translatedArrayResult) {
-                    $translation['value'] = $translatedArrayResult['t_' . $index] ?? $translation['value'];
+                $translationsArray = collect($translationsArray)->map(function ($translation, $index) use (
+                    $translatedArrayResult,
+                    $openTranslateService,
+                    $rootLanguage,
+                    $language
+                ) {
+                    if(isset($translatedArrayResult['t_' . $index])) {
+                        $translation['value'] = $translatedArrayResult['t_' . $index];
+                    } else {
+                        $translation['value'] = $openTranslateService->translateString($rootLanguage, $language,  $translation['value']);
+                    }
                     return $translation;
                 })->toArray();
             } catch(\Exception $e) {
