@@ -175,8 +175,17 @@ trait CanCreateTranslation
                     })->toArray()
                 );
 
-                $translationsArray = collect($translationsArray)->map(function ($translation, $index) use ($translatedArrayResult) {
-                    $translation['value'] = $translatedArrayResult['t_' . $index] ?? $translation['value'];
+                $translationsArray = collect($translationsArray)->map(function ($translation, $index) use (
+                    $translatedArrayResult,
+                    $openTranslateService,
+                    $rootLanguage,
+                    $language
+                ) {
+                    if(isset($translatedArrayResult['t_' . $index])) {
+                        $translation['value'] = $translatedArrayResult['t_' . $index];
+                    } else {
+                        $translation['value'] = $openTranslateService->translateString($rootLanguage, $language,  $translation['value']);
+                    }
                     return $translation;
                 })->toArray();
             } catch(\Exception $e) {
