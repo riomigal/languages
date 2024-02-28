@@ -4,6 +4,7 @@ namespace Riomigal\Languages\Livewire;
 
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Log;
 use Riomigal\Languages\Jobs\Batch\BatchProcessor;
 use Riomigal\Languages\Jobs\ExportTranslationJob;
 use Riomigal\Languages\Livewire\Traits\ChecksForRunningJobs;
@@ -212,11 +213,10 @@ class Translations extends AuthComponent
      */
     public function openAITranslate(): void
     {
-
         if(!$this->translationExample?->value) return;
-        $languageCodeFrom = Language::find($this->openAiTranslateLanguageId)?->code;
+        $languageCodeFrom = Language::find($this->openAiTranslateLanguageId);
         if(!$languageCodeFrom) return;
-        $languageCodeTo = Language::find($this->currentLanguageId)?->code;
+        $languageCodeTo = Language::find($this->currentLanguageId);
         if(!$languageCodeTo) return;
         try {
             $this->translatedValue = resolve(OpenAITranslationService::class)->translateString(
@@ -225,7 +225,7 @@ class Translations extends AuthComponent
                 $this->translationExample->value
             );
         } catch(\Exception $e) {
-
+            Log::warning('Translations::openAITranslate()' . $e->getMessage);
         }
     }
 
