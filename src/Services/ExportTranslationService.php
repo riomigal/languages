@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Riomigal\Languages\Exceptions\ExportTranslationException;
 use Riomigal\Languages\Jobs\ExportUpdatedModelTranslation;
 use Riomigal\Languages\Jobs\ExportUpdatedTranslation;
@@ -129,6 +130,9 @@ class ExportTranslationService
                     }
                 });
         } catch (\Exception $e) {
+            Log::error('ExportTranslationService::exportFileTranslationForLanguage.', [
+                'ErrorMessage' => $e->getMessage()
+            ]);
             File::deleteDirectory($languageDirectory);
             File::copyDirectory($tempLangDirectory, $languageDirectory);
             File::deleteDirectory($tempDirectory);

@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Riomigal\Languages\Exceptions\ExportFileException;
 use Riomigal\Languages\Exceptions\ExportTranslationException;
 use Riomigal\Languages\Models\Translation;
@@ -24,6 +25,7 @@ trait CanExportTranslation
      */
     protected function updateTranslation(string $type, string $languageCode, bool $isVendor, string $namespace = '', string $group = '', bool $forceExportAll = false): void
     {
+        $path = null;
         try {
             $query = Translation::where([
                 ['type', '=', $type ],
@@ -57,8 +59,13 @@ trait CanExportTranslation
             $query->update(['exported' => true]);
 
         } catch (\Exception $e) {
+            $errorId = Str::random();
+            Log::error('CanExportTranslation::updateTranslation()', [
+                'errorId' => $errorId,
+                'errorMessage' => $e->getMessage()
+            ]);
             $query->update(['exported' => false]);
-            throw new ExportFileException($e->getMessage(), __('languages::exceptions.export_file_error', ['path' => $path]), 0);
+            throw new ExportFileException($e->getMessage(), __('languages::exceptions.export_file_error', ['relativePathname' => $path, 'errorId' => $errorId]), 0);
         }
     }
 
