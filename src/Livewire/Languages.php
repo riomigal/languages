@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Validation\Rule;
+use Riomigal\Languages\Jobs\ApproveLanguagesJob;
 use Riomigal\Languages\Jobs\Batch\BatchProcessor;
 use Riomigal\Languages\Jobs\FindMissingTranslationsJob;
 use Riomigal\Languages\Jobs\ImportLanguagesJob;
@@ -127,9 +128,17 @@ class Languages extends AuthComponent
             new ImportTranslationsJob()
         ];
 
-        $totalTranslationsBefore = Translation::count();
-        $finally = function () use (&$totalTranslationsBefore) {
-            Translator::notifyAdminImportedTranslations($totalTranslationsBefore);
+        $totals = [];
+        $languages = Language::all();
+        $languages->each(function(Language $language) use (&$totals) {
+            $totals[$language->code] = $language->translations()->count();
+        });
+
+
+        $finally = function () use (&$totals, &$languages) {
+            $languages->each(function(Language $language) use (&$totals) {
+                Translator::notifyAdminImportedTranslations($totals[$language->code], $language);
+            });
         };
 
         $this->emit('startBatchProgress', $batchProcessor->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
@@ -145,27 +154,31 @@ class Languages extends AuthComponent
     {
         if ($this->anotherJobIsRunning()) return;
 
-        $total = Translation::selectRaw('count(*) as total')->groupBy('language_id')->orderBy('language_id')->pluck('total')->all();
+//        $total = Translation::selectRaw('count(*) as total')->groupBy('language_id')->orderBy('language_id')->pluck('total')->all();
+//
+//        Language::query()->whereDoesntHave('translations')->each(function(Language $language) use (&$total) {
+//                $total[] = -1;
+//        });
+//
+//        $total = count(array_unique($total));
 
-        Language::query()->whereDoesntHave('translations')->each(function(Language $language) use (&$total) {
-                $total[] = -1;
+
+        $batchArray = [
+            new FindMissingTranslationsJob()
+        ];
+
+        $totals = [];
+        $languages = Language::all();
+        $languages->each(function(Language $language) use (&$totals) {
+            $totals[$language->code] = $language->translations()->count();
         });
+        $finally = function () use (&$totals, &$languages) {
+            $languages->each(function(Language $language) use (&$totals) {
+                Translator::notifyAdminImportedMissingTranslations($totals[$language->code], $language);
+            });
+        };
 
-        $total = count(array_unique($total));
-
-        if ($total > 1) {
-            $batchArray = [
-                new FindMissingTranslationsJob()
-            ];
-            $totalTranslationsBefore = Translation::count();
-            $finally = function () use (&$totalTranslationsBefore) {
-                Translator::notifyAdminImportedMissingTranslations($totalTranslationsBefore);
-            };
-
-            $this->emit('startBatchProgress', $batchProcessor->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
-        } else {
-            $this->authUser->notify(new FlashMessage(__('languages::translations.nothing_exported')));
-        }
+        $this->emit('startBatchProgress', $batchProcessor->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
     }
 
 

@@ -106,6 +106,13 @@
                          'showLoader' => '1'
                         ]
                      )
+                    @include('languages::component.button',
+                           [
+                            'clickEvent' => 'approveAllLanguagesTranslations',
+                            'text' => __('languages::translations.button.approve_all_languages', ['language_code' => $this->language->code]),
+                            'showLoader' => '1'
+                           ]
+                        )
                     @endif
         </div>
         @include('languages::component.table', [
