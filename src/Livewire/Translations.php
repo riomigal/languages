@@ -5,6 +5,7 @@ namespace Riomigal\Languages\Livewire;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Log;
+use Riomigal\Languages\Jobs\ApproveLanguagesJob;
 use Riomigal\Languages\Jobs\Batch\BatchProcessor;
 use Riomigal\Languages\Jobs\ExportTranslationJob;
 use Riomigal\Languages\Livewire\Traits\ChecksForRunningJobs;
@@ -12,6 +13,7 @@ use Riomigal\Languages\Models\Language;
 use Riomigal\Languages\Models\Translation;
 use Riomigal\Languages\Models\Translator;
 use Riomigal\Languages\Notifications\FlashMessage;
+use Riomigal\Languages\Services\ApproveLanguagesService;
 use Riomigal\Languages\Services\ExportTranslationService;
 use Riomigal\Languages\Services\OpenAITranslationService;
 
@@ -286,8 +288,8 @@ class Translations extends AuthComponent
     public function approveTranslation(int $id): void
     {
         $translation =  Translation::findOrFail($id);
-        $translation->update($this->approvedTranslationUpdateArray());
-        $this->resetTranslationCache($translation);
+        $translation->update(resolve(ApproveLanguagesService::class)->approvedTranslationUpdateArray($this->authUser->id));
+        resolve(ApproveLanguagesService::class)->resetTranslationCache($translation);
     }
 
     /**
@@ -295,32 +297,51 @@ class Translations extends AuthComponent
      */
     public function approveAllTranslations(): void
     {
-        $this->language->translations()->where('approved', false)
-            ->chunkById(200, function($translations) {
-                Translation::query()->whereIn('id', $translations->pluck('id')->all())->update($this->approvedTranslationUpdateArray());
-                foreach ($translations as $translation) {
-                    $this->resetTranslationCache($translation);
-                }
+        if ($this->anotherJobIsRunning()) return;
+
+        $notApprovedLanguagesTotal = $this->language->translations()->where('approved', false)->count();
+
+        if ($notApprovedLanguagesTotal) {
+            $batchArray = [
+                new ApproveLanguagesJob($this->language, $this->authUser->id)
+            ];
+
+            $language = $this->language;
+            $finally = function () use (&$notApprovedLanguagesTotal, &$language) {
+                Translator::notifyAdminApprovedTranslationsPerLanguage($notApprovedLanguagesTotal, $language);
+            };
+
+            $this->emit('startBatchProgress', resolve(BatchProcessor::class)->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
+        } else {
+            $this->authUser->notify(new FlashMessage(__('languages::translations.nothing_approved')));
+        }
+    }
+
+    public function approveAllLanguagesTranslations(): void
+    {
+        if ($this->anotherJobIsRunning()) return;
+
+        $notApprovedLanguagesTotal = Translation::where('approved', false)->count();
+
+        if ($notApprovedLanguagesTotal) {
+            $languages = Language::all();
+            $batchArray = [];
+            $totals = [];
+            $languages->each(function(Language $language) use (&$batchArray, &$totals) {
+                $batchArray[] = new ApproveLanguagesJob($language, $this->authUser->id);
+                $totals[$language->code] = $language->translations()->where('approved', false)->count();
             });
-    }
 
-    protected function approvedTranslationUpdateArray(): array
-    {
-        return [
-            'approved' => true,
-            'updated_translation' => false,
-            'needs_translation' => false,
-            'old_value' => null,
-            'approved_by' => $this->authUser->id,
-            'previous_updated_by' => null,
-            'previous_approved_by' => null,
-        ];
-    }
+            $finally = function () use (&$totals, &$languages) {
+                $languages->each(function(Language $language) use (&$totals, &$languages) {
+                    Translator::notifyAdminApprovedTranslationsPerLanguage($totals[$language->code], $language);
+                });
+            };
 
-    protected function resetTranslationCache(Translation $translation): void
-    {
-        Translation::unsetCachedTranslation($translation->language_code, $translation->group ?? null, $translation->namespace ?? null);
-        Translation::getCachedTranslations($translation->language_code, $translation->group ?? null, $translation->namespace ?? null);
+            $this->emit('startBatchProgress', resolve(BatchProcessor::class)->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
+        } else {
+            $this->authUser->notify(new FlashMessage(__('languages::translations.nothing_approved')));
+        }
     }
 
     /**

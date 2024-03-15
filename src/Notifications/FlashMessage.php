@@ -2,6 +2,7 @@
 
 namespace Riomigal\Languages\Notifications;
 
+use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
@@ -34,6 +35,7 @@ class FlashMessage extends Notification implements ShouldQueue
     {
         return [
             'message' => $this->message,
+            'date_time' => Carbon::now()->toDateTimeString()
         ];
     }
 

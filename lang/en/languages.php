@@ -27,8 +27,10 @@ return [
         ],
     ],
     'import_languages_success' => 'Import finished. Languages imported: :languages',
-    'import_translations_success' => 'Import finished. Translations imported: :total',
-    'find_missing_translations_success' => 'Import finished. Missing Translations imported: :total',
+    'import_languages_success_nothing_imported' => 'Import finished. No Languages imported.',
+    'import_translations_success' => 'Import (:language_code) finished. Translations imported: :total',
+    'find_missing_translations_success' => 'Import (:language_code) finished. Missing Translations imported: :total',
+    'find_missing_translations_success_nothing_found' => 'Missing Translations Import finished. Nothing to import.',
     'deleted' => 'Language deleted!',
     'created' => 'Language :language created!',
     'info_fallback_language' => 'Your default language (config: app.locale) is: :language. Please make sure that this is the default language to use before importing the languages. Click on "Import Languages" to start using the application.'

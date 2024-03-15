@@ -86,33 +86,35 @@ class Translator extends Authenticatable
                 return in_array($language->id, $existingLanguageIds);
             })->pluck('name')->all();
         Translator::query()->admin()->each(function (Translator $translator) use ($newLanguages) {
-            $translator->notify(new FlashMessage($newLanguages ? __('languages::languages.import_languages_success', ['languages' => implode(', ', $newLanguages)]) . __('languages::global.reload_suggestion') : __('languages::global.import.nothing_imported')));
+            $translator->notify(new FlashMessage($newLanguages ? __('languages::languages.import_languages_success', ['languages' => implode(', ', $newLanguages)]) . __('languages::global.reload_suggestion') : __('languages::languages.import_languages_success_nothing_imported')));
         });
         return $newLanguages;
     }
 
     /**
-     * @param int $totalTranslationsBefore
+     * @param int $total
+     * @param Language $language
      * @return int
      */
-    public static function notifyAdminImportedTranslations(int $totalTranslationsBefore): int
+    public static function notifyAdminImportedTranslations(int $total, Language $language): int
     {
-        $total = Translation::count() - $totalTranslationsBefore;
-        Translator::query()->admin()->each(function (Translator $translator) use ($total) {
-            $translator->notify(new FlashMessage($total ? __('languages::languages.import_translations_success', ['total' => $total]) . __('languages::global.reload_suggestion') : __('languages::global.import.nothing_imported')));
+        $total = $language->translations()->count() - $total;
+        Translator::query()->admin()->each(function (Translator $translator) use ($total, $language) {
+            $translator->notify(new FlashMessage(__('languages::languages.import_translations_success', ['total' => $total, 'language_code' => $language->code]) . __('languages::global.reload_suggestion')));
         });
         return $total;
     }
 
     /**
-     * @param int $totalTranslationsBefore
+     * @param int $total
+     * @param Language $language
      * @return int
      */
-    public static function notifyAdminImportedMissingTranslations(int $totalTranslationsBefore): int
+    public static function notifyAdminImportedMissingTranslations(int $total, Language $language): int
     {
-        $total = Translation::count() - $totalTranslationsBefore;
-        Translator::query()->admin()->where('admin', true)->each(function (Translator $translator) use ($total) {
-            $translator->notify(new FlashMessage($total ? __('languages::languages.find_missing_translations_success', ['total' => $total]) . __('languages::global.reload_suggestion') : __('languages::global.import.nothing_imported')));
+        $total = $language->translations()->count() - $total;
+        Translator::query()->admin()->where('admin', true)->each(function (Translator $translator) use ($total, $language) {
+            $translator->notify(new FlashMessage(__('languages::languages.find_missing_translations_success', ['total' => $total, 'language_code' => $language->code]) . __('languages::global.reload_suggestion')));
         });
         return $total;
     }
@@ -139,6 +141,19 @@ class Translator extends Authenticatable
     {
         Translator::query()->admin()->each(function (Translator $translator) use ($total, $languages) {
             $translator->notify(new FlashMessage($total ? __('languages::translations.export_languages_success', ['languages' => implode(', ', $languages->pluck('name')->all()), 'total' => $total]) . __('languages::global.reload_suggestion') : __('languages::translations.nothing_exported')));
+        });
+        return $total;
+    }
+
+    /**
+     * @param int $total
+     * @param Language $language
+     * @return int
+     */
+    public static function notifyAdminApprovedTranslationsPerLanguage(int $total, Language $language): int
+    {
+        Translator::query()->admin()->each(function (Translator $translator) use ($total, $language) {
+            $translator->notify(new FlashMessage($total ? __('languages::translations.approved_language_success', ['language' => $language->name, 'total' => $total]) . __('languages::global.reload_suggestion') : __('languages::translations.nothing_exported')));
         });
         return $total;
     }

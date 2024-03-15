@@ -43,6 +43,7 @@
                 <div>
                     <div class="text-sm font-normal">
                         <div class="text-sm font-normal">{!! json_decode($notification)->message !!}</div>
+                        <div>{!! json_decode($notification)->date_time ?? '' !!}</div>
                     </div>
                 </div>
             </div>

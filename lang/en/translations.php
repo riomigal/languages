@@ -6,7 +6,8 @@ return [
         'export_all_translations_models' => 'Export All Translated Models',
         'export_translation' => 'Export Language',
         'export_translation_models' => 'Export Translated Models',
-        'approve_all' => 'Approve ALL (:language_code) Translations'
+        'approve_all' => 'Approve (:language_code) Translations',
+        'approve_all_languages' => 'Approve (All Languages) Translations'
     ],
     'title' => 'Translations :language (:code)',
     'checkbox_filter_button' => 'State Filters',
@@ -60,8 +61,11 @@ return [
     'no_translation_example' => 'ATTENTION: This is not an example. There is no translation for this key!',
     'export_language_success' => 'Export finished. Languages exported: :language - Total Exports: :total',
     'export_languages_success' => 'Export finished. Languages exported: :languages - Total Exports: :total',
+    'approved_language_success' => 'Update finished. Languages approved: :language - Total Approved: :total',
+    'approved_languages_success' => 'Update finished. Languages approved: :languages - Total Approved: :total',
     'export_on_other_host_success' => 'Export on :host finished.',
     'export_on_other_host_started' => 'Export on :host started.',
     'export_on_other_host_start_failed' => 'Export on :host couldn\'t start, something went wrong.',
     'nothing_exported' => 'Nothing exported.',
+    'nothing_approved' => 'Nothing approved.',
 ];
