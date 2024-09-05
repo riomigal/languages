@@ -39,9 +39,9 @@ class LanguagesServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        if(Schema::connection(config('languages.db_connection'))->hasTable(config('languages.table_settings'))) {
-            $this->settings = DB::connection(config('languages.db_connection'))->table(config('languages.table_settings'))->first();
-        }
+//        if(Schema::connection(config('languages.db_connection'))->hasTable(config('languages.table_settings'))) {
+//            $this->settings = DB::connection(config('languages.db_connection'))->table(config('languages.table_settings'))->first();
+//        }
         $this->publishes([
             __DIR__ . '/../config/languages.php' => config_path('languages.php'),
             __DIR__ . '/../config/openai.php' => config_path('openai.php') // Creates an open ai config
