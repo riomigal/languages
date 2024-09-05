@@ -161,9 +161,7 @@ class ExportTranslationService
                 ->where('type', '=', 'model')
                 ->isUpdated(false)
                 ->approved()
-                ->when(!$this->forceExportAll, function($query) {
-                    $query->exported(false);
-                })
+                ->exported(false)
                 ->chunkById(200, function ($translations) use ($language) {
                     foreach ($translations as $translation) {
                         if ($this->batch) {
