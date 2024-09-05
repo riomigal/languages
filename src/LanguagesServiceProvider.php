@@ -2,10 +2,7 @@
 
 namespace Riomigal\Languages;
 
-use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
 use Riomigal\Languages\Console\Commands\DeveloperDownloadToLocalCommand;
@@ -39,9 +36,9 @@ class LanguagesServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        if(Schema::connection(config('languages.db_connection'))->hasTable(config('languages.table_settings'))) {
-            $this->settings = DB::connection(config('languages.db_connection'))->table(config('languages.table_settings'))->first();
-        }
+//        if(Schema::connection(config('languages.db_connection'))->hasTable(config('languages.table_settings'))) {
+//            $this->settings = DB::connection(config('languages.db_connection'))->table(config('languages.table_settings'))->first();
+//        }
         $this->publishes([
             __DIR__ . '/../config/languages.php' => config_path('languages.php'),
             __DIR__ . '/../config/openai.php' => config_path('openai.php') // Creates an open ai config
