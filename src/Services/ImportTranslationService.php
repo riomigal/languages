@@ -208,9 +208,10 @@ class ImportTranslationService
                     $content = json_decode(File::get($file->getRealPath()), true);
                     $sharedRelativePathname = str_replace($this->language->code . '.json', $this->languagePlaceholder . '.json', $relativePathname);
                 } else {
-                    $group = str_replace('.' . $type, '', substr($relativePathname, 4));
+                    $offset = strlen($this->language->code) + 2;
+                    $group = str_replace('.' . $type, '', substr($relativePathname, $offset));
                     $content = require($file->getRealPath());
-                    $sharedRelativePathname = $this->languagePlaceholder . substr($relativePathname, 2);
+                    $sharedRelativePathname = $this->languagePlaceholder . substr($relativePathname, $offset);
                 }
 
                 if (!is_array($content)) {
