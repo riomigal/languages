@@ -1,3 +1,4 @@
+@php use Illuminate\Support\Str; @endphp
 <div class="relative overflow-x-auto">
     <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
         <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
@@ -26,7 +27,7 @@
                         @elseif(is_bool($item->{$field}))
                             @include('languages::component.boolean-icon', ['boolean' => $item->{$field}])
                         @else
-                            <p>{{ trim($item->{$field}) }}</p>
+                            <p class="min-w-16">{{ Str::limit(trim($item->{$field}), 100) }}</p>
                         @endif
                     </td>
                 @endforeach

@@ -157,4 +157,16 @@ class Translator extends Authenticatable
         });
         return $total;
     }
+
+    /**
+     * @param Translation $translation
+     * @return Translation
+     */
+    public static function notifyAdminUpdatedAllLanguages(Translation $translation): Translation
+    {
+        Translator::query()->admin()->each(function (Translator $translator) use ($translation) {
+            $translator->notify(new FlashMessage(__('languages::translations.updated_all_languages', ['translation_id' => $translation->id]) . ' ' . __('languages::global.reload_suggestion')));
+        });
+        return $translation;
+    }
 }
