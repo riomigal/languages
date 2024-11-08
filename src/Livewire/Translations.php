@@ -4,10 +4,12 @@ namespace Riomigal\Languages\Livewire;
 
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Riomigal\Languages\Jobs\ApproveLanguagesJob;
 use Riomigal\Languages\Jobs\Batch\BatchProcessor;
 use Riomigal\Languages\Jobs\ExportTranslationJob;
+use Riomigal\Languages\Jobs\UpdateTranslationJob;
 use Riomigal\Languages\Livewire\Traits\ChecksForRunningJobs;
 use Riomigal\Languages\Models\Language;
 use Riomigal\Languages\Models\Translation;
@@ -35,6 +37,11 @@ class Translations extends AuthComponent
      * @var Translation|null
      */
     public Translation|null $translationExample = null;
+
+    /**
+     * @var Collection|\Illuminate\Database\Eloquent\Collection|null
+     */
+    public Collection|\Illuminate\Database\Eloquent\Collection|null $translationExamples = null;
 
     /**
      * @var array
@@ -150,6 +157,7 @@ class Translations extends AuthComponent
                     $query->where(
                         'namespace', 'LIKE', '%' . $this->search . '%'
                     )
+                        ->orWhere('id', 'LIKE', '%' . $this->search . '%')
                         ->orWhere('group', 'LIKE', '%' . $this->search . '%')
                         ->orWhere('key', 'LIKE', '%' . $this->search . '%')
                         ->orWhere('value', 'LIKE', '%' . $this->search . '%')
@@ -198,8 +206,11 @@ class Translations extends AuthComponent
     public function showTranslateModal(int $id): void
     {
         $this->translation = Translation::findOrFail($id);
-        $this->translationExample = Translation::where('shared_identifier', $this->translation->shared_identifier)
-            ->where('language_id', $this->translateLanguageExampleId)->first();
+        $this->translationExamples = Translation::where('shared_identifier', $this->translation->shared_identifier)->get();
+        if(!$this->isAdministrator) {
+            $this->translationExamples->where('language_id', $this->authUser->languages->pluck('id')->all());
+        }
+        $this->translationExample = $this->translationExamples->where('language_id', $this->translateLanguageExampleId)->first();
         $this->openAiTranslateLanguageId = $this->translateLanguageExampleId;
         if (!$this->translationExample || !$this->translationExample->value) {
             $this->translationExample = Translation::where('shared_identifier', $this->translation->shared_identifier)
@@ -260,7 +271,32 @@ class Translations extends AuthComponent
     /**
      * @return void
      */
-    public function updateTranslation(): void
+    public function updateAllTranslations(OpenAITranslationService $openAITranslationService): void
+    {
+        if ($this->translation->value != $this->translatedValue) {
+            $rootLanguage = $this->translation->language;
+            $batchArray = [];
+            $this->translationExamples->each(function(Translation $translation) use ($openAITranslationService, $rootLanguage, &$batchArray) {
+                $batchArray[] = new UpdateTranslationJob($rootLanguage, $translation, $this->translatedValue, $this->authUser);
+            });
+
+
+            $translation = $this->translation;
+            $finally = function () use ($translation) {
+                Translator::notifyAdminUpdatedAllLanguages($translation);
+            };
+
+            $this->updateTranslation(false);
+            $this->emit('startBatchProgress', resolve(BatchProcessor::class)->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
+        }
+    }
+
+
+    /**
+     * @param bool $showSuccess
+     * @return void
+     */
+    public function updateTranslation(bool $showSuccess = true): void
     {
         if ($this->translation->value != $this->translatedValue) {
             $this->translation->exported = false;
@@ -277,7 +313,9 @@ class Translations extends AuthComponent
             $this->translation->approved = false;
             $this->translation->save();
             $this->hideTranslationModal();
-            $this->emit('showToast', __('languages::translations.update_success_message'), LanguagesToastMessage::MESSAGE_TYPES['SUCCESS'], 4000);
+            if($showSuccess) {
+                $this->emit('showToast', __('languages::translations.update_success_message'), LanguagesToastMessage::MESSAGE_TYPES['SUCCESS'], 4000);
+            }
         }
     }
 
