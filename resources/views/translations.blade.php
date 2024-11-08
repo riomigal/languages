@@ -117,6 +117,7 @@
         </div>
         @include('languages::component.table', [
                       'thead' => [
+                       'id',
                       __('languages::translations.table.head.is_vendor'),
                       __('languages::translations.table.head.namespace'),
                        __('languages::translations.table.head.group'),
@@ -130,7 +131,7 @@
                        __('languages::translations.table.head.content'),
                        __('languages::translations.table.head.old_content')
                        ],
-                       'tbody' => ['is_vendor', 'namespace', 'group', 'needs_translation', 'approved', 'approver', 'updated_translation', 'updater', 'exported', 'key', 'value', 'old_value'],
+                       'tbody' => ['id', 'is_vendor', 'namespace', 'group', 'needs_translation', 'approved', 'approver', 'updated_translation', 'updater', 'exported', 'key', 'value', 'old_value'],
                        'action' => ['translate', 'approve_translation', 'needs_translation', 'restore_needs_translation', 'restore_translation'],
                   ])
         <div>
@@ -139,8 +140,8 @@
     </div>
     {{--    Modal --}}
     <div wire:ignore.self id="edit-translation-modal" tabindex="-1" aria-hidden="true"
-         class="hidden w-full overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-modal md:h-full">
-        <div class="relative p-4 w-full max-w-3xl h-full md:h-auto max-w-4xl">
+         class="hidden w-full overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center md:inset-0 h-modal h-screen">
+        <div class="relative p-4 w-full h-screen md:h-auto">
             <!-- Modal content -->
             <div class="relative p-4 bg-white rounded-lg shadow dark:bg-gray-800 sm:p-5">
                 <div
@@ -162,7 +163,14 @@
                         <span class="sr-only">Close modal</span>
                     </button>
                 </div>
-                <div class="w-full flex flex-wrap gap-4 text-md">
+                <button disabled type="button" class="py-2.5 px-5 me-2 text-sm font-medium text-gray-900 bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 inline-flex items-center" wire:loading>
+                    <svg aria-hidden="true" role="status" class="inline w-4 h-4 me-3 text-gray-200 animate-spin dark:text-gray-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/>
+                        <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="#1C64F2"/>
+                    </svg>
+                    Loading...
+                </button>
+                <div class="w-full flex flex-wrap gap-4 text-md" wire:loading.remove>
                     <div class="w-1/1">
                         @if($translationExample)
                             <p class="w-full mb-3 font-light text-gray-500 dark:text-gray-400">{!! $translationExample->value ?: "<span style='color:red'>" . __('languages::translations.no_translation_example') . "</span>" !!}</p>
@@ -191,7 +199,15 @@
                                 {{ __('languages::translations.action_update')}}
                             </button>
                         </div>
-                        @if($this->translationExample?->value && Setting::getCached()->enable_open_ai_translations)
+                        @if(Setting::getCached()->enable_open_ai_translations && $this->language->code === config('app.locale'))
+                            <div class="flex items-center justify-between px-3 py-2 border-t dark:border-gray-600">
+                                <button type="submit" wire:click.prevent="updateAllTranslations" wire:loading.remove wire:target="openAITranslate"
+                                        class="inline-flex items-center py-2.5 px-4 text-xs font-medium text-center text-white bg-blue-700 rounded-lg focus:ring-4 focus:ring-blue-200 dark:focus:ring-blue-900 hover:bg-blue-800">
+                                    {{ __('languages::translations.action_update_and_translate_others')}}
+                                </button>
+                            </div>
+                        @endif
+                        @if($this->translationExample?->value && Setting::getCached()->enable_open_ai_translations && $this->language->code !== config('app.locale'))
                             <div class="flex items-center justify-between px-3 py-2 border-t dark:border-gray-600">
                                 <button type="submit" wire:click.prevent="openAITranslate" wire:loading.remove wire:target="openAITranslate"
                                         class="inline-flex items-center py-2.5 px-4 text-xs font-medium text-center text-white bg-blue-700 rounded-lg focus:ring-4 focus:ring-blue-200 dark:focus:ring-blue-900 hover:bg-blue-800">
@@ -199,6 +215,31 @@
                                 </button>
                             </div>
                         @endif
+                    </div>
+                    <div class="w-full flex flex-wrap gap-5">
+                        @foreach($this->translationExamples?->whereNotIn('language_code', [$this->language->code, config('app.locale')]) ?? [] as $transExample)
+                            <div x-data="{ open: false }" class="relative">
+                                <!-- Button to toggle dropdown -->
+                                <button id="dropdownBtnLangTrans{{$transExample->shared_identifier}}{{$transExample->language_id}}"
+                                        @click="open = !open"
+                                        class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800" type="button">
+                                    {{$transExample->language_code }}
+                                    <svg class="w-2.5 h-2.5 ms-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/>
+                                    </svg>
+                                </button>
+
+                                <!-- Dropdown menu -->
+                                <div x-show="open" x-transition
+                                     class="z-50 w-full max-h-60 overflow-y-auto rounded-lg shadow-lg bg-white dark:bg-gray-700"
+                                     style="display: none;">
+                                    <p class="p-1 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownBtnLangTrans{{$transExample->shared_identifier}}{{$transExample->language_id}}">
+                                        {!! $transExample->value ?: "<span style='color:red'>" . __('languages::translations.no_translation_example') . "</span>" !!}
+                                    </p>
+                                </div>
+                            </div>
+
+                        @endforeach
                     </div>
                 </div>
             </div>

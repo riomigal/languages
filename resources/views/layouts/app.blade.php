@@ -24,7 +24,7 @@
         <a href="{{ route('languages.translators') }}" class="flex items-center">
             <span class="self-center text-xl font-semibold whitespace-nowrap dark:text-white">{{__('languages::navbar.brand')}}</span>
         </a>
-        <span class="dark:text-white">v 1.7.8</span>
+        <span class="dark:text-white">v 1.7.9</span>
         <div class="flex items-center md:order-2">
             <button id="theme-toggle" type="button"
                     class="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm p-2.5">
