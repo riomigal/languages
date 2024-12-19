@@ -98,6 +98,9 @@ trait CanExportTranslation
                 $content = json_decode(File::get($fullPath), true);
             }
         }
+        if(!is_array($content)) {
+            $content = [];
+        }
 
         foreach ($translations as $key => $value) {
             $content[$key] = $value;
