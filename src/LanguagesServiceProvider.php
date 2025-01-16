@@ -39,6 +39,9 @@ class LanguagesServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if(!config('languages.enabled')) {
+            return;
+        }
 //        if(Schema::connection(config('languages.db_connection'))->hasTable(config('languages.table_settings'))) {
 //            $this->settings = DB::connection(config('languages.db_connection'))->table(config('languages.table_settings'))->first();
 //        }
@@ -74,6 +77,9 @@ class LanguagesServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        if(!config('languages.enabled')) {
+            return;
+        }
         $this->app->singleton(OpenAITranslationService::class, function () {
             return new OpenAITranslationService();
         });
