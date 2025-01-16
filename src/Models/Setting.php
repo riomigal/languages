@@ -70,6 +70,7 @@ class Setting extends Model
     public static function getFreshCached(): Setting
     {
         Cache::forget(config('languages.cache_key') . '_settings');
+        Cache::forget(config('languages.cache_key') . '_has_db_loader_on');
         return self::getCached();
     }
 
