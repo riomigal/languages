@@ -2,6 +2,7 @@
 
 namespace Riomigal\Languages;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Translation\TranslationServiceProvider;
@@ -57,7 +58,10 @@ class LanguagesTranslatorServiceProvider extends TranslationServiceProvider
      */
     protected function loadTranslationsArray(): void
     {
-        if(Schema::connection(config('languages.db_connection'))->hasTable(config('languages.table_settings')) && DB::connection(config('languages.db_connection'))->table(config('languages.table_settings'))->first()->db_loader) {
+        $hasDBLoaderOn = Cache::rememberForever(config('languages.cache_key') . '_has_db_loader_on', function () {
+            return Schema::connection(config('languages.db_connection'))->hasTable(config('languages.table_settings')) && DB::connection(config('languages.db_connection'))->table(config('languages.table_settings'))->first()->db_loader;
+        });
+        if($hasDBLoaderOn) {
             $this->app->singleton('translation.loader', function ($app) {
                 return new TranslationLoader($app['files'], $app['path.lang']);
             });
