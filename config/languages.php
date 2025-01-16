@@ -4,6 +4,15 @@
  * Stores the config of the languages package
  */
 return [
+    /*
+      |--------------------------------------------------------------------------
+      | Disable
+      |--------------------------------------------------------------------------
+      |
+      | If handling translations on multiple server add here your primary server.
+      | This will also be the primary entry for developer DB content download
+      */
+    'enabled' => env('LANGUAGES_ENABLED', true),
 
     /*
    |--------------------------------------------------------------------------
