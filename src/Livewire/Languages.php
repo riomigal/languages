@@ -4,12 +4,14 @@ namespace Riomigal\Languages\Livewire;
 
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\Client\Pool;
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\Rule;
 use Riomigal\Languages\Jobs\ApproveLanguagesJob;
 use Riomigal\Languages\Jobs\Batch\BatchProcessor;
+use Riomigal\Languages\Jobs\ExportTranslationJob;
 use Riomigal\Languages\Jobs\FindMissingTranslationsJob;
 use Riomigal\Languages\Jobs\ImportLanguagesJob;
 use Riomigal\Languages\Jobs\ImportTranslationsJob;
@@ -19,6 +21,8 @@ use Riomigal\Languages\Models\Setting;
 use Riomigal\Languages\Models\Translation;
 use Riomigal\Languages\Models\Translator;
 use Riomigal\Languages\Notifications\FlashMessage;
+use Riomigal\Languages\Services\BatchService;
+use Riomigal\Languages\Services\ExportTranslationService;
 
 class Languages extends AuthComponent
 {
@@ -73,12 +77,22 @@ class Languages extends AuthComponent
 
     public function deleteJobs(): bool
     {
-        $jobs = DB::table('jobs')->where('queue', config('languages.queue_name'))
-                ->delete();
-        $batches = DB::table('job_batches')->where('name', config('languages.batch_name'))
-                ->whereNull('cancelled_at')
-                ->whereNull('finished_at')
-                ->delete();
+        [$jobs, $batches] = resolve(BatchService::class)->deleteBatches();
+
+        $hosts = array_filter(explode(',', Setting::getDomains()));
+
+        if($hosts) {
+            $hosts = array_diff($hosts, [request()->getSchemeAndHttpHost()]);
+            $path = route('languages.api.cancel-batch', [], false);
+            Http::pool(function (Pool $pool) use ($hosts, $path) {
+                $poolArray = [];
+                foreach($hosts as $host) {
+                    $poolArray[] = $pool->post($host . $path, ['api_key' => config('languages.api_shared_api_key')]);
+                }
+                return $poolArray;
+            });
+        }
+
         if (($jobs + $batches)) {
             $this->emit('showToast', __('languages::global.jobs.delete_success', ['batches' => $batches, 'jobs' => $jobs]), LanguagesToastMessage::MESSAGE_TYPES['SUCCESS']);
             $this->emit('startBatchProgress', null);
@@ -129,7 +143,10 @@ class Languages extends AuthComponent
         ];
 
         $totals = [];
-        $languages = Language::all();
+        $languages = Language::query()
+            ->when(Setting::getCached()->import_only_from_root_language, function($query) {
+                $query->where('code', config('app.locale'));
+            })->get();
         $languages->each(function(Language $language) use (&$totals) {
             $totals[$language->code] = $language->translations()->count();
         });
@@ -154,15 +171,6 @@ class Languages extends AuthComponent
     {
         if ($this->anotherJobIsRunning()) return;
 
-//        $total = Translation::selectRaw('count(*) as total')->groupBy('language_id')->orderBy('language_id')->pluck('total')->all();
-//
-//        Language::query()->whereDoesntHave('translations')->each(function(Language $language) use (&$total) {
-//                $total[] = -1;
-//        });
-//
-//        $total = count(array_unique($total));
-
-
         $batchArray = [
             new FindMissingTranslationsJob()
         ];
@@ -179,6 +187,77 @@ class Languages extends AuthComponent
         };
 
         $this->emit('startBatchProgress', $batchProcessor->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
+    }
+
+    /**
+     * @return void
+     */
+    public function approveAllLanguagesTranslations(): void
+    {
+        if ($this->anotherJobIsRunning()) return;
+
+        $notApprovedLanguagesTotal = Translation::where('approved', false)->count();
+
+        if ($notApprovedLanguagesTotal) {
+            $languages = Language::all();
+            $batchArray = [];
+            $totals = [];
+            $languages->each(function(Language $language) use (&$batchArray, &$totals) {
+                $batchArray[] = new ApproveLanguagesJob($language, $this->authUser->id);
+                $totals[$language->code] = $language->translations()->where('approved', false)->count();
+            });
+
+            $finally = function () use (&$totals, &$languages) {
+                $languages->each(function(Language $language) use (&$totals, &$languages) {
+                    Translator::notifyAdminApprovedTranslationsPerLanguage($totals[$language->code], $language);
+                });
+            };
+
+            $this->emit('startBatchProgress', resolve(BatchProcessor::class)->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
+        } else {
+            $this->authUser->notify(new FlashMessage(__('languages::translations.nothing_approved')));
+        }
+    }
+
+    /**
+     * @param bool $exportOnlyModels
+     * @return void
+     */
+    public function exportTranslationsForAllLanguages(bool $exportOnlyModels = false): void
+    {
+        if ($this->anotherJobIsRunning()) return;
+
+        $languages = Language::find(Translation::query()
+            ->isUpdated(false)->exported(false)
+            ->when($exportOnlyModels, function($query) {
+                $query->type('model');
+            })
+            ->approved()->distinct()->pluck('language_id')->toArray());
+
+        if ($languages->count() > 0) {
+
+            $batchArray = [];
+            $languages->each(function (Language $language) use (&$batchArray) {
+                $batchArray[] = new ExportTranslationJob($language);
+            });
+
+            $total = Translation::query()
+                ->isUpdated(false)->exported(false)
+                ->when($exportOnlyModels, function($query) {
+                    $query->type('model');
+                })
+                ->approved()
+                ->count();
+
+            $finally = function () use (&$total, &$languages) {
+                Translator::notifyAdminExportedTranslationsAllLanguages($total, $languages);
+                resolve(ExportTranslationService::class)->exportTranslationsOnOtherHosts();
+            };
+            $this->emit('startBatchProgress', resolve(BatchProcessor::class)->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
+
+        } else {
+            $this->authUser->notify(new FlashMessage(__('languages::translations.nothing_exported')));
+        }
     }
 
 

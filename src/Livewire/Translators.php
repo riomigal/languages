@@ -99,7 +99,7 @@ class Translators extends AuthComponent
      */
     public function getRules(): array
     {
-        return [
+        $rules = [
             'email' => ['required', 'email', Rule::unique(config('languages.db_connection') . '.' . config('languages.table_translators'), 'email')->ignore(($this->translator) ? $this->translator->id : 0)],
             'phone' => ['nullable', 'string', Rule::unique(config('languages.db_connection') . '.' . config('languages.table_translators'), 'phone')->ignore(($this->translator) ? $this->translator->id : 0)],
             'admin' => 'nullable|bool',
@@ -107,8 +107,15 @@ class Translators extends AuthComponent
             'last_name' => 'required|string|min:2',
             'password' => 'required|min:8',
             'password_confirmation' => 'required|same:password',
-            'languages' => 'required|array'
         ];
+
+        if ($this->admin === false) {
+            $rules['languages'] = 'required|array';
+        } else {
+            $rules['languages'] = 'nullable|array';
+        }
+
+        return $rules;
     }
 
     /**

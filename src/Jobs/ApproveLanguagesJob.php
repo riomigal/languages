@@ -9,7 +9,7 @@ use Riomigal\Languages\Services\ApproveLanguagesService;
 class ApproveLanguagesJob extends BaseJob
 {
     public function __construct(
-        protected Language                 $language,
+        protected Language $language,
         protected int $authUserId
     )
     {

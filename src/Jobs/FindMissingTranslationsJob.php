@@ -9,6 +9,7 @@ class FindMissingTranslationsJob extends BaseJob
 {
     /**
      * @return void
+     * @throws \Riomigal\Languages\Exceptions\MassCreateTranslationsException
      */
     public function handle(): void
     {

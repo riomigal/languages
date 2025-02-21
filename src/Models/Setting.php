@@ -22,7 +22,10 @@ class Setting extends Model
         'enable_pending_notifications',
         'enable_automatic_pending_notifications',
         'enable_open_ai_translations',
-        'process_running'
+        'process_running',
+        'domains',
+        'import_only_from_root_language',
+        'allow_deleting_languages',
     ];
 
     /**
@@ -35,6 +38,8 @@ class Setting extends Model
         'enable_automatic_pending_notifications' => 'boolean',
         'enable_open_ai_translations' => 'boolean',
         'process_running' => 'boolean',
+        'import_only_from_root_language' => 'boolean',
+        'allow_deleting_languages' => 'boolean',
     ];
 
     /**
@@ -80,5 +85,10 @@ class Setting extends Model
         $setting->process_running = $value;
         $setting->save();
         return $setting;
+    }
+
+    public static function getDomains(): ?string
+    {
+        return Setting::getCached()->domains ?? config('languages.multiple_db_hosts');
     }
 }

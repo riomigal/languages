@@ -45,7 +45,7 @@ class ImportTranslations extends Command
 
             $this->info('Importing translations...');
             $importTranslationService->importTranslations();
-            Translator::notifyAdminImportedTranslations($totalTranslationsBefore);
+//            Translator::notifyAdminImportedTranslations($totalTranslationsBefore);
             $total = Translation::count() - $totalTranslationsBefore;
             $this->info('New translations imported: ' . $total . '.');
 

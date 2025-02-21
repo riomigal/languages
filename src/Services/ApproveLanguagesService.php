@@ -10,7 +10,7 @@ class ApproveLanguagesService
     public function approveLanguages(Language $language, int $authUserId): void {
 
         $language->translations()->where('approved', false)
-            ->chunkById(50, function($translations) use ($authUserId) {
+            ->chunkById(100, function($translations) use ($authUserId) {
                 Translation::query()->whereIn('id', $translations->pluck('id')->all())->update($this->approvedTranslationUpdateArray($authUserId));
                 foreach ($translations as $translation) {
                     $this->resetTranslationCache($translation);
@@ -34,6 +34,6 @@ class ApproveLanguagesService
     public function resetTranslationCache(Translation $translation): void
     {
         Translation::unsetCachedTranslation($translation->language_code, $translation->group ?? null, $translation->namespace ?? null);
-        Translation::getCachedTranslations($translation->language_code, $translation->group ?? null, $translation->namespace ?? null);
+//        Translation::getCachedTranslations($translation->language_code, $translation->group ?? null, $translation->namespace ?? null);
     }
 }

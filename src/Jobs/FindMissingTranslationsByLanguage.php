@@ -20,7 +20,7 @@ class FindMissingTranslationsByLanguage extends BaseJob
 
     /**
      * @return void
-     * @throws \Exception
+     * @throws \Riomigal\Languages\Exceptions\MassCreateTranslationsException
      */
     public function handle(): void
     {

@@ -21,51 +21,21 @@ class ImportTranslationService
 {
     use CanCreateTranslation;
 
-    /**
-     * @var null|Batch
-     */
     protected null|Batch $batch = null;
 
-    /**
-     * @var string
-     */
     protected string $root;
 
-    /**
-     * @var string
-     */
     protected string $namespace = '';
 
-    /**
-     * @var Collection
-     */
     protected Collection $languages;
 
-    /**
-     * @var Language
-     */
     protected Language $language;
 
-    /**
-     * @var \SplFileInfo
-     */
     protected \SplFileInfo $file;
-
-    /**
-     * @var bool
-     */
     protected bool $isVendor = false;
-
-    /**
-     * @var string
-     */
     protected string $languagePlaceholder = '{language}';
 
     /**
-     * Imports translations
-     *
-     * @param Batch|null $batch
-     * @return void
      * @throws ImportTranslationsException
      */
     public function importTranslations(null|Batch $batch = null): void
@@ -74,18 +44,17 @@ class ImportTranslationService
             $this->batch = $batch;
         }
 
-        // Get all languages
-        $this->languages = Language::query()->get();
+        $this->languages = Language::query()
+            ->when(Setting::getCached()->import_only_from_root_language, function($query) {
+                $query->where('code', config('app.locale'));
+            })->get();
 
-        // Create root lang and vendor directory if missing
         $this->createMissingDirectory(App::langPath());
         $this->createMissingDirectory(App::langPath('vendor'));
 
-        // Imports app translations
         $this->root = App::langPath();
         $this->importFromRoot();
 
-        // Imports vendor translations
         $this->importVendorTranslations();
 
         // Imports model translations
@@ -117,9 +86,12 @@ class ImportTranslationService
                             }
                         }
                         if ($this->batch) {
-                            $this->batch->add(new MassCreateTranslationsJob($content[$languageCode], '', 'model', $language->id, $language->code, $this->namespace,  $modelClass, $this->isVendor));
+                            $this->massCreateTranslations($content[$languageCode],  'model', $language->id, $language->code, $this->namespace,  $modelClass, $this->isVendor);
+
+                            //Inefficient can be removed
+//                            $this->batch->add(new MassCreateTranslationsJob($content[$languageCode],'model', $language->id, $language->code, $this->namespace,  $modelClass, $this->isVendor));
                         } else {
-                            $this->massCreateTranslations($content[$languageCode], '', 'model', $language->id, $language->code, $this->namespace,  $modelClass, $this->isVendor);
+                            $this->massCreateTranslations($content[$languageCode],  'model', $language->id, $language->code, $this->namespace,  $modelClass, $this->isVendor);
                         }
                     }
                 }
@@ -187,14 +159,12 @@ class ImportTranslationService
     }
 
     /**
-     * @param string $root
-     * @param \SplFileInfo $file
-     * @return void
      * @throws ImportTranslationsException
      */
     protected function generateContent(string $root, \SplFileInfo $file): void
     {
         try {
+            $languageHelper = resolve(LanguageHelper::class);
             if(File::exists($file->getRealPath())) {
                 $relativePathname = str_replace($root, '', $file->getRealPath());
                 $relativePath = File::dirname($relativePathname);
@@ -206,12 +176,10 @@ class ImportTranslationService
                 if ($type == 'json') {
                     $group = '';
                     $content = json_decode(File::get($file->getRealPath()), true);
-                    $sharedRelativePathname = str_replace($this->language->code . '.json', $this->languagePlaceholder . '.json', $relativePathname);
                 } else {
                     $offset = strlen($this->language->code) + 2;
                     $group = str_replace('.' . $type, '', substr($relativePathname, $offset));
                     $content = require($file->getRealPath());
-                    $sharedRelativePathname = $this->languagePlaceholder . substr($relativePathname, $offset);
                 }
 
                 if (!is_array($content)) {
@@ -223,11 +191,13 @@ class ImportTranslationService
                 }
 
                 if (count($content) > 0) {
-                    $content = resolve(LanguageHelper::class)->array_convert_keys_to_dot_notation($content);
+                    $content = $languageHelper->array_convert_keys_to_dot_notation($content);
                     if ($this->batch) {
-                        $this->batch->add(new MassCreateTranslationsJob($content, $sharedRelativePathname, $type, $this->language->id, $this->language->code, $this->namespace, $group, $this->isVendor));
+                        $this->massCreateTranslations($content, $type, $this->language->id, $this->language->code, $this->namespace, $group, $this->isVendor);
+                        // Inefficient can be removed
+//                        $this->batch->add(new MassCreateTranslationsJob($content, $type, $this->language->id, $this->language->code, $this->namespace, $group, $this->isVendor));
                     } else {
-                        $this->massCreateTranslations($content, $sharedRelativePathname, $type, $this->language->id, $this->language->code, $this->namespace, $group, $this->isVendor);
+                        $this->massCreateTranslations($content, $type, $this->language->id, $this->language->code, $this->namespace, $group, $this->isVendor);
                     }
                 }
             }

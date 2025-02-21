@@ -4,14 +4,12 @@ namespace Riomigal\Languages\Services;
 
 use Illuminate\Bus\Batch;
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Riomigal\Languages\Exceptions\ExportTranslationException;
-use Riomigal\Languages\Jobs\ExportUpdatedModelTranslation;
-use Riomigal\Languages\Jobs\ExportUpdatedTranslation;
 use Riomigal\Languages\Models\Language;
+use Riomigal\Languages\Models\Setting;
 use Riomigal\Languages\Models\Translation;
 use Riomigal\Languages\Models\Translator;
 use Riomigal\Languages\Notifications\FlashMessage;
@@ -38,7 +36,7 @@ class ExportTranslationService
 
     public function exportTranslationsOnOtherHosts(): void
     {
-        $hosts = explode(',', config('languages.multiple_db_hosts'));
+        $hosts = explode(',', Setting::getDomains());
         if(count($hosts) < 1) return;
 
         $hosts = array_diff($hosts, [request()->getSchemeAndHttpHost()]);
@@ -73,7 +71,7 @@ class ExportTranslationService
     }
 
 
-    /**
+    /**p
      * @param Language $language
      * @param Batch|null $batch
      * @param bool $exportOnlyModels
@@ -123,7 +121,9 @@ class ExportTranslationService
                 ->chunk(200, function ($translations) use ($language) {
                     foreach ($translations as $translation) {
                         if ($this->batch) {
-                            $this->batch->add([new ExportUpdatedTranslation($translation->type, $language->code, $translation->is_vendor, $translation->namespace, $translation->group, $this->forceExportAll)]);
+                            $this->updateTranslation($translation->type, $language->code, $translation->is_vendor, $translation->namespace, $translation->group, $this->forceExportAll);
+
+//                            $this->batch->add([new ExportUpdatedTranslation($translation->type, $language->code, $translation->is_vendor, $translation->namespace, $translation->group, $this->forceExportAll)]);
                         } else {
                             $this->updateTranslation($translation->type, $language->code, $translation->is_vendor, $translation->namespace, $translation->group, $this->forceExportAll);
                         }
@@ -154,7 +154,6 @@ class ExportTranslationService
             $this->batch = $batch;
         }
         try {
-            DB::beginTransaction();
             Translation::query()
                 ->select('id', 'namespace', 'group', 'key', 'value')
                 ->where('language_id', $language->id)
@@ -167,15 +166,14 @@ class ExportTranslationService
                 ->chunkById(200, function ($translations) use ($language) {
                     foreach ($translations as $translation) {
                         if ($this->batch) {
-                            $this->batch->add(new ExportUpdatedModelTranslation($translation->id, $language->code));
+                            $this->updateModelTranslation($translation, $language->code);
+//                            $this->batch->add(new ExportUpdatedModelTranslation($translation->id, $language->code));
                         } else {
                             $this->updateModelTranslation($translation, $language->code);
                         }
                     }
                 });
-            DB::commit();
         } catch(\Exception $e) {
-            DB::rollBack();
             throw $e;
         }
     }
