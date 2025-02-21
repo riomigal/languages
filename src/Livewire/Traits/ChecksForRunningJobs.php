@@ -6,6 +6,7 @@ use Illuminate\Http\Client\Pool;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Riomigal\Languages\Livewire\LanguagesToastMessage;
+use Riomigal\Languages\Models\Setting;
 
 trait ChecksForRunningJobs
 {
@@ -25,7 +26,7 @@ trait ChecksForRunningJobs
             return true;
         }
 
-        $hosts = array_filter(explode(',', config('languages.multiple_db_hosts')));
+        $hosts = array_filter(explode(',', Setting::getDomains()));
 
         if($hosts) {
             $hosts = array_diff($hosts, [request()->getSchemeAndHttpHost()]);

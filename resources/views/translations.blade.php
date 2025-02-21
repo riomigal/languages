@@ -24,7 +24,7 @@
                [
                    'id' => 'translations_select_type',
                    'text' =>__('languages::translations.filter.type'),
-                   'model' => 'types',
+                   'name' => 'types',
                    'data' => [
                        'php' => __('languages::translations.filter.type_selection.php'),
                        'json' => __('languages::translations.filter.type_selection.json'),
@@ -36,14 +36,14 @@
                [
                    'id' => 'translations_select_updated_by',
                    'text' =>__('languages::translations.filter.updated_by'),
-                   'model' => 'updatedBy',
+                   'name' => 'updatedBy',
                    'data' => $this->translators
                   ])
             @include('languages::component.select-checkbox-multiple',
                [
                    'id' => 'translations_select_updated_by',
                    'text' =>__('languages::translations.filter.approved_by'),
-                   'model' => 'approvedBy',
+                   'name' => 'approvedBy',
                    'data' => $this->translators
                   ])
 
@@ -81,24 +81,6 @@
                     @endif
 
 
-                    @if(!Setting::getCached()->db_loader)
-                        @include('languages::component.button',
-                          [
-                          'clickEvent' => 'exportTranslationsForAllLanguages',
-                           'text' => __('languages::translations.button.export_all_translations'),
-                           'showLoader' => '1'
-                          ]
-                        )
-                    @else
-                        @include('languages::component.button',
-                          [
-                            'clickEvent' => 'exportTranslationsForAllLanguages("1")',
-                            'text' => __('languages::translations.button.export_all_translations_models'),
-                            'showLoader' => '1'
-                          ]
-                        )
-                    @endif
-
                     @include('languages::component.button',
                         [
                          'clickEvent' => 'approveAllTranslations',
@@ -106,13 +88,6 @@
                          'showLoader' => '1'
                         ]
                      )
-                    @include('languages::component.button',
-                           [
-                            'clickEvent' => 'approveAllLanguagesTranslations',
-                            'text' => __('languages::translations.button.approve_all_languages', ['language_code' => $this->language->code]),
-                            'showLoader' => '1'
-                           ]
-                        )
                     @endif
         </div>
         @include('languages::component.table', [

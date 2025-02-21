@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Riomigal\Languages\Exceptions\ExportFileException;
-use Riomigal\Languages\Exceptions\ExportTranslationException;
 use Riomigal\Languages\Models\Translation;
 
 trait CanExportTranslation

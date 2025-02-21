@@ -34,7 +34,7 @@ trait CanCreateTranslation
 
         Translation::query()
             ->where('language_code', $rootLanguage->code)
-            ->chunkById(300,
+            ->chunkById(100,
                 function ($records) use ($rootLanguage, $batch) {
                     foreach ($this->missingLanguages as $language) {
 
@@ -55,10 +55,11 @@ trait CanCreateTranslation
                             ->where('language_code', $fromLanguageCode)
                             ->chunkById(Setting::getCached()->enable_open_ai_translations ? config('languages.max_open_ai_missing_trans') : 400,
                                 function ($translations) use ($language, $batch, $rootLanguage) {
+                                    $translationIds = $translations->pluck('id')->all();
                                     if($batch) {
-                                        $batch->add(new MassCreateEloquentTranslationsJob($translations->toArray(), $language->id, $rootLanguage->id));
+                                        $batch->add(new MassCreateEloquentTranslationsJob($translationIds, $language->id, $rootLanguage->id));
                                     } else {
-                                        $this->massCreateEloquentTranslations($translations->toArray(), $language, $rootLanguage);
+                                        $this->massCreateEloquentTranslations($translationIds, $language, $rootLanguage);
                                     }
                                 }
                             );
@@ -69,21 +70,11 @@ trait CanCreateTranslation
     }
 
     /**
-     * @param array $content
-     * @param string $sharedRelativePathname
-     * @param string $type
-     * @param int $languageId
-     * @param string $languageCode
-     * @param string $namespace
-     * @param string $group
-     * @param bool $isVendor
-     * @return void
      * @throws MassCreateTranslationsException
      */
-    protected function massCreateTranslations(array $content, string $sharedRelativePathname, string $type, int $languageId, string $languageCode, string $namespace, string $group, bool $isVendor): void
+    protected function massCreateTranslations(array $content, string $type, int $languageId, string $languageCode, string $namespace, string $group, bool $isVendor): void
     {
         try {
-            DB::connection(config('languages.db_connection'))->beginTransaction();
             $translationsArray = [];
             if($type == 'model') {
                 $namespace = $group;
@@ -94,16 +85,24 @@ trait CanCreateTranslation
                 if($type == 'model') {
                     [$group, $key] = explode('.', $key);
                 }
-                $translationsArray[] = $this->getNewTranslation($languageId, $languageCode, $sharedIdentifier, $type, $key, $value, $namespace, $group, $isVendor);
+                $translationsArray[$sharedIdentifier] = $this->getTranslationArray($languageId, $languageCode, $sharedIdentifier, $type, $key, $value, $namespace, $group, $isVendor);
             }
+
+            $existingKeys = Translation::select('shared_identifier', 'language_code')
+                ->where('language_code', $languageCode)
+                ->whereIn('shared_identifier', array_keys($translationsArray))
+                ->pluck('shared_identifier')->all();
+
+            $translationsArray = array_filter($translationsArray, function($translation, $key) use ($existingKeys) {
+                return !in_array($key, $existingKeys);
+            }, ARRAY_FILTER_USE_BOTH);
+
             $translationsArray = array_filter($translationsArray);
             if (count($translationsArray) > 0) {
                 $this->massInsertTranslations($translationsArray);
             }
-            DB::connection(config('languages.db_connection'))->commit();
             Translation::unsetCachedTranslation($languageCode, $group ?? null, $namespace ?? null);
         } catch (\Exception|MassCreateTranslationsException $e) {
-            DB::connection(config('languages.db_connection'))->rollBack();
             if ($e::class == MassCreateTranslationsException::class) {
                 throw $e;
             } else {
@@ -119,28 +118,19 @@ trait CanCreateTranslation
     }
 
     /**
-     * @param array $translations
-     * @param int $languageId
-     * @param string $languageCode
-     * @param string $fromLanguageCode
+     * @param array $translationIds
+     * @param Language $language
+     * @param Language $rootLanguage
      * @return void
      * @throws MassCreateTranslationsException
      */
-    protected function massCreateEloquentTranslations(array $translations, Language $language, Language $rootLanguage): void
+    protected function massCreateEloquentTranslations(array $translationIds, Language $language, Language $rootLanguage): void
     {
         try {
-            DB::connection(config('languages.db_connection'))->beginTransaction();
             $translationsArray = [];
+            $openTranslateService = resolve(OpenAITranslationService::class);
+            $translations = Translation::whereIn('id', $translationIds)->get()->toArray();
             foreach ($translations as $translation) {
-//                try {
-//                    $translation['value'] = resolve(OpenAITranslationService::class)->translateString(
-//                        $fromLanguageCode,
-//                        $languageCode,
-//                        $translation['value']
-//                    );
-//                } catch(\Exception $e) {
-//
-//                }
                 if (!$this->translationExists($translation['shared_identifier'], $language->code)) {
                     $generatedTranslation = $this->getTranslationArray(
                         $language->id,
@@ -159,10 +149,8 @@ trait CanCreateTranslation
                     $translationsArray[] = $generatedTranslation;
                 }
             }
-
-            $openTranslateService = resolve(OpenAITranslationService::class);
             try {
-                $tempTranslationsArray = $translationsArray;
+                $tempTranslationsArray = json_decode(json_encode($translationsArray) ,true);
 
                 // Get Open Api translated array
                 $translatedArrayResult = [];
@@ -215,9 +203,7 @@ trait CanCreateTranslation
             }
 
             $this->massInsertTranslations($translationsArray);
-            DB::connection(config('languages.db_connection'))->commit();
         } catch (\Exception|MassCreateTranslationsException $e) {
-            DB::connection(config('languages.db_connection'))->rollBack();
             $errorId = Str::random();
             Log::error('Something went wrong while mass creating eloquent translations: ', [
                 'error_id' => $errorId,
@@ -231,21 +217,6 @@ trait CanCreateTranslation
 
     }
 
-
-    /**
-     * Gets new array record for mass insert if record non-existent
-     *
-     * @param int $languageId
-     * @param string $languageCode
-     * @param string $sharedIdentifier
-     * @param string $type
-     * @param string $key
-     * @param string $value
-     * @param string $namespace
-     * @param string $group
-     * @param bool $isVendor
-     * @return array
-     */
     protected function getNewTranslation(int $languageId, string $languageCode, string $sharedIdentifier, string $type, string $key, string $value, string $namespace, string $group, bool $isVendor): array
     {
         if (!$this->translationExists($sharedIdentifier, $languageCode)) {
@@ -254,21 +225,6 @@ trait CanCreateTranslation
         return [];
     }
 
-
-    /**
-     * Gets array record
-     *
-     * @param int $languageId
-     * @param string $languageCode
-     * @param string $sharedIdentifier
-     * @param string $type
-     * @param string $key
-     * @param string $value
-     * @param string $namespace
-     * @param string $group
-     * @param bool $isVendor
-     * @return array
-     */
     protected function getTranslationArray(int $languageId, string $languageCode, string $sharedIdentifier, string $type, string $key, string $value, string $namespace, string $group, bool $isVendor, bool $approved = true, ?bool $needsTranslation = null): array
     {
         return [

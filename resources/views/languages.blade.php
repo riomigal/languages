@@ -40,7 +40,13 @@
             @include('languages::component.search')
             <div class="flex flex-wrap">
             @if($isAdministrator)
-
+                    @include('languages::component.button',
+                                           [
+                                           'clickEvent' => 'showForm',
+                                           'text' => __('languages::languages.button.add_language'),
+                                           'showLoader' => '1'
+                                           ]
+                                       )
                 @include('languages::component.button',
                    [
                    'clickEvent' => 'importLanguages',
@@ -56,13 +62,6 @@
                        'showLoader' => '1'
                    ]
                )
-                    @include('languages::component.button',
-                       [
-                       'clickEvent' => 'showForm',
-                       'text' => __('languages::languages.button.add_language'),
-                       'showLoader' => '1'
-                       ]
-                   )
                     @endif
                     @include('languages::component.button',
                        [
@@ -71,6 +70,30 @@
                        'showLoader' => '1'
                        ]
                    )
+                    @include('languages::component.button',
+                               [
+                                'clickEvent' => 'approveAllLanguagesTranslations',
+                                'text' => __('languages::translations.button.approve_all_languages'),
+                                'showLoader' => '1'
+                               ]
+                            )
+                    @if(!\Riomigal\Languages\Models\Setting::getCached()->db_loader)
+                        @include('languages::component.button',
+                          [
+                          'clickEvent' => 'exportTranslationsForAllLanguages',
+                           'text' => __('languages::translations.button.export_all_translations'),
+                           'showLoader' => '1'
+                          ]
+                        )
+                    @else
+                        @include('languages::component.button',
+                          [
+                            'clickEvent' => 'exportTranslationsForAllLanguages("1")',
+                            'text' => __('languages::translations.button.export_all_translations_models'),
+                            'showLoader' => '1'
+                          ]
+                        )
+                    @endif
                 <button type="button"
                         wire:click.prevent="deleteJobs"
                         class="text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 focus:outline-none dark:focus:ring-red-800">
@@ -87,6 +110,12 @@
                 @endif
             </div>
         </div>
+        @php
+        $action = [];
+        if(\Riomigal\Languages\Models\Setting::getCached()->allow_deleting_languages) {
+            $action[] = 'delete';
+        }
+        @endphp
         @include('languages::component.table', [
                    'thead' => [
                     __('languages::languages.table.head.language_code'),
@@ -94,7 +123,7 @@
                     __('languages::languages.table.head.language_native_name')
                     ],
                     'tbody' => ['code', 'name','native_name'],
-                    'action' => ['delete'],
+                    'action' => $action,
                     'route' => ['name' => 'languages.translations', 'parameter' => 'language']
                ])
         <div>
