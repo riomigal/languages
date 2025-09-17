@@ -269,6 +269,7 @@ class Translations extends AuthComponent
     }
 
     /**
+     * @param OpenAITranslationService $openAITranslationService
      * @return void
      */
     public function updateAllTranslations(OpenAITranslationService $openAITranslationService): void
@@ -355,33 +356,6 @@ class Translations extends AuthComponent
         }
     }
 
-    public function approveAllLanguagesTranslations(): void
-    {
-        if ($this->anotherJobIsRunning()) return;
-
-        $notApprovedLanguagesTotal = Translation::where('approved', false)->count();
-
-        if ($notApprovedLanguagesTotal) {
-            $languages = Language::all();
-            $batchArray = [];
-            $totals = [];
-            $languages->each(function(Language $language) use (&$batchArray, &$totals) {
-                $batchArray[] = new ApproveLanguagesJob($language, $this->authUser->id);
-                $totals[$language->code] = $language->translations()->where('approved', false)->count();
-            });
-
-            $finally = function () use (&$totals, &$languages) {
-                $languages->each(function(Language $language) use (&$totals, &$languages) {
-                    Translator::notifyAdminApprovedTranslationsPerLanguage($totals[$language->code], $language);
-                });
-            };
-
-            $this->emit('startBatchProgress', resolve(BatchProcessor::class)->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
-        } else {
-            $this->authUser->notify(new FlashMessage(__('languages::translations.nothing_approved')));
-        }
-    }
-
     /**
      * @param int $id
      * @return void
@@ -437,47 +411,6 @@ class Translations extends AuthComponent
             };
 
             $this->emit('startBatchProgress', resolve(BatchProcessor::class)->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
-        } else {
-            $this->authUser->notify(new FlashMessage(__('languages::translations.nothing_exported')));
-        }
-    }
-
-    /**
-     * @param bool $exportOnlyModels
-     * @return void
-     */
-    public function exportTranslationsForAllLanguages(bool $exportOnlyModels = false): void
-    {
-        if ($this->anotherJobIsRunning()) return;
-
-        $languages = Language::find(Translation::query()
-            ->isUpdated(false)->exported(false)
-            ->when($exportOnlyModels, function($query) {
-                $query->type('model');
-            })
-            ->approved()->distinct()->pluck('language_id')->toArray());
-
-        if ($languages->count() > 0) {
-
-            $batchArray = [];
-            $languages->each(function (Language $language) use (&$batchArray) {
-                $batchArray[] = new ExportTranslationJob($language);
-            });
-
-            $total = Translation::query()
-                ->isUpdated(false)->exported(false)
-                ->when($exportOnlyModels, function($query) {
-                    $query->type('model');
-                })
-                ->approved()
-                ->count();
-
-            $finally = function () use (&$total, &$languages) {
-               Translator::notifyAdminExportedTranslationsAllLanguages($total, $languages);
-               resolve(ExportTranslationService::class)->exportTranslationsOnOtherHosts();
-            };
-            $this->emit('startBatchProgress', resolve(BatchProcessor::class)->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
-
         } else {
             $this->authUser->notify(new FlashMessage(__('languages::translations.nothing_exported')));
         }

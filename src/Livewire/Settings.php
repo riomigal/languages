@@ -19,11 +19,14 @@ class Settings extends AuthComponent
     public function getRules(): array
     {
         return [
+            'setting.domains' => 'required',
             'setting.db_loader' => 'boolean',
             'setting.import_vendor' => 'boolean',
             'setting.enable_pending_notifications' => 'boolean',
             'setting.enable_automatic_pending_notifications' => 'boolean',
             'setting.enable_open_ai_translations' => 'boolean',
+            'setting.import_only_from_root_language' => 'boolean',
+            'setting.allow_deleting_languages' => 'boolean',
         ];
     }
 

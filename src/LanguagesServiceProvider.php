@@ -25,12 +25,15 @@ use Riomigal\Languages\Livewire\Translations;
 use Riomigal\Languages\Livewire\Translators;
 use Riomigal\Languages\Middleware\AuthApi;
 use Riomigal\Languages\Middleware\AuthTranslator;
+use Riomigal\Languages\Models\Setting;
 use Riomigal\Languages\Models\Translator;
 use Riomigal\Languages\Services\OpenAITranslationService;
 
 
 class LanguagesServiceProvider extends ServiceProvider
 {
+    public static string $version = '1.8.5';
+
     protected null|bool|object $settings = false;
     /**
      * Bootstrap the package services.
@@ -162,7 +165,9 @@ class LanguagesServiceProvider extends ServiceProvider
      */
     protected function loadRoutes(): void
     {
-        $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
+        if(config('languages.main_server_domain') === config('app.url')) {
+            $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
+        }
         $this->loadRoutesFrom(__DIR__ . '/../routes/api.php');
     }
 

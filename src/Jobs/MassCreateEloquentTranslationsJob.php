@@ -9,12 +9,15 @@ use Riomigal\Languages\Services\Traits\CanCreateTranslation;
 class MassCreateEloquentTranslationsJob extends BaseJob
 {
     use CanCreateTranslation;
+
     public function __construct(
-        protected array  $translations,
+        protected array  $translationIds,
         protected int $languageId,
         protected string $fromLanguageId
     )
     {
+        $this->timeout = 300;
+        $this->queue = config('languages.queue_name');
         parent::__construct();
     }
 
@@ -24,6 +27,6 @@ class MassCreateEloquentTranslationsJob extends BaseJob
      */
     public function handle(): void
     {
-        $this->massCreateEloquentTranslations($this->translations, Language::find($this->languageId), Language::find($this->fromLanguageId));
+        $this->massCreateEloquentTranslations($this->translationIds, Language::find($this->languageId), Language::find($this->fromLanguageId));
     }
 }

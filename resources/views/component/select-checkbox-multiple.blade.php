@@ -1,3 +1,19 @@
+@props([
+    'id',
+    'text',
+    'name',
+    'showErrors' => true,
+    'type' => 'text',
+    'id' => null,
+    'info' => false,
+    'label' => false,
+    'required' => false,
+])
+<div class="relative">
+@if($label)
+<label for="languages"
+       class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">{{$label}}</label>
+@endif
 <div class="" x-data="{ {{$id}} : false}">
     <button x-on:click="{{$id}} = !{{$id}}"
             class="text-white w-auto bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2.5 text-center inline-flex items-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
@@ -13,7 +29,7 @@
             @foreach($data as $key => $value)
                 <li>
                     <div class="flex items-center p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-600">
-                        <input id="id{{$key}}" type="checkbox" wire:model="{{$model}}" value="{{$key}}"
+                        <input id="id{{$key}}" type="checkbox" wire:model="{{$name}}" value="{{$key}}"
                                class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 cursor-pointer">
                         <label for="id{{$key}}"
                                class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300 cursor-pointer">{{$value}}</label>
@@ -22,5 +38,12 @@
             @endforeach
         </ul>
     </div>
+</div>
+@if($showErrors)
+    @include('languages::component.error', ['field' => $name])
+@endif
+@if($info)
+    <span class="text-xs font-light text-gray-500 dark:text-gray-300 pb-3 my-1">{{$info}}</span>
+@endif
 </div>
 
