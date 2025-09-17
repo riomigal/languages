@@ -40,7 +40,7 @@ class OpenAITranslationService
                     ['role' => 'system', 'content' => 'You are an universal translator and return only translated values and designed to output JSON.'],
                     ['role' => 'system', 'content' => 'Keep the order of the array and please do not translate Laravel placeholders. Placeholders are words starting with a colon (e.g. :word).'],
                     ['role' => 'system', 'content' => 'If the translate from language of one value is not ' . $rootLanguage->name . ' (' . $rootLanguage->code . '), then try to detect language for this value.'],
-                    ['role' => 'user', 'content' => json_encode(array_filter($array))],
+                    ['role' => 'user', 'content' => json_encode(array_filter($array), JSON_UNESCAPED_SLASHES)],
                     ['role' => 'user', 'content' => 'Translate from ' . $rootLanguage->name . ' (' . $rootLanguage->code . ') to ' . $toLanguage->name . ' (' . $toLanguage->code. ').'],
                 ],
             ]);
