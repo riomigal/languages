@@ -153,21 +153,5 @@ return [
     */
     'open_ai_model' => 'gpt-3.5-turbo-1106',
 
-    'max_open_ai_missing_trans' => 50, // the translator translates multiple array values if you have longer text reduce this number
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Custom instructions
-    |--------------------------------------------------------------------------
-    |
-    | Here you can give the model custom instructions
-    */
-    'open_ai_custom_system_instructions' => [
-    ],
-
-    'open_ai_custom_user_instructions' => [
-    ],
-
-
+    'max_open_ai_missing_trans' => 50 // the translator translates multiple array values if you have longer text reduce this number
 ];
