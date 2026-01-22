@@ -169,4 +169,21 @@ class Translator extends Authenticatable
         });
         return $translation;
     }
+
+    /**
+     * @param string $prUrl
+     * @param array $languageCodes
+     * @param int $translationsCount
+     * @return void
+     */
+    public static function notifyAdminPullRequestCreated(string $prUrl, array $languageCodes, int $translationsCount): void
+    {
+        Translator::query()->admin()->each(function (Translator $translator) use ($prUrl, $languageCodes, $translationsCount) {
+            $translator->notify(new FlashMessage(__('languages::translations.pr_created_success', [
+                'pr_url' => $prUrl,
+                'languages' => implode(', ', $languageCodes),
+                'total' => $translationsCount,
+            ])));
+        });
+    }
 }
