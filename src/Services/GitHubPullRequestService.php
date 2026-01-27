@@ -17,6 +17,8 @@ class GitHubPullRequestService
     protected string $baseBranch;
     protected string $branchPrefix;
     protected string $langPathInRepo;
+    protected string $gitUserName;
+    protected string $gitUserEmail;
 
     public function __construct()
     {
@@ -25,6 +27,8 @@ class GitHubPullRequestService
         $this->baseBranch = config('languages.github_pr.base_branch');
         $this->branchPrefix = config('languages.github_pr.branch_prefix');
         $this->langPathInRepo = config('languages.github_pr.lang_path_in_repo');
+        $this->gitUserName = config('languages.github_pr.git_user_name');
+        $this->gitUserEmail = config('languages.github_pr.git_user_email');
     }
 
     /**
@@ -105,6 +109,21 @@ class GitHubPullRequestService
             escapeshellarg($cloneUrl),
             escapeshellarg($this->tempDir)
         ), sys_get_temp_dir());
+
+        // Configure git user identity in the cloned repository
+        $this->configureGitUser();
+    }
+
+    /**
+     * Configure git user identity in the cloned repository.
+     *
+     * @return void
+     * @throws Exception
+     */
+    protected function configureGitUser(): void
+    {
+        $this->runGitCommand(sprintf('config user.name %s', escapeshellarg($this->gitUserName)));
+        $this->runGitCommand(sprintf('config user.email %s', escapeshellarg($this->gitUserEmail)));
     }
 
     /**
