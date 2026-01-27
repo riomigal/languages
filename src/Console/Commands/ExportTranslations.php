@@ -10,6 +10,7 @@ use Riomigal\Languages\Models\Setting;
 use Riomigal\Languages\Models\Translation;
 use Riomigal\Languages\Models\Translator;
 use Riomigal\Languages\Services\ExportTranslationService;
+use Riomigal\Languages\Services\GitHubPullRequestService;
 
 class ExportTranslations extends Command
 {
@@ -18,10 +19,11 @@ class ExportTranslations extends Command
     /**
      * The name and signature of the console command.
      * --force: it will export all files even if exported is true in the translations record
+     * --create-pr: creates a GitHub PR with the exported translations
      *
      * @var string
      */
-    protected $signature = 'languages:export-translations {--force=}';
+    protected $signature = 'languages:export-translations {--force=} {--create-pr}';
 
     /**
      * The console command description.
@@ -36,6 +38,7 @@ class ExportTranslations extends Command
     public function handle(ExportTranslationService $exportTranslationService): void
     {
         $forceExport = (bool) $this->option('force');
+        $createPr = (bool) $this->option('create-pr');
 
         if($this->anotherJobIsRunning(true)) return;
         try {
@@ -69,6 +72,11 @@ class ExportTranslations extends Command
                     ->approved()
                     ->count();
                 $this->info('Total translations exported: ' . $total . '.');
+
+                // Create PR if requested
+                if ($createPr && $total > 0) {
+                    $this->createPullRequest($languages, $total);
+                }
             } else {
                 $this->info('Nothing to export.');
             }
@@ -76,6 +84,38 @@ class ExportTranslations extends Command
         } catch(\Exception $e) {
             Setting::setJobsRunning(false);
             throw $e;
+        }
+    }
+
+    /**
+     * Create a GitHub pull request with the exported translations.
+     *
+     * @param \Illuminate\Database\Eloquent\Collection $languages
+     * @param int $total
+     * @return void
+     */
+    protected function createPullRequest($languages, int $total): void
+    {
+        if (!GitHubPullRequestService::isEnabled()) {
+            $this->warn('GitHub PR integration is not enabled or not properly configured. Skipping PR creation.');
+            return;
+        }
+
+        $this->info('Creating GitHub pull request...');
+
+        try {
+            $languageCodes = $languages->pluck('code')->toArray();
+            $prUrl = resolve(GitHubPullRequestService::class)
+                ->createPullRequestForExport($languageCodes, $total);
+
+            if ($prUrl) {
+                $this->info('Pull request created: ' . $prUrl);
+                Translator::notifyAdminPullRequestCreated($prUrl, $languageCodes, $total);
+            } else {
+                $this->warn('No changes to commit, PR not created.');
+            }
+        } catch (\Exception $e) {
+            $this->error('Failed to create pull request: ' . $e->getMessage());
         }
     }
 }

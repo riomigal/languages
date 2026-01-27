@@ -141,7 +141,7 @@ return [
     */
 
     'translatable_models' => [
-//        \App\Models\User::class
+        //        \App\Models\User::class
     ],
 
     /*
@@ -153,5 +153,28 @@ return [
     */
     'open_ai_model' => 'gpt-3.5-turbo-1106',
 
-    'max_open_ai_missing_trans' => 50 // the translator translates multiple array values if you have longer text reduce this number
+    'max_open_ai_missing_trans' => 50, // the translator translates multiple array values if you have longer text reduce this number
+
+    /*
+    |--------------------------------------------------------------------------
+    | GitHub PR Integration
+    |--------------------------------------------------------------------------
+    |
+    | Configure automatic PR creation when exporting translations.
+    | When enabled, exports can optionally create a Pull Request to your
+    | source repository with the translation file changes.
+    |
+    | LANGUAGES_GITHUB_PR_REPOSITORY: Format "owner/repo" (e.g., "acme/my-app")
+    | LANGUAGES_GITHUB_PR_TOKEN: Personal access token with repo scope
+    | LANGUAGES_GITHUB_PR_LANG_PATH: Path to lang folder in repo (relative to repo root)
+    |
+    */
+    'github_pr' => [
+        'enabled' => env('LANGUAGES_GITHUB_PR_ENABLED', false),
+        'repository' => env('LANGUAGES_GITHUB_PR_REPOSITORY', ''),
+        'base_branch' => env('LANGUAGES_GITHUB_PR_BASE_BRANCH', 'main'),
+        'branch_prefix' => env('LANGUAGES_GITHUB_PR_BRANCH_PREFIX', 'translations/export-'),
+        'token' => env('LANGUAGES_GITHUB_PR_TOKEN', ''),
+        'lang_path_in_repo' => env('LANGUAGES_GITHUB_PR_LANG_PATH', 'lang'),
+    ],
 ];
