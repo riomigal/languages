@@ -8,6 +8,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Riomigal\Languages\Jobs\ApproveLanguagesJob;
 use Riomigal\Languages\Jobs\Batch\BatchProcessor;
+use Riomigal\Languages\Jobs\CreateTranslationPullRequestJob;
 use Riomigal\Languages\Jobs\ExportTranslationJob;
 use Riomigal\Languages\Jobs\UpdateTranslationJob;
 use Riomigal\Languages\Livewire\Traits\ChecksForRunningJobs;
@@ -17,6 +18,7 @@ use Riomigal\Languages\Models\Translator;
 use Riomigal\Languages\Notifications\FlashMessage;
 use Riomigal\Languages\Services\ApproveLanguagesService;
 use Riomigal\Languages\Services\ExportTranslationService;
+use Riomigal\Languages\Services\GitHubPullRequestService;
 use Riomigal\Languages\Services\OpenAITranslationService;
 
 class Translations extends AuthComponent
@@ -125,6 +127,16 @@ class Translations extends AuthComponent
     public array $approvedBy = [];
 
     /**
+     * @var bool
+     */
+    public bool $createPrOnExport = false;
+
+    /**
+     * @var bool
+     */
+    public bool $githubPrEnabled = false;
+
+    /**
      * @param Language $language
      * @return void
      */
@@ -143,6 +155,7 @@ class Translations extends AuthComponent
         $this->translateLanguageExampleId = $this->translateLanguageFallbackExampleId;
         $this->languages = Language::query()->get()->toArray();
         $this->translators = Translator::pluck('email', 'id')->toArray();
+        $this->githubPrEnabled = GitHubPullRequestService::isEnabled();
     }
 
     /**
@@ -155,7 +168,9 @@ class Translations extends AuthComponent
             ->when($this->search, function ($query) {
                 $query->where(function ($query) {
                     $query->where(
-                        'namespace', 'LIKE', '%' . $this->search . '%'
+                        'namespace',
+                        'LIKE',
+                        '%' . $this->search . '%'
                     )
                         ->orWhere('id', 'LIKE', '%' . $this->search . '%')
                         ->orWhere('group', 'LIKE', '%' . $this->search . '%')
@@ -207,7 +222,7 @@ class Translations extends AuthComponent
     {
         $this->translation = Translation::findOrFail($id);
         $this->translationExamples = Translation::where('shared_identifier', $this->translation->shared_identifier)->get();
-        if(!$this->isAdministrator) {
+        if (!$this->isAdministrator) {
             $this->translationExamples->where('language_id', $this->authUser->languages->pluck('id')->all());
         }
         $this->translationExample = $this->translationExamples->where('language_id', $this->translateLanguageExampleId)->first();
@@ -226,18 +241,18 @@ class Translations extends AuthComponent
      */
     public function openAITranslate(): void
     {
-        if(!$this->translationExample?->value) return;
+        if (!$this->translationExample?->value) return;
         $languageCodeFrom = Language::find($this->openAiTranslateLanguageId);
-        if(!$languageCodeFrom) return;
+        if (!$languageCodeFrom) return;
         $languageCodeTo = Language::find($this->currentLanguageId);
-        if(!$languageCodeTo) return;
+        if (!$languageCodeTo) return;
         try {
             $this->translatedValue = resolve(OpenAITranslationService::class)->translateString(
                 $languageCodeFrom,
                 $languageCodeTo,
                 $this->translationExample->value
             );
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             Log::warning('Translations::openAITranslate()' . $e->getMessage);
         }
     }
@@ -257,7 +272,7 @@ class Translations extends AuthComponent
      */
     public function requestTranslation(int $id): void
     {
-        Translation::findOrFail($id)->update(['needs_translation' => true,'approved' => false]);
+        Translation::findOrFail($id)->update(['needs_translation' => true, 'approved' => false]);
     }
 
     /**
@@ -277,7 +292,7 @@ class Translations extends AuthComponent
         if ($this->translation->value != $this->translatedValue) {
             $rootLanguage = $this->translation->language;
             $batchArray = [];
-            $this->translationExamples->each(function(Translation $translation) use ($openAITranslationService, $rootLanguage, &$batchArray) {
+            $this->translationExamples->each(function (Translation $translation) use ($openAITranslationService, $rootLanguage, &$batchArray) {
                 $batchArray[] = new UpdateTranslationJob($rootLanguage, $translation, $this->translatedValue, $this->authUser);
             });
 
@@ -302,7 +317,7 @@ class Translations extends AuthComponent
         if ($this->translation->value != $this->translatedValue) {
             $this->translation->exported = false;
             $this->translation->needs_translation = false;
-            if(!$this->translation->updated_translation) {
+            if (!$this->translation->updated_translation) {
                 $this->translation->previous_approved_by = $this->translation->approved_by;
                 $this->translation->previous_updated_by = $this->translation->updated_by;
                 $this->translation->old_value = $this->translation->value;
@@ -314,7 +329,7 @@ class Translations extends AuthComponent
             $this->translation->approved = false;
             $this->translation->save();
             $this->hideTranslationModal();
-            if($showSuccess) {
+            if ($showSuccess) {
                 $this->emit('showToast', __('languages::translations.update_success_message'), LanguagesToastMessage::MESSAGE_TYPES['SUCCESS'], 4000);
             }
         }
@@ -363,7 +378,7 @@ class Translations extends AuthComponent
     public function restoreTranslation(int $id): void
     {
         $translation =  Translation::findOrFail($id);
-        if($translation->old_value && !$translation->approved) {
+        if ($translation->old_value && !$translation->approved) {
             $translation->value = $translation->old_value;
             $translation->old_value = null;
             $translation->approved_by = $translation->previous_approved_by;
@@ -387,7 +402,7 @@ class Translations extends AuthComponent
 
         $updatedTranslationsTotal = $this->language->translations()
             ->isUpdated(false)->exported(false)
-            ->when($exportOnlyModels, function($query) {
+            ->when($exportOnlyModels, function ($query) {
                 $query->type('model');
             })
             ->approved()->count();
@@ -399,15 +414,21 @@ class Translations extends AuthComponent
 
             $total = Translation::query()->where('language_id', $this->language->id)
                 ->isUpdated(false)->exported(false)
-                ->when($exportOnlyModels, function($query) {
+                ->when($exportOnlyModels, function ($query) {
                     $query->type('model');
                 })
                 ->approved()
                 ->count();
             $language = $this->language;
-            $finally = function () use (&$total, &$language) {
+            $createPr = $this->createPrOnExport && $this->githubPrEnabled;
+            $finally = function () use (&$total, &$language, $createPr) {
                 Translator::notifyAdminExportedTranslationsPerLanguage($total, $language);
                 resolve(ExportTranslationService::class)->exportTranslationsOnOtherHosts();
+
+                // Create PR if enabled
+                if ($createPr && $total > 0) {
+                    CreateTranslationPullRequestJob::dispatch([$language->code], $total);
+                }
             };
 
             $this->emit('startBatchProgress', resolve(BatchProcessor::class)->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
@@ -422,10 +443,10 @@ class Translations extends AuthComponent
      */
     public function updateThreeStatesFilter(string $key): void
     {
-        if($this->{$key} === null) {
+        if ($this->{$key} === null) {
             $this->{$key} = true;
             $this->queryString[$key] = true;
-        } else if($this->{$key} === true) {
+        } else if ($this->{$key} === true) {
             $this->{$key} = false;
             $this->queryString[$key] = false;
         } else {

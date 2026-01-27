@@ -70,4 +70,9 @@ return [
     'export_on_other_host_start_failed' => 'Export on :host couldn\'t start, something went wrong.',
     'nothing_exported' => 'Nothing exported.',
     'nothing_approved' => 'Nothing approved.',
+    'pr_created_success' => 'Pull request created successfully! Languages: :languages - Total: :total - PR: :pr_url',
+    'pr_creation_failed' => 'Failed to create pull request.',
+    'pr_not_configured' => 'GitHub PR integration is not configured.',
+    'create_pr_label' => 'Create Pull Request',
+    'create_pr_tooltip' => 'After export, create a PR to the configured GitHub repository',
 ];
