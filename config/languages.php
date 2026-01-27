@@ -176,5 +176,7 @@ return [
         'branch_prefix' => env('LANGUAGES_GITHUB_PR_BRANCH_PREFIX', 'translations/export-'),
         'token' => env('LANGUAGES_GITHUB_PR_TOKEN', ''),
         'lang_path_in_repo' => env('LANGUAGES_GITHUB_PR_LANG_PATH', 'lang'),
+        'git_user_name' => env('LANGUAGES_GITHUB_PR_GIT_USER_NAME', 'Languages Bot'),
+        'git_user_email' => env('LANGUAGES_GITHUB_PR_GIT_USER_EMAIL', 'languages-bot@noreply.github.com'),
     ],
 ];
