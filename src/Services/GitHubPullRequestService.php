@@ -65,6 +65,7 @@ class GitHubPullRequestService
             $this->cloneRepository();
             $this->createBranch($branchName);
             $this->copyLanguageFiles($languageCodes);
+            $this->formatLanguageFiles();
 
             if (!$this->commitChanges($this->buildCommitMessage($languageCodes, $translationsCount))) {
                 Log::info('GitHubPullRequestService: No changes to commit.');
@@ -90,6 +91,39 @@ class GitHubPullRequestService
             throw $e;
         } finally {
             $this->cleanup();
+        }
+    }
+
+    /**
+     * Format the language files using Pint.
+     *
+     * @return void
+     */
+    protected function formatLanguageFiles(): void
+    {
+        $langPath = $this->tempDir . '/' . $this->langPathInRepo;
+        
+        // Get all PHP files in the lang directory
+        $phpFiles = glob($langPath . '/**/*.php', GLOB_BRACE) ?: [];
+        $phpFiles = array_merge($phpFiles, glob($langPath . '/*/*.php') ?: []);
+        
+        if (empty($phpFiles)) {
+            return;
+        }
+        
+        $fileList = implode(' ', array_map('escapeshellarg', $phpFiles));
+        
+        // Run Pint from the translation server's vendor directory
+        $pintPath = base_path('vendor/bin/pint');
+        
+        if (File::exists($pintPath)) {
+            exec(sprintf('%s %s %s 2>&1', escapeshellarg(PHP_BINARY), escapeshellarg($pintPath), $fileList), $output, $returnCode);
+            
+            if ($returnCode !== 0) {
+                Log::warning('GitHubPullRequestService: Pint formatting failed.', [
+                    'output' => implode("\n", $output)
+                ]);
+            }
         }
     }
 
