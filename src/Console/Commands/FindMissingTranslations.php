@@ -49,7 +49,10 @@ class FindMissingTranslations extends Command
                 $this->info('Existing Translations: ' . $totalTranslationsBefore . '.');
                 $this->info('Importing translations...');
                 $missingTranslationService->findMissingTranslations();
-                Translator::notifyAdminImportedMissingTranslations($totalTranslationsBefore);
+                $rootLanguage = Language::query()->where('code', config('app.locale'))->first();
+                if($rootLanguage) {
+                    Translator::notifyAdminImportedMissingTranslations($totalTranslationsBefore, $rootLanguage);
+                }
                 $total = Translation::count() - $totalTranslationsBefore;
                 $this->info('New missing translations created: ' . $total . '.');
             } else {

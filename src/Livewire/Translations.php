@@ -253,7 +253,7 @@ class Translations extends AuthComponent
                 $this->translationExample->value
             );
         } catch (\Exception $e) {
-            Log::warning('Translations::openAITranslate()' . $e->getMessage);
+            Log::warning('Translations::openAITranslate()' . $e->getMessage());
         }
     }
 
@@ -284,15 +284,14 @@ class Translations extends AuthComponent
     }
 
     /**
-     * @param OpenAITranslationService $openAITranslationService
      * @return void
      */
-    public function updateAllTranslations(OpenAITranslationService $openAITranslationService): void
+    public function updateAllTranslations(): void
     {
         if ($this->translation->value != $this->translatedValue) {
             $rootLanguage = $this->translation->language;
             $batchArray = [];
-            $this->translationExamples->each(function (Translation $translation) use ($openAITranslationService, $rootLanguage, &$batchArray) {
+            $this->translationExamples->each(function (Translation $translation) use ($rootLanguage, &$batchArray) {
                 $batchArray[] = new UpdateTranslationJob($rootLanguage, $translation, $this->translatedValue, $this->authUser);
             });
 

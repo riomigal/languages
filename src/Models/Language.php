@@ -2,13 +2,23 @@
 
 namespace Riomigal\Languages\Models;
 
-use Illuminate\Contracts\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * @mixin Builder
+ * @property int $id
+ * @property string $name
+ * @property string $native_name
+ * @property string $code
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property Collection<int, Translation> $translations
+ * @property Collection<int, Translator> $translators
+ *
+ * @mixin Builder<Language>
  */
 class Language extends Model
 {
@@ -161,7 +171,7 @@ class Language extends Model
     );
 
     /**
-     * @var string[]
+     * @var array<int, string>
      */
     protected $fillable = [
         'name', 'code', 'native_name'

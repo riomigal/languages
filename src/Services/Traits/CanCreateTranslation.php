@@ -18,25 +18,30 @@ use Riomigal\Languages\Services\OpenAITranslationService;
 trait CanCreateTranslation
 {
     /**
-     * @var Collection
+     * @var Collection<int, Language>
      */
     protected Collection $missingLanguages;
 
     /**
-     * @param Collection $languages
+     * @param Collection<int, Language> $languages
      * @param Language $rootLanguage
      * @return void
      * @throws MassCreateTranslationsException
      */
     public function findMissingTranslationsByLanguage(Collection $languages, Language $rootLanguage, ?Batch $batch = null): void
     {
-        $this->missingLanguages = $languages->reject(fn($language) => $language->id == $rootLanguage->id);
+        /** @var Collection<int, Language> $missingLanguages */
+        $missingLanguages = $languages->reject(
+            fn (Language $language): bool => $language->id === $rootLanguage->id
+        );
+        $this->missingLanguages = $missingLanguages;
 
         Translation::query()
             ->where('language_code', $rootLanguage->code)
             ->chunkById(100,
                 function ($records) use ($rootLanguage, $batch) {
                     foreach ($this->missingLanguages as $language) {
+                        /** @var Language $language */
 
                         // Get array of all identifier
                         $identifierArray = $records->pluck('shared_identifier')->all();
@@ -101,7 +106,7 @@ trait CanCreateTranslation
             if (count($translationsArray) > 0) {
                 $this->massInsertTranslations($translationsArray);
             }
-            Translation::unsetCachedTranslation($languageCode, $group ?? null, $namespace ?? null);
+            Translation::unsetCachedTranslation($languageCode, $group, $namespace);
         } catch (\Exception|MassCreateTranslationsException $e) {
             if ($e::class == MassCreateTranslationsException::class) {
                 throw $e;
@@ -197,6 +202,7 @@ trait CanCreateTranslation
                                 'value' => $translation['value'],
                             ]);
                             $translation['value'] = $tempValue;
+                            return $translation;
                         }
                     })->toArray();
 

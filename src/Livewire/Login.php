@@ -5,8 +5,8 @@ namespace Riomigal\Languages\Livewire;
 use DanHarrin\LivewireRateLimiting\Exceptions\TooManyRequestsException;
 use DanHarrin\LivewireRateLimiting\WithRateLimiting;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Livewire\Component;
-use Livewire\Redirector;
 use Riomigal\Languages\Models\Language;
 use Riomigal\Languages\Models\Translator;
 
@@ -54,9 +54,9 @@ class Login extends Component
     }
 
     /**
-     * @return Redirector|null
+     * @return RedirectResponse|null
      */
-    public function login(): Redirector|\Illuminate\Routing\Redirector|null
+    public function login(): ?RedirectResponse
     {
         try {
             $this->rateLimit(10);

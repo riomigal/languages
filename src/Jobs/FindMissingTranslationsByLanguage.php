@@ -24,6 +24,10 @@ class FindMissingTranslationsByLanguage extends BaseJob
      */
     public function handle(): void
     {
-        $this->findMissingTranslationsByLanguage(Language::query()->whereIn('id', $this->languageIds)->get(), Language::find($this->languageId), $this->batch());
+        $this->findMissingTranslationsByLanguage(
+            Language::query()->whereIn('id', $this->languageIds)->get(),
+            Language::query()->findOrFail($this->languageId),
+            $this->batch()
+        );
     }
 }

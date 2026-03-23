@@ -2,18 +2,45 @@
 
 namespace Riomigal\Languages\Models;
 
-use Illuminate\Contracts\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Cache;
 
 /**
- * @mixin Builder
+ * @property int $id
+ * @property int $language_id
+ * @property string $language_code
+ * @property string $shared_identifier
+ * @property bool $is_vendor
+ * @property string $type
+ * @property string|null $namespace
+ * @property string|null $group
+ * @property string $key
+ * @property string|null $value
+ * @property string|null $old_value
+ * @property bool $approved
+ * @property bool $needs_translation
+ * @property bool $updated_translation
+ * @property int|null $updated_by
+ * @property int|null $previous_updated_by
+ * @property int|null $approved_by
+ * @property int|null $previous_approved_by
+ * @property bool $exported
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property Language $language
+ * @property Translator|null $approvedBy
+ * @property Translator|null $updatedBy
+ * @property string $approver
+ * @property string $updater
+ *
+ * @mixin Builder<Translation>
  */
 class Translation extends Model
 {
-     /**
-     * @var string[]
+    /**
+     * @var array<int, string>
      */
     protected $fillable = [
         'language_id', 'language_code', 'shared_identifier', 'is_vendor', 'type', 'namespace',
@@ -22,7 +49,7 @@ class Translation extends Model
     ];
 
     /**
-     * @var string[]
+     * @var array<string, string>
      */
     protected $casts = [
         'is_vendor' => 'boolean',
@@ -169,8 +196,9 @@ class Translation extends Model
      * @return array
      */
     public static function getCachedTranslations(string $locale, string|null $group = null, string|null $namespace = null): array {
+        $cacheKey = config('languages.cache_key') . $locale . ($group ?? '') . ($namespace ?? '');
 
-        return Cache::rememberForever(config('languages.cache_key') . $locale . $group ?? '' . $namespace ?? '', function() use ($locale, $group, $namespace) {
+        return Cache::rememberForever($cacheKey, function() use ($locale, $group, $namespace) {
         $array = [];
         Translation::select(
             'language_code',
@@ -188,7 +216,7 @@ class Translation extends Model
             })
             ->when($namespace != '*', function($query) use ($namespace) {
                 $query->where('namespace', $namespace);
-            })->each(function(Translation $translation) use(&$array,$locale, $namespace, $group) {
+            })->each(function(Translation $translation) use(&$array) {
                 $array[$translation->key] = $translation->approved ? $translation->value : $translation->old_value;
             });
         return $array;
@@ -203,7 +231,8 @@ class Translation extends Model
      */
     public static function unsetCachedTranslation(string $locale, string|null $group = null, string|null $namespace = null): void
     {
-        Cache::forget(config('languages.cache_key') . $locale . $group ?? '' . $namespace ?? '');
+        $cacheKey = config('languages.cache_key') . $locale . ($group ?? '') . ($namespace ?? '');
+        Cache::forget($cacheKey);
     }
 
     /**

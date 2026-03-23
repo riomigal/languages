@@ -4,9 +4,12 @@ namespace Riomigal\Languages\Livewire;
 
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
+use Riomigal\Languages\Livewire\Traits\DispatchesLegacyEvents;
 
 class LanguagesToastMessage extends Component
 {
+    use DispatchesLegacyEvents;
+
     const MESSAGE_TYPES = [
         'SUCCESS' => 'SUCCESS',
         'DELETED' => 'DELETED',

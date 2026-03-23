@@ -10,13 +10,14 @@ class MassCreateEloquentTranslationsJob extends BaseJob
 {
     use CanCreateTranslation;
 
+    public int $timeout = 300;
+
     public function __construct(
         protected array  $translationIds,
         protected int $languageId,
-        protected string $fromLanguageId
+        protected int $fromLanguageId
     )
     {
-        $this->timeout = 300;
         $this->queue = config('languages.queue_name');
         parent::__construct();
     }
@@ -27,6 +28,10 @@ class MassCreateEloquentTranslationsJob extends BaseJob
      */
     public function handle(): void
     {
-        $this->massCreateEloquentTranslations($this->translationIds, Language::find($this->languageId), Language::find($this->fromLanguageId));
+        $this->massCreateEloquentTranslations(
+            $this->translationIds,
+            Language::query()->findOrFail($this->languageId),
+            Language::query()->findOrFail($this->fromLanguageId)
+        );
     }
 }

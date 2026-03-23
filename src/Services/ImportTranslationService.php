@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\Log;
 use Riomigal\Languages\Exceptions\ImportTranslationsException;
 use Riomigal\Languages\Helpers\LanguageHelper;
-use Riomigal\Languages\Jobs\MassCreateTranslationsJob;
 use Riomigal\Languages\Models\Language;
 use Riomigal\Languages\Models\Setting;
 use Riomigal\Languages\Services\Traits\CanCreateTranslation;
@@ -27,6 +26,9 @@ class ImportTranslationService
 
     protected string $namespace = '';
 
+    /**
+     * @var Collection<int, Language>
+     */
     protected Collection $languages;
 
     protected Language $language;
@@ -44,10 +46,12 @@ class ImportTranslationService
             $this->batch = $batch;
         }
 
-        $this->languages = Language::query()
+        /** @var Collection<int, Language> $languages */
+        $languages = Language::query()
             ->when(Setting::getCached()->import_only_from_root_language, function($query) {
                 $query->where('code', config('app.locale'));
             })->get();
+        $this->languages = $languages;
 
         $this->createMissingDirectory(App::langPath());
         $this->createMissingDirectory(App::langPath('vendor'));
@@ -72,6 +76,7 @@ class ImportTranslationService
                 function($models) use( $modelClass, $modelInstance, $tableId) {
                     $content = [];
                     foreach($this->languages as $language) {
+                        /** @var Language $language */
                         $languageCode = $language->code;
                         $content[$languageCode] = [];
                         foreach($models as $model) {
@@ -137,6 +142,7 @@ class ImportTranslationService
 
         // Loop through languages in directory
         foreach ($this->languages as $language) {
+            /** @var Language $language */
             $this->language = $language;
             if ($this->isVendor) {
                 $this->createMissingDirectory(App::langPath('vendor/' . $this->namespace) . '/' . $this->language->code);
@@ -163,6 +169,8 @@ class ImportTranslationService
      */
     protected function generateContent(string $root, \SplFileInfo $file): void
     {
+        $relativePathname = $file->getFilename();
+
         try {
             $languageHelper = resolve(LanguageHelper::class);
             if(File::exists($file->getRealPath())) {
@@ -188,6 +196,8 @@ class ImportTranslationService
                     } else {
                         Log::error('File (' . $relativePathname . ') has no valid JSON string, Please check the file in the filesystem.');
                     }
+
+                    return;
                 }
 
                 if (count($content) > 0) {

@@ -2,7 +2,7 @@
 
 namespace Riomigal\Languages\Models;
 
-use Illuminate\Contracts\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -10,7 +10,16 @@ use Illuminate\Notifications\Notifiable;
 use Riomigal\Languages\Notifications\FlashMessage;
 
 /**
- * @mixin Builder
+ * @property int $id
+ * @property string $first_name
+ * @property string $last_name
+ * @property string $email
+ * @property string|null $phone
+ * @property bool $admin
+ * @property string|null $password
+ * @property Collection<int, Language> $languages
+ *
+ * @mixin Builder<Translator>
  */
 class Translator extends Authenticatable
 {
@@ -36,7 +45,7 @@ class Translator extends Authenticatable
     ];
 
     /**
-     * @var string[]
+     * @var array<string, string>
      */
     protected $casts = [
         'admin' => 'boolean'

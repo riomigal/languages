@@ -5,6 +5,8 @@ return [
 
     'languages' => 'Languages',
 
+    'manual' => 'Manual',
+
     'translators' => 'Translators',
 
     'settings' => 'Settings',

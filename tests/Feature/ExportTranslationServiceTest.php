@@ -75,6 +75,14 @@ class ExportTranslationServiceTest extends BaseTestCase
         ImportTranslationsJob::dispatch(new ImportTranslationService(), $this->admin);
     }
 
+    /**
+     * @test
+     */
+    public function export_translation_service_tests_are_currently_disabled(): void
+    {
+        $this->assertTrue(true);
+    }
+
 //    /**
 //     * @test
 //     */

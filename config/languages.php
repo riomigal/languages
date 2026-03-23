@@ -62,6 +62,8 @@ return [
 
     'settings_url' => 'settings',
 
+    'manual_url' => 'manual',
+
     'login_url' => 'login',
 
     /*

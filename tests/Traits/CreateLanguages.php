@@ -10,7 +10,7 @@ trait CreateLanguages
      * @param string|null $code
      * @return Language
      */
-    public function createFallbackLanguage(string $code = null): Language
+    public function createFallbackLanguage(?string $code = null): Language
     {
         if (!$code) $code = config('app.fallback_locale');
         $language = collect(Language::LANGUAGES)->where('code', $code)->first();

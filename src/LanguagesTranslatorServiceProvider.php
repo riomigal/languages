@@ -27,7 +27,7 @@ class LanguagesTranslatorServiceProvider extends TranslationServiceProvider
      */
     public function register(): void
     {
-        if(config('languages.enabled')) {
+        if(config('languages.enabled', true)) {
             $this->app->singleton(LanguageHelper::class, function () {
                 return new LanguageHelper();
             });
@@ -43,13 +43,13 @@ class LanguagesTranslatorServiceProvider extends TranslationServiceProvider
      */
     protected function registerLoader(): void
     {
-        if(!config('languages.enabled')) {
+        if(!config('languages.enabled', true)) {
             parent::registerLoader();
             return;
         }
         if(app()->runningInConsole()) {
             try {
-                DB::connection(config('languages.db_connection'))->connection()->getDatabaseName();
+                DB::connection(config('languages.db_connection'))->getDatabaseName();
                 $this->loadTranslationsArray();
             } catch (\Exception) {
                 parent::registerLoader();

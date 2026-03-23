@@ -1,0 +1,11 @@
+includes:
+    - ./vendor/nunomaduro/larastan/extension.neon
+
+parameters:
+    level: 5
+    checkModelProperties: false
+    paths:
+        - src
+    parallel:
+        maximumNumberOfProcesses: 1
+    tmpDir: build/phpstan

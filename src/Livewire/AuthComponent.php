@@ -6,11 +6,12 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Model;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Riomigal\Languages\Livewire\Traits\DispatchesLegacyEvents;
 use Riomigal\Languages\Models\Translator;
 
 abstract class AuthComponent extends Component
 {
-    use WithPagination;
+    use WithPagination, DispatchesLegacyEvents;
 
     /**
      * @var string
@@ -44,14 +45,14 @@ abstract class AuthComponent extends Component
     {
         $this->authUser = Translator::find(auth(config('languages.translator_guard'))->user()?->id);
         if(!$this->authUser) abort(403);
-        $this->isAdministrator = $this->authUser?->admin;
+        $this->isAdministrator = $this->authUser->admin;
     }
 
 
     /**
      * @return void
      */
-    protected function updatedSearch(): void
+    public function updatedSearch(): void
     {
         $this->gotoPage(1);
     }

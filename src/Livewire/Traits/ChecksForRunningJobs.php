@@ -3,6 +3,7 @@
 namespace Riomigal\Languages\Livewire\Traits;
 
 use Illuminate\Http\Client\Pool;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Riomigal\Languages\Livewire\LanguagesToastMessage;
@@ -26,7 +27,7 @@ trait ChecksForRunningJobs
             return true;
         }
 
-        $hosts = array_filter(explode(',', Setting::getDomains()));
+        $hosts = array_filter(array_map('trim', explode(',', Setting::getDomains())));
 
         if($hosts) {
             $hosts = array_diff($hosts, [request()->getSchemeAndHttpHost()]);
@@ -39,13 +40,13 @@ trait ChecksForRunningJobs
                 return $poolArray;
             });
             foreach($responses as $response) {
-                if(!$response->ok()) {
-                    $this->jobIsRunningMessage($fromCommandLine);
-                    return true;
+                // Ignore unreachable/misconfigured hosts so local jobs are not blocked.
+                if(!$response instanceof Response || !$response->ok()) {
+                    continue;
                 }
 
                 try{
-                    if($response['process_running']) {
+                    if((bool) $response->json('process_running', false)) {
                         $this->jobIsRunningMessage($fromCommandLine);
                         return true;
                     }
@@ -63,14 +64,39 @@ trait ChecksForRunningJobs
     protected function jobIsRunningMessage(bool $fromCommandLine, bool $isRunning = true): void
     {
         if($fromCommandLine) {
-            if($isRunning) $this->info('Another Process is running.');
+            if($isRunning) {
+                $this->sendCommandInfo('Another Process is running.');
+            }
         } else {
             if ($isRunning) {
-                $this->emit('showToast', __('languages::global.import.processing_no_action'), LanguagesToastMessage::MESSAGE_TYPES['WARNING']);
+                $this->emitToast(
+                    __('languages::global.import.processing_no_action'),
+                    LanguagesToastMessage::MESSAGE_TYPES['WARNING']
+                );
             } else {
-                $this->emit('showToast', __('languages::global.import.start_message'), LanguagesToastMessage::MESSAGE_TYPES['SUCCESS'], 6000);
+                $this->emitToast(
+                    __('languages::global.import.start_message'),
+                    LanguagesToastMessage::MESSAGE_TYPES['SUCCESS'],
+                    6000
+                );
             }
         }
 
+    }
+
+    private function sendCommandInfo(string $message): void
+    {
+        if(method_exists($this, 'info')) {
+            /** @var callable(string):void $info */
+            $info = [$this, 'info'];
+            $info($message);
+        }
+    }
+
+    private function emitToast(string $message, string $type, int $duration = 3000): void
+    {
+        if(method_exists($this, 'emit')) {
+            call_user_func([$this, 'emit'], 'showToast', $message, $type, $duration);
+        }
     }
 }

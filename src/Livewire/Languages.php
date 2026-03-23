@@ -221,7 +221,7 @@ class Languages extends AuthComponent
             });
 
             $finally = function () use (&$totals, &$languages) {
-                $languages->each(function(Language $language) use (&$totals, &$languages) {
+                $languages->each(function(Language $language) use (&$totals) {
                     Translator::notifyAdminApprovedTranslationsPerLanguage($totals[$language->code], $language);
                 });
             };

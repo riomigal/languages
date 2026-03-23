@@ -3,7 +3,6 @@
 namespace Riomigal\Languages\Livewire;
 
 use Illuminate\Contracts\View\View;
-use Illuminate\Database\Eloquent\Model;
 use Riomigal\Languages\Models\Setting;
 
 class Settings extends AuthComponent
@@ -57,9 +56,9 @@ class Settings extends AuthComponent
     }
 
     /**
-     * @return Model
+     * @return Setting
      */
-    public function query(): Model
+    public function query(): Setting
     {
         return Setting::getCached();
     }

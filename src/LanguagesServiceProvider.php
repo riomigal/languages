@@ -20,6 +20,7 @@ use Riomigal\Languages\Livewire\BatchExecution;
 use Riomigal\Languages\Livewire\FlashMessage;
 use Riomigal\Languages\Livewire\LanguagesToastMessage;
 use Riomigal\Languages\Livewire\Login;
+use Riomigal\Languages\Livewire\Manual;
 use Riomigal\Languages\Livewire\Settings;
 use Riomigal\Languages\Livewire\Translations;
 use Riomigal\Languages\Livewire\Translators;
@@ -32,7 +33,7 @@ use Riomigal\Languages\Services\OpenAITranslationService;
 
 class LanguagesServiceProvider extends ServiceProvider
 {
-    public static string $version = '1.8.9';
+    public static string $version = '1.9.0';
 
     protected null|bool|object $settings = false;
     /**
@@ -42,7 +43,7 @@ class LanguagesServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        if(!config('languages.enabled')) {
+        if(!config('languages.enabled', true)) {
             return;
         }
 //        if(Schema::connection(config('languages.db_connection'))->hasTable(config('languages.table_settings'))) {
@@ -80,13 +81,14 @@ class LanguagesServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        if(!config('languages.enabled')) {
+        $this->mergeConfigFrom(__DIR__ . '/../config/languages.php', 'languages');
+
+        if(!config('languages.enabled', true)) {
             return;
         }
         $this->app->singleton(OpenAITranslationService::class, function () {
             return new OpenAITranslationService();
         });
-        $this->mergeConfigFrom(__DIR__ . '/../config/languages.php', 'languages');
     }
 
     /**
@@ -146,6 +148,7 @@ class LanguagesServiceProvider extends ServiceProvider
         Livewire::component('flash-message', FlashMessage::class);
         Livewire::component('batch-execution', BatchExecution::class);
         Livewire::component('settings', Settings::class);
+        Livewire::component('manual', Manual::class);
     }
 
     /**

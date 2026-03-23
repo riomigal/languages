@@ -2,12 +2,23 @@
 
 namespace Riomigal\Languages\Models;
 
-use Illuminate\Contracts\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 
 /**
- * @mixin Builder
+ * @property int $id
+ * @property bool $db_loader
+ * @property bool $import_vendor
+ * @property bool $enable_pending_notifications
+ * @property bool $enable_automatic_pending_notifications
+ * @property bool $enable_open_ai_translations
+ * @property bool $process_running
+ * @property string|null $domains
+ * @property bool $import_only_from_root_language
+ * @property bool $allow_deleting_languages
+ *
+ * @mixin Builder<Setting>
  */
 class Setting extends Model
 {
@@ -29,7 +40,7 @@ class Setting extends Model
     ];
 
     /**
-     * @var string[]
+     * @var array<string, string>
      */
     protected $casts = [
         'db_loader' => 'boolean',

@@ -73,6 +73,9 @@ class BaseTestCase extends TestCase
             'database' => ':memory:',
             'prefix' => '',
         ]);
+        $app['config']->set('queue.default', 'sync');
+        $app['config']->set('languages.enabled', true);
+        $app['config']->set('languages.db_connection', 'testbench');
     }
 
     /**

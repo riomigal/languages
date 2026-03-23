@@ -36,10 +36,15 @@ class ExportTranslationService
 
     public function exportTranslationsOnOtherHosts(): void
     {
-        $hosts = explode(',', Setting::getDomains());
-        if(count($hosts) < 1) return;
+        $hosts = array_values(array_filter(array_map('trim', explode(',', Setting::getDomains()))));
+        if ($hosts === []) {
+            return;
+        }
 
-        $hosts = array_diff($hosts, [request()->getSchemeAndHttpHost()]);
+        $hosts = array_values(array_diff($hosts, [request()->getSchemeAndHttpHost()]));
+        if ($hosts === []) {
+            return;
+        }
 
         $path = route('languages.api.force-export', [], false);
 

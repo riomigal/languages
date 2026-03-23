@@ -19,17 +19,22 @@
     ],
     "minimum-stability": "stable",
     "require": {
-        "php": "^8.2",
-        "illuminate/support": "^9.0||^10||^11",
-        "laravel/legacy-factories": "^1.3",
+        "php": "^8.1",
+        "illuminate/support": "^9.0||^10.0||^11.0||^12.0",
         "danharrin/livewire-rate-limiting": "^1.0",
-        "livewire/livewire": "^2.12||^3.0",
-        "openai-php/laravel": "^0.7.8||^0.8.0||^0.14.0"
+        "livewire/livewire": "^2.12||^3.0"
     },
     "require-dev": {
-        "orchestra/testbench": "^9.0||^10||^11",
-        "phpunit/phpunit": "^10.0",
-        "mockery/mockery": "^1.0.0"
+        "laravel/legacy-factories": "^1.3",
+        "openai-php/laravel": "^0.7.8||^0.8.0||^0.14.0",
+        "orchestra/testbench": "^7.0||^8.0||^9.0||^10.0||^11.0",
+        "phpunit/phpunit": "^9.6||^10.0",
+        "mockery/mockery": "^1.0.0",
+        "phpstan/phpstan": "^1.12",
+        "nunomaduro/larastan": "^2.11"
+    },
+    "suggest": {
+        "openai-php/laravel": "Optional. Install to enable automatic translation with OpenAI."
     },
     "extra": {
         "laravel": {
@@ -41,6 +46,9 @@
     },
     "license": "MIT",
     "config": {
+        "platform": {
+            "php": "8.1.34"
+        },
         "allow-plugins": {
             "php-http/discovery": true
         }

@@ -13,7 +13,7 @@ class MissingTranslationService
     use CanCreateTranslation;
 
     /**
-     * @var Collection
+     * @var Collection<int, Language>
      */
     protected Collection $languages;
 
@@ -44,7 +44,11 @@ class MissingTranslationService
         }
         $this->languages = Language::all();
 
-        $language = $this->languages->where('code', config('app.locale') ?? 'en')->first();
+        /** @var Language|null $language */
+        $language = $this->languages->firstWhere('code', config('app.locale') ?? 'en') ?? $this->languages->first();
+        if (!$language) {
+            return 0;
+        }
 
         if($singleLanguage) {
            $this->languages = $this->languages->filter(fn(Language $filteredLanguage) => $singleLanguage->id === $filteredLanguage->id);

@@ -60,8 +60,8 @@ class TranslationsTest extends BaseTestCase
              */
             ->assertSee(__('languages::translations.title', ['language' => $this->language->name, 'code' => $this->language->code]))
             ->assertSee(__('languages::translations.button.export_translation'))
-            ->assertSee(__('languages::translations.button.approve_all'))
-            ->assertSee(__('languages::translations.button.export_all_translations'))
+            ->assertSee(__('languages::translations.button.approve_all', ['language_code' => $this->language->code]))
+            ->assertDontSee(__('languages::translations.button.export_all_translations'))
             ->assertSee(__('languages::translations.checkbox_filter_button'))
             ->assertSee(__('languages::translations.table.action.translate'))
             ->assertDontSee(__('languages::translations.title', ['language' => $languageTwo->name, 'code' => $languageTwo->code]));
@@ -89,7 +89,7 @@ class TranslationsTest extends BaseTestCase
              */
             ->assertSee(__('languages::translations.title', ['language' => $this->language->name, 'code' => $this->language->code]))
             ->assertDontSee(__('languages::translations.button.export_translation'))
-            ->assertDontSee(__('languages::translations.button.approve_all'))
+            ->assertDontSee(__('languages::translations.button.approve_all', ['language_code' => $this->language->code]))
             ->assertDontSee(__('languages::translations.button.export_all_translations'))
             ->assertSee(__('languages::translations.checkbox_filter_button'))
             ->assertSee(__('languages::translations.table.action.translate'))

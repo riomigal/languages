@@ -3,7 +3,11 @@
 namespace Riomigal\Languages\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
+use Riomigal\Languages\Models\Language;
 
+/**
+ * @mixin Language
+ */
 class LanguageResource extends JsonResource
 {
     /**
@@ -13,13 +17,16 @@ class LanguageResource extends JsonResource
      */
     public function toArray($request): array
     {
+        /** @var Language $language */
+        $language = $this->resource;
+
         return [
-            'id' => $this->id,
-            'name' => $this->name,
-            'native_name' => $this->native_name,
-            'code' => $this->code,
-            'created_at' => $this->created_at?->toDateTimeString(),
-            'updated_at' => $this->updated_at?->toDateTimeString()
+            'id' => $language->id,
+            'name' => $language->name,
+            'native_name' => $language->native_name,
+            'code' => $language->code,
+            'created_at' => $language->created_at?->toDateTimeString(),
+            'updated_at' => $language->updated_at?->toDateTimeString()
         ];
     }
 
