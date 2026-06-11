@@ -11,11 +11,8 @@ window._ = _;
 
 // window.axios = axios;
 
-import Alpine from 'alpinejs';
-
-window.Alpine = Alpine;
-
-Alpine.start();
+// Livewire 3 bundles and starts Alpine itself (via @livewireScripts),
+// so the package must not ship a second Alpine instance.
 
 // window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
