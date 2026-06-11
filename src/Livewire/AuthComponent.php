@@ -98,13 +98,13 @@ abstract class AuthComponent extends Component
      */
     public function showNoAuthorizationMessage(): void
     {
-        $this->emit('showToast', 'Action not authorized!', LanguagesToastMessage::MESSAGE_TYPES['WARNING']);
+        $this->dispatch('showToast', 'Action not authorized!', LanguagesToastMessage::MESSAGE_TYPES['WARNING']);
     }
 
     /**
      * @return void
      */
     public function handleException(): void {
-        $this->emit('showToast', __('languages::global.something_wrong'), LanguagesToastMessage::MESSAGE_TYPES['WARNING'], 4000);
+        $this->dispatch('showToast', __('languages::global.something_wrong'), LanguagesToastMessage::MESSAGE_TYPES['WARNING'], 4000);
     }
 }

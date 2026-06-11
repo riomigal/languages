@@ -233,7 +233,7 @@ class Translations extends AuthComponent
             $this->openAiTranslateLanguageId = $this->translateLanguageExampleId;
         }
         $this->translatedValue = $this->translation->value;
-        $this->dispatchBrowserEvent('showTranslationModal');
+        $this->dispatch('showTranslationModal');
     }
 
     /**
@@ -280,7 +280,7 @@ class Translations extends AuthComponent
      */
     public function hideTranslationModal(): void
     {
-        $this->dispatchBrowserEvent('hideTranslationModal');
+        $this->dispatch('hideTranslationModal');
     }
 
     /**
@@ -303,7 +303,7 @@ class Translations extends AuthComponent
             };
 
             $this->updateTranslation(false);
-            $this->emit('startBatchProgress', resolve(BatchProcessor::class)->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
+            $this->dispatch('startBatchProgress', resolve(BatchProcessor::class)->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
         }
     }
 
@@ -330,7 +330,7 @@ class Translations extends AuthComponent
             $this->translation->save();
             $this->hideTranslationModal();
             if ($showSuccess) {
-                $this->emit('showToast', __('languages::translations.update_success_message'), LanguagesToastMessage::MESSAGE_TYPES['SUCCESS'], 4000);
+                $this->dispatch('showToast', __('languages::translations.update_success_message'), LanguagesToastMessage::MESSAGE_TYPES['SUCCESS'], 4000);
             }
         }
     }
@@ -365,7 +365,7 @@ class Translations extends AuthComponent
                 Translator::notifyAdminApprovedTranslationsPerLanguage($notApprovedLanguagesTotal, $language);
             };
 
-            $this->emit('startBatchProgress', resolve(BatchProcessor::class)->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
+            $this->dispatch('startBatchProgress', resolve(BatchProcessor::class)->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
         } else {
             $this->authUser->notify(new FlashMessage(__('languages::translations.nothing_approved')));
         }
@@ -431,7 +431,7 @@ class Translations extends AuthComponent
                 }
             };
 
-            $this->emit('startBatchProgress', resolve(BatchProcessor::class)->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
+            $this->dispatch('startBatchProgress', resolve(BatchProcessor::class)->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
         } else {
             $this->authUser->notify(new FlashMessage(__('languages::translations.nothing_exported')));
         }

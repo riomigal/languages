@@ -3,6 +3,7 @@
 namespace Riomigal\Languages\Livewire\Traits;
 
 use Illuminate\Http\Client\Pool;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Riomigal\Languages\Livewire\LanguagesToastMessage;
@@ -39,7 +40,7 @@ trait ChecksForRunningJobs
                 return $poolArray;
             });
             foreach($responses as $response) {
-                if(!$response->ok()) {
+                if(!($response instanceof Response) || !$response->ok()) {
                     $this->jobIsRunningMessage($fromCommandLine);
                     return true;
                 }
@@ -66,9 +67,9 @@ trait ChecksForRunningJobs
             if($isRunning) $this->info('Another Process is running.');
         } else {
             if ($isRunning) {
-                $this->emit('showToast', __('languages::global.import.processing_no_action'), LanguagesToastMessage::MESSAGE_TYPES['WARNING']);
+                $this->dispatch('showToast', __('languages::global.import.processing_no_action'), LanguagesToastMessage::MESSAGE_TYPES['WARNING']);
             } else {
-                $this->emit('showToast', __('languages::global.import.start_message'), LanguagesToastMessage::MESSAGE_TYPES['SUCCESS'], 6000);
+                $this->dispatch('showToast', __('languages::global.import.start_message'), LanguagesToastMessage::MESSAGE_TYPES['SUCCESS'], 6000);
             }
         }
 
