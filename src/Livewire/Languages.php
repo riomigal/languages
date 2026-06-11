@@ -107,15 +107,15 @@ class Languages extends AuthComponent
         }
 
         if (($jobs + $batches)) {
-            $this->emit('showToast', __('languages::global.jobs.delete_success', ['batches' => $batches, 'jobs' => $jobs]), LanguagesToastMessage::MESSAGE_TYPES['SUCCESS']);
-            $this->emit('startBatchProgress', null);
+            $this->dispatch('showToast', __('languages::global.jobs.delete_success', ['batches' => $batches, 'jobs' => $jobs]), LanguagesToastMessage::MESSAGE_TYPES['SUCCESS']);
+            $this->dispatch('startBatchProgress', null);
             return true;
         }
         if(!$this->anotherJobIsRunning()) {
             Setting::setJobsRunning(false);
         }
-        $this->emit('showToast', __('languages::global.jobs.delete_not_found'), LanguagesToastMessage::MESSAGE_TYPES['WARNING']);
-        $this->emit('startBatchProgress', null);
+        $this->dispatch('showToast', __('languages::global.jobs.delete_not_found'), LanguagesToastMessage::MESSAGE_TYPES['WARNING']);
+        $this->dispatch('startBatchProgress', null);
         return false;
     }
 
@@ -139,7 +139,7 @@ class Languages extends AuthComponent
             Translator::notifyAdminImportedLanguages($languages);
         };
 
-        $this->emit('startBatchProgress', $batchProcessor->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
+        $this->dispatch('startBatchProgress', $batchProcessor->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
     }
 
     /**
@@ -171,7 +171,7 @@ class Languages extends AuthComponent
             });
         };
 
-        $this->emit('startBatchProgress', $batchProcessor->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
+        $this->dispatch('startBatchProgress', $batchProcessor->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
     }
 
     /**
@@ -199,7 +199,7 @@ class Languages extends AuthComponent
             });
         };
 
-        $this->emit('startBatchProgress', $batchProcessor->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
+        $this->dispatch('startBatchProgress', $batchProcessor->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
     }
 
     /**
@@ -226,7 +226,7 @@ class Languages extends AuthComponent
                 });
             };
 
-            $this->emit('startBatchProgress', resolve(BatchProcessor::class)->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
+            $this->dispatch('startBatchProgress', resolve(BatchProcessor::class)->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
         } else {
             $this->authUser->notify(new FlashMessage(__('languages::translations.nothing_approved')));
         }
@@ -273,7 +273,7 @@ class Languages extends AuthComponent
                     CreateTranslationPullRequestJob::dispatch($languageCodes, $total);
                 }
             };
-            $this->emit('startBatchProgress', resolve(BatchProcessor::class)->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
+            $this->dispatch('startBatchProgress', resolve(BatchProcessor::class)->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
 
         } else {
             $this->authUser->notify(new FlashMessage(__('languages::translations.nothing_exported')));
@@ -293,7 +293,7 @@ class Languages extends AuthComponent
             $language = Language::query()->findOrFail($id);
             $language->translators()->detach();
             $language->delete();
-            $this->emit('showToast', __('languages::languages.deleted'), LanguagesToastMessage::MESSAGE_TYPES['WARNING']);
+            $this->dispatch('showToast', __('languages::languages.deleted'), LanguagesToastMessage::MESSAGE_TYPES['WARNING']);
             return true;
         }
         return false;
@@ -314,7 +314,7 @@ class Languages extends AuthComponent
             if(!File::exists($langPath)) {
                 File::makeDirectory($langPath);
             }
-            $this->emit('showToast', __('languages::languages.created', ['language' => $language->name]), LanguagesToastMessage::MESSAGE_TYPES['SUCCESS']);
+            $this->dispatch('showToast', __('languages::languages.created', ['language' => $language->name]), LanguagesToastMessage::MESSAGE_TYPES['SUCCESS']);
             return true;
         }
         return false;

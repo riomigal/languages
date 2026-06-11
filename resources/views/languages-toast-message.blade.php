@@ -4,11 +4,11 @@
         x-data="{showMessage: @entangle('showMessage')}"
         class="flex justify-center"
         x-init="() => {
-        window.livewire.on('closeToastMessage', (duration) => {
+        window.addEventListener('closeToastMessage', (event) => {
             if (typeof window.toastTimeout !== 'undefined') {
                 clearTimeout(window.toastTimeout)
             }
-            window.toastTimeout = setTimeout(() => showMessage = false, duration );
+            window.toastTimeout = setTimeout(() => showMessage = false, event.detail.duration );
         })
     }"
 >

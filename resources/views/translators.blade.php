@@ -104,7 +104,7 @@
             <h3 class="mb-3 bold dark:text-white ">{{ __('languages::translators.form.update_password_title', ['email' => $this->translator->email])}}</h3>
             <div class="grid md:grid-cols-2 md:gap-6">
                 <div class="relative z-0 w-full mb-6 group">
-                    <input type="password" name="new_password" id="new_password" wire:model.defer="new_password"
+                    <input type="password" name="new_password" id="new_password" wire:model="new_password"
                            class="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer"
                            placeholder=" " required/>
                     <label for="new_password"
@@ -113,7 +113,7 @@
                 </div>
                 <div class="relative z-0 w-full mb-6 group">
                     <input type="password" name="new_password_confirmation" id="new_password_confirmation"
-                           wire:model.defer="new_password_confirmation"
+                           wire:model="new_password_confirmation"
                            class="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer"
                            placeholder=" " required/>
                     <label for="new_password_confirmation"
