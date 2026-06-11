@@ -179,7 +179,7 @@ class Translators extends AuthComponent
             );
             $translator->languages()->detach();
             $translator->languages()->attach($this->languages);
-            $this->emit('showToast', __('languages::translators.created'), LanguagesToastMessage::MESSAGE_TYPES['SUCCESS']);
+            $this->dispatch('showToast', __('languages::translators.created'), LanguagesToastMessage::MESSAGE_TYPES['SUCCESS']);
             $this->reset(['email', 'phone', 'password', 'password_confirmation', 'first_name', 'last_name', 'admin', 'languages', 'showForm']);
             return true;
         }
@@ -206,7 +206,7 @@ class Translators extends AuthComponent
             );
             $this->translator->languages()->detach();
             $this->translator->languages()->attach($this->languages);
-            $this->emit('showToast', __('languages::translators.updated'), LanguagesToastMessage::MESSAGE_TYPES['SUCCESS']);
+            $this->dispatch('showToast', __('languages::translators.updated'), LanguagesToastMessage::MESSAGE_TYPES['SUCCESS']);
             $this->reset(['email', 'phone', 'password', 'password_confirmation', 'first_name', 'last_name', 'admin', 'languages', 'showForm']);
             return true;
         }
@@ -223,7 +223,7 @@ class Translators extends AuthComponent
         if (parent::delete($id)) {
             $translator = Translator::query()->findOrFail($id);
             $translator->delete();
-            $this->emit('showToast', __('languages::translators.deleted'), LanguagesToastMessage::MESSAGE_TYPES['WARNING']);
+            $this->dispatch('showToast', __('languages::translators.deleted'), LanguagesToastMessage::MESSAGE_TYPES['WARNING']);
             return true;
         }
         return false;
@@ -281,7 +281,7 @@ class Translators extends AuthComponent
         $this->translator->password = Hash::make($this->new_password);
         $this->translator->save();
         $this->toggleUpdatePasswordForm();
-        $this->emit('showToast', __('languages::translators.password_updated_success', ['email'=> $this->translator->email]), LanguagesToastMessage::MESSAGE_TYPES['SUCCESS']);
+        $this->dispatch('showToast', __('languages::translators.password_updated_success', ['email'=> $this->translator->email]), LanguagesToastMessage::MESSAGE_TYPES['SUCCESS']);
     }
 
     public function notifyPendingTranslations(): void
@@ -289,7 +289,7 @@ class Translators extends AuthComponent
         $this->translator->languages()->each(function(Language $language) {
             $this->translator->notify(new PendingTranslationsNotification($language));
         });
-        $this->emit('showToast', __('languages::pending-translations-notification.success', ['email' => $this->translator->email]), LanguagesToastMessage::MESSAGE_TYPES['SUCCESS']);
+        $this->dispatch('showToast', __('languages::pending-translations-notification.success', ['email' => $this->translator->email]), LanguagesToastMessage::MESSAGE_TYPES['SUCCESS']);
     }
 
 

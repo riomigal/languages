@@ -19,11 +19,6 @@ class FlashMessage extends Component
     public int $notifiable;
 
     /**
-     * @var bool
-     */
-    public bool $showMessages = false;
-
-    /**
      * @var int
      */
     public int $totalNotifications = 0;
@@ -40,19 +35,11 @@ class FlashMessage extends Component
     /**
      * @return void
      */
-    public function toggleMessages(): void {
-        $this->showMessages = !$this->showMessages;
-    }
-
-    /**
-     * @return void
-     */
     public function markAllAsRead(): void {
         DB::connection(config('languages.db_connection'))->table('notifications')->whereIn('id', array_keys($this->notifications))->update([
             'read_at' => now()
         ]);
         $this->updateNotifications();
-        $this->toggleMessages();
     }
 
     /**
@@ -78,9 +65,6 @@ class FlashMessage extends Component
             ]
         );
         $this->updateNotifications();
-        if($this->totalNotifications == 0) {
-            $this->toggleMessages();
-        }
     }
 
     /**

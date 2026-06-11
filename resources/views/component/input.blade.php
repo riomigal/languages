@@ -11,7 +11,7 @@
 
 <div id="{{ $id ?: $name}}" class="relative z-0 w-full mb-6 group">
     <input type="{{$type}}" name="{{$name}}"
-           wire:model.debounce.500ms="{{$name}}"
+           wire:model.live.debounce.500ms="{{$name}}"
            class="block py-2.5 px-0 w-full text-sm text-gray-900 bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer"
            @if($placeholder) placeholder="{{$placeholder}}"  @endif
            @if($required) required @endif/>
