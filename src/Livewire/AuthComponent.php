@@ -51,7 +51,7 @@ abstract class AuthComponent extends Component
     /**
      * @return void
      */
-    protected function updatedSearch(): void
+    public function updatedSearch(): void
     {
         $this->gotoPage(1);
     }

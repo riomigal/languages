@@ -32,7 +32,7 @@ use Riomigal\Languages\Services\OpenAITranslationService;
 
 class LanguagesServiceProvider extends ServiceProvider
 {
-    public static string $version = '1.8.9';
+    public static string $version = '1.9.3';
 
     protected null|bool|object $settings = false;
     /**
