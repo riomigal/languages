@@ -19,7 +19,6 @@
     @endphp
 
     @if ($paginator->hasPages())
-        @php(isset($this->numberOfPaginatorsRendered[$paginator->getPageName()]) ? $this->numberOfPaginatorsRendered[$paginator->getPageName()]++ : $this->numberOfPaginatorsRendered[$paginator->getPageName()] = 1)
         <div class="flex flex-col p-3">
             <p class="text-sm font-light text-gray-500 dark:text-gray-400 pb-3">
                 {{ __('languages::pagination.total', ['total' => $paginator->total(), 'currentPage' => $paginator->currentPage()]) }}

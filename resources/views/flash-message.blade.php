@@ -1,11 +1,11 @@
-<div wire:poll.visible.6000ms="updateNotifications" x-data="{show : @entangle('showMessages')}">
+<div wire:poll.visible.6000ms="updateNotifications" x-data="{show: false}">
     @if($this->totalNotifications > 0)
         <div class="h-auto fixed bottom-16 right-5 grid items-center m-auto w-auto h-auto z-50 max-w-md p-4"
              role="alert">
             <div x-show="!show"
                  class="flex flex-row items-center w-full max-w-xs p-4 space-x-4 text-gray-500 bg-white divide-x divide-gray-200 rounded-lg shadow dark:text-gray-400 dark:divide-gray-700 space-x dark:bg-gray-800"
                  role="alert">
-                <button wire:click="toggleMessages" type="button"
+                <button @click="show = true" type="button"
                         class="inline-flex items-center px-5 py-2.5 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                          stroke="currentColor" class="w-6 h-6">
@@ -21,13 +21,13 @@
             @if($this->totalNotifications > 0)
                 <div x-show="show" class="flex flex-row">
                     <div>
-                        <div wire:click="markAllAsRead"
+                        <div wire:click="markAllAsRead" @click="show = false"
                              class="cursor-pointer inline-flex items-center px-5 py-2.5 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
                             {{ __('languages::flash-messages.mark_all_read') }}
                         </div>
                     </div>
                     <div>
-                        <div wire:click="toggleMessages" class="cursor-pointer inline-flex items-center px-5 py-2.5 text-sm font-medium text-center text-white bg-red-700 rounded-lg hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800">
+                        <div @click="show = false" class="cursor-pointer inline-flex items-center px-5 py-2.5 text-sm font-medium text-center text-white bg-red-700 rounded-lg hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800">
                             {{ __('languages::flash-messages.close') }}
                         </div>
                     </div>

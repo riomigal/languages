@@ -41,7 +41,7 @@ class LanguagesToastMessage extends Component
         }
         $this->showMessage = true;
 
-        $this->emit('closeToastMessage', $duration);
+        $this->dispatch('closeToastMessage', duration: $duration);
     }
 
     public function close(): void
