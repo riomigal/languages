@@ -102,29 +102,51 @@ class GitHubPullRequestService
     protected function formatLanguageFiles(): void
     {
         $langPath = $this->tempDir . '/' . $this->langPathInRepo;
-        
-        // Get all PHP files in the lang directory
-        $phpFiles = glob($langPath . '/**/*.php', GLOB_BRACE) ?: [];
-        $phpFiles = array_merge($phpFiles, glob($langPath . '/*/*.php') ?: []);
-        
-        if (empty($phpFiles)) {
+
+        $pintPath = $this->getPintPath();
+
+        if (!File::isDirectory($langPath) || !File::exists($pintPath)) {
             return;
         }
-        
-        $fileList = implode(' ', array_map('escapeshellarg', $phpFiles));
-        
-        // Run Pint from the translation server's vendor directory
-        $pintPath = base_path('vendor/bin/pint');
-        
-        if (File::exists($pintPath)) {
-            exec(sprintf('%s %s %s 2>&1', escapeshellarg(PHP_BINARY), escapeshellarg($pintPath), $fileList), $output, $returnCode);
-            
-            if ($returnCode !== 0) {
-                Log::warning('GitHubPullRequestService: Pint formatting failed.', [
-                    'output' => implode("\n", $output)
-                ]);
-            }
+
+        [$output, $returnCode] = $this->executePint($pintPath, $langPath);
+
+        if ($returnCode !== 0) {
+            Log::warning('GitHubPullRequestService: Pint formatting failed.', [
+                'output' => implode("\n", $output),
+            ]);
         }
+    }
+
+    /**
+     * Get the Pint executable path from the host application.
+     *
+     * @return string
+     */
+    protected function getPintPath(): string
+    {
+        return base_path('vendor/bin/pint');
+    }
+
+    /**
+     * Format the exported language directory with Pint.
+     *
+     * @param string $pintPath
+     * @param string $langPath
+     * @return array{0: array<int, string>, 1: int}
+     */
+    protected function executePint(string $pintPath, string $langPath): array
+    {
+        $output = [];
+        $returnCode = 0;
+
+        exec(
+            sprintf('%s %s %s 2>&1', escapeshellarg(PHP_BINARY), escapeshellarg($pintPath), escapeshellarg($langPath)),
+            $output,
+            $returnCode
+        );
+
+        return [$output, $returnCode];
     }
 
     /**
