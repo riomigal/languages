@@ -98,7 +98,9 @@ class LanguagesServiceProvider extends ServiceProvider
      */
     protected function setCustomGuard(): void
     {
-        Config::set('auth.guards.' . config('languages.translator_guard'), [
+        /** @var string $translatorGuard Configured translator guard name. */
+        $translatorGuard = config('languages.translator_guard');
+        Config::set('auth.guards.' . $translatorGuard, [
             'driver' => 'session',
             'provider' => 'translators',
         ]);
@@ -123,8 +125,11 @@ class LanguagesServiceProvider extends ServiceProvider
      */
     protected function addMiddleware(): void
     {
+        /** @var string $translatorGuard Configured translator guard name. */
         $translatorGuard = config('languages.translator_guard');
-        app('router')->aliasMiddleware(config('languages.auth_guard'), AuthTranslator::class);
+        /** @var string $authGuard Configured authentication middleware alias. */
+        $authGuard = config('languages.auth_guard');
+        app('router')->aliasMiddleware($authGuard, AuthTranslator::class);
         app('router')->aliasMiddleware('laravel-languages-auth-api', AuthApi::class);
         app('router')->pushMiddlewareToGroup($translatorGuard, \Illuminate\Cookie\Middleware\EncryptCookies::class);
         app('router')->pushMiddlewareToGroup($translatorGuard, \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class);

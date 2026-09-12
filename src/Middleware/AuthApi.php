@@ -9,13 +9,14 @@ class AuthApi
 {
     /**
      * @param Request $request
-     * @param \Closure $next
+     * @param \Closure(Request): (JsonResponse|null) $next
      * @return JsonResponse|null
      */
     public function handle(Request $request, \Closure $next): JsonResponse|null
     {
         $request->headers->set('Accept', 'application/json');
 
+        /** @var array{api_key: string} $data Guaranteed by the required|string validation rule. */
         $data = $request->validate([
             'api_key' => 'required|string',
         ]);

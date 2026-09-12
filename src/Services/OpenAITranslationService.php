@@ -30,7 +30,7 @@ class OpenAITranslationService
 
     /**
      * @param array<array-key, string> $array Translation text indexed by caller-supplied keys.
-     * @return array<array-key, string> The same keys, with translated values.
+     * @return array<array-key, mixed> Decoded external JSON; response keys and value types are not validated.
      */
     public function translateArray(Language $rootLanguage, Language $toLanguage, array $array, bool $stringTranslation = false): array
     {

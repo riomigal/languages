@@ -36,6 +36,8 @@ class UpdateTranslatorPasswordRequest extends FormRequest
      */
     public function translatorAttributes(): array
     {
-        return ['password' => Hash::make($this->validated('new_password'))];
+        /** @var string $password Validated by required|string|min:8. */
+        $password = $this->validated('new_password');
+        return ['password' => Hash::make($password)];
     }
 }

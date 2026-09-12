@@ -10,6 +10,9 @@ class FindMissingTranslationsByLanguage extends BaseJob
 {
     use CanCreateTranslation;
 
+    /**
+     * @param list<int> $languageIds
+     */
     public function __construct(
         protected array $languageIds,
         protected int $languageId,

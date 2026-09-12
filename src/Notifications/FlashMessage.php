@@ -13,7 +13,9 @@ class FlashMessage extends Notification implements ShouldQueue
 
     public function __construct(protected string $message)
     {
-        $this->queue = config('languages.queue_name');
+        /** @var string|null $queue Configured queue name stored by Queueable. */
+        $queue = config('languages.queue_name');
+        $this->queue = $queue;
     }
 
     /**

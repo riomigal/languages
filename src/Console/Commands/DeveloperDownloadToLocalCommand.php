@@ -29,6 +29,7 @@ class DeveloperDownloadToLocalCommand extends Command
      */
     protected $description = 'Download the content of the live DB on local and updates as well the filesystem.';
 
+    /** @var array{api_key?: string} */
     protected array $apiKeyParams = [];
 
     /**
@@ -36,22 +37,30 @@ class DeveloperDownloadToLocalCommand extends Command
      */
     public function handle(): void
     {
-        $this->apiKeyParams = ['api_key' => config('languages.api_shared_api_key')];
+        /** @var string $apiKey Configured shared API key. */
+        $apiKey = config('languages.api_shared_api_key');
+        $this->apiKeyParams = ['api_key' => $apiKey];
 
-        $DB = DB::connection(config('languages.db_connection'));
+        /** @var string|\UnitEnum|null $connection Configured database connection name. */
+        $connection = config('languages.db_connection');
+        $DB = DB::connection($connection);
         try {
             $DB->statement('SET FOREIGN_KEY_CHECKS=0;');
             $DB->beginTransaction();
 
             $this->info('Request all languages.');
-            $response = Http::post(config('languages.main_server_domain') . route('languages.api.get-languages', [], false), $this->apiKeyParams);
+            /** @var string $domain Configured main server URL. */
+            $domain = config('languages.main_server_domain');
+            $response = Http::post($domain . route('languages.api.get-languages', [], false), $this->apiKeyParams);
             if ($response->status() !== 200) {
                 throw new \Exception('DeveloperDownloadToLocalCommand: Couldn\'t import languages');
             }
             $this->info('Deleting all languages in DB');
             Language::query()->delete();
             $this->info('Inserting all languages in DB');
-            Language::insert($response['data']);
+            /** @var list<array<string, scalar|null>> $languages Serialized LanguageResource records. */
+            $languages = $response['data'];
+            Language::insert($languages);
 
             $this->info('Requesting Translations 1');
             $response = $this->sendGetPaginatedTranslationsRequest();
@@ -62,15 +71,19 @@ class DeveloperDownloadToLocalCommand extends Command
             Translation::query()->delete();
 
             $this->info('Inserting Translations 1 in DB');
-            Translation::insert($response['data']);
-            for($page = 2; $page <= $response['meta']['last_page']; $page++) {
+            /** @var array{data: list<array<string, scalar|null>>, meta: array{last_page: int}} $payload Paginated TranslationResource response. */
+            $payload = $response->json();
+            Translation::insert($payload['data']);
+            for($page = 2; $page <= $payload['meta']['last_page']; $page++) {
                 $this->info('Requesting Translations 2');
                 $response = $this->sendGetPaginatedTranslationsRequest(['page' => $page]);
                 if ($response->status() !== 200) {
                     $this->throwException($page);
                 }
                 $this->info('Inserting Translations 2 in DB');
-                Translation::insert($response['data']);
+                /** @var array{data: list<array<string, scalar|null>>, meta: array{last_page: int}} $payload Paginated TranslationResource response. */
+                $payload = $response->json();
+                Translation::insert($payload['data']);
             }
             $DB->commit();
             $this->info('All translation inserted');
@@ -90,9 +103,14 @@ class DeveloperDownloadToLocalCommand extends Command
         $this->info('Download finished.');
     }
 
+    /**
+     * @param array{page?: int} $params
+     */
     protected function sendGetPaginatedTranslationsRequest(array $params = []): Response
     {
-        return Http::post(config('languages.main_server_domain') . route('languages.api.get-paginated-translations', $params, false), $this->apiKeyParams);
+        /** @var string $domain Configured main server URL. */
+        $domain = config('languages.main_server_domain');
+        return Http::post($domain . route('languages.api.get-paginated-translations', $params, false), $this->apiKeyParams);
     }
 
     protected function throwException(int $page = 1): void

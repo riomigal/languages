@@ -10,7 +10,7 @@ class Translator
 {
     /**
      * @param Request $request
-     * @param \Closure $next
+     * @param \Closure(Request): (Response|RedirectResponse|null) $next
      * @return Response|RedirectResponse|null
      */
     public function handle(Request $request, \Closure $next): Response|RedirectResponse|null

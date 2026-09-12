@@ -4,6 +4,7 @@ namespace Riomigal\Languages\Console\Commands;
 
 
 use Illuminate\Console\Command;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 
 class PruneLanguageBatches extends Command
@@ -27,10 +28,14 @@ class PruneLanguageBatches extends Command
      */
     public function handle(): void
     {
-        DB::connection(config('languages.db_connection'))->table('job_batches')->where('name', config('languages.batch_name'))
-            ->where(function ($query) {
-                $query->where('finished_at', '<', now()->subHours(config('languages.prune_batch_hours'))->timestamp)
-                    ->orWhere('cancelled_at', '<', now()->subHours(config('languages.prune_batch_hours'))->timestamp);
+        /** @var string|\UnitEnum|null $connection Configured database connection name. */
+        $connection = config('languages.db_connection');
+        DB::connection($connection)->table('job_batches')->where('name', config('languages.batch_name'))
+            ->where(function (Builder $query) {
+                /** @var int|float $hours Retention interval from config/languages.php. */
+                $hours = config('languages.prune_batch_hours');
+                $query->where('finished_at', '<', now()->subHours($hours)->timestamp)
+                    ->orWhere('cancelled_at', '<', now()->subHours($hours)->timestamp);
             })->delete();
     }
 }

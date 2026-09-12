@@ -69,6 +69,7 @@ class UpdateSettingFieldRequest extends FormRequest
     public function validationData(): array
     {
         $field = $this->field();
+        /** @var array<string, mixed> $data Unvalidated input under a supported, non-numeric field name. */
         $data = $this->only($field);
 
         if ($field === 'domains') {

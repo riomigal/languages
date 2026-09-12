@@ -13,7 +13,7 @@ class EnsureAdmin
      * Require an administrator resolved by EnsureTranslator.
      *
      * @param Request $request
-     * @param Closure $next
+     * @param Closure(Request): Response $next
      * @return Response
      */
     public function handle(Request $request, Closure $next): Response

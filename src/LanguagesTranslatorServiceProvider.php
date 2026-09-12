@@ -2,6 +2,8 @@
 
 namespace Riomigal\Languages;
 
+use Illuminate\Foundation\Application;
+use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -49,7 +51,9 @@ class LanguagesTranslatorServiceProvider extends TranslationServiceProvider
         }
         if(app()->runningInConsole()) {
             try {
-                DB::connection(config('languages.db_connection'))->getDatabaseName();
+                /** @var string|\UnitEnum|null $connection Configured database connection name. */
+                $connection = config('languages.db_connection');
+                DB::connection($connection)->getDatabaseName();
                 $this->loadTranslationsArray();
             } catch (\Exception) {
                 parent::registerLoader();
@@ -64,12 +68,28 @@ class LanguagesTranslatorServiceProvider extends TranslationServiceProvider
      */
     protected function loadTranslationsArray(): void
     {
-        $hasDBLoaderOn = Cache::rememberForever(config('languages.cache_key') . '_has_db_loader_on', function () {
-            return Schema::connection(config('languages.db_connection'))->hasTable(config('languages.table_settings')) && DB::connection(config('languages.db_connection'))->table(config('languages.table_settings'))->first()->db_loader;
+        /** @var string $cacheKey Configured cache key prefix. */
+        $cacheKey = config('languages.cache_key');
+        $hasDBLoaderOn = Cache::rememberForever($cacheKey . '_has_db_loader_on', function () {
+            /** @var string|null $connection Connection name accepted by the schema builder. */
+            $connection = config('languages.db_connection');
+            /** @var string $table Configured settings table name. */
+            $table = config('languages.table_settings');
+            if (!Schema::connection($connection)->hasTable($table)) {
+                return false;
+            }
+            /** @var \stdClass $setting The singleton row seeded when the settings table is created. */
+            $setting = DB::connection($connection)->table($table)->first();
+            // Preserve the boolean result of the original hasTable() && db_loader expression.
+            return (bool) $setting->db_loader;
         });
         if($hasDBLoaderOn) {
-            $this->app->singleton('translation.loader', function ($app) {
-                return new TranslationLoader($app['files'], $app['path.lang']);
+            $this->app->singleton('translation.loader', function (Application $app) {
+                /** @var Filesystem $files Laravel's filesystem service binding. */
+                $files = $app['files'];
+                /** @var string $path Laravel's language path binding. */
+                $path = $app['path.lang'];
+                return new TranslationLoader($files, $path);
             });
         } else {
             parent::registerLoader();

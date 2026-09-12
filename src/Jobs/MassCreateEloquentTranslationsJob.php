@@ -21,7 +21,9 @@ class MassCreateEloquentTranslationsJob extends BaseJob
         protected int $fromLanguageId
     )
     {
-        $this->queue = config('languages.queue_name');
+        /** @var string|null $queue Configured queue name stored by Queueable. */
+        $queue = config('languages.queue_name');
+        $this->queue = $queue;
         parent::__construct();
     }
 

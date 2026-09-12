@@ -13,6 +13,9 @@ class UpdateTranslationJob extends BaseJob
 {
 
 
+    /**
+     * @param Translator $authUser The acting translator required to attribute the update.
+     */
     public function __construct(
         protected Language $rootLanguage,
         protected Translation $translation,
@@ -37,7 +40,9 @@ class UpdateTranslationJob extends BaseJob
             $this->translation->old_value = $this->translation->value;
         }
         $this->translation->approved_by = null;
-        $this->translation->updated_by = $this->authUser->id;
+        /** @var Translator $authUser Required by the constructor contract; null remains unsupported at runtime. */
+        $authUser = $this->authUser;
+        $this->translation->updated_by = $authUser->id;
         $this->translation->updated_translation = true;
         $this->translation->value =  resolve(OpenAITranslationService::class)->translateString($this->rootLanguage, $this->translation->language, $this->translatedValue);
         $this->translation->approved = false;

@@ -11,18 +11,20 @@ class AuthTranslator
 {
     /**
      * @param Request $request
-     * @param \Closure $next
+     * @param \Closure(Request): (Response|RedirectResponse|JsonResponse|null) $next
      * @return Response|RedirectResponse|JsonResponse|null
      */
     public function handle(Request $request, \Closure $next): Response|RedirectResponse|JsonResponse|null
     {
+        /** @var string $guard Configured translator guard name. */
+        $guard = config('languages.translator_guard');
 
         if($request->wantsJson()) {
-            if (!auth(config('languages.translator_guard'))->check()) {
+            if (!auth($guard)->check()) {
                 return response()->json(['message' => 'User is not authenticated!'], 403);
             }
         } else {
-            if (!auth(config('languages.translator_guard'))->check()) {
+            if (!auth($guard)->check()) {
                 abort(302, '', ['Location' => route('languages.login')]);
             }
         }

@@ -15,12 +15,14 @@ class TranslationLoader extends FileLoader
      * @param string $group
      * @param string|null $namespace
      *
-     * @return array<string, mixed> Translation lines, arbitrarily nested by group.
+     * @return array<array-key, mixed> External translation file contents or stored lines; numeric keys are allowed.
      */
     public function load($locale,  $group, $namespace = null): array
     {
         if(!Setting::getCached()->import_vendor && $namespace && $namespace !== '*') {
-            return parent::load($locale, $group, $namespace);
+            /** @var array<array-key, mixed> $lines FileLoader returns arbitrary PHP/JSON translation file contents. */
+            $lines = parent::load($locale, $group, $namespace);
+            return $lines;
         }
         return Translation::getCachedTranslations($locale,  $group, $namespace);
     }

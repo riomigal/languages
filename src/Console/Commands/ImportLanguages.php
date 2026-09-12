@@ -39,9 +39,12 @@ class ImportLanguages extends Command
 
             $languages = Language::all();
             if($languages->count()) {
-                $this->info('Existing languages: ' . implode(', ', $languages->pluck('name')->all()) . '.');
+                /** @var list<string> $names Language model name attributes. */
+                $names = $languages->pluck('name')->all();
+                $this->info('Existing languages: ' . implode(', ', $names) . '.');
             }
 
+            /** @var list<int> $languages Language model primary keys. */
             $languages = $languages->pluck('id')->all();
             $importLanguageService->importLanguages();
             $newLanguages = Translator::notifyAdminImportedLanguages($languages);

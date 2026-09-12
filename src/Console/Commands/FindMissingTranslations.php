@@ -36,6 +36,7 @@ class FindMissingTranslations extends Command
         try {
             Setting::setJobsRunning();
 
+            /** @var list<int|numeric-string> $total SQL COUNT results, whose scalar type depends on the driver. */
             $total = Translation::selectRaw('count(*) as total')->groupBy('language_id')->orderBy('language_id')->pluck('total')->all();
 
             Language::query()->whereDoesntHave('translations')->each(function(Language $language) use (&$total) {

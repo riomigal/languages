@@ -24,7 +24,9 @@ class ExportUpdatedModelTranslation extends BaseJob
      */
     public function handle(): void
     {
-        $this->updateModelTranslation(Translation::find($this->translation_id), $this->languageCode);
+        $translation = Translation::find($this->translation_id);
+        // updateModelTranslation() already rejects a missing record with TypeError.
+        $this->updateModelTranslation($translation ?? throw new \TypeError('The translation to export must exist, null given.'), $this->languageCode);
     }
 
 }

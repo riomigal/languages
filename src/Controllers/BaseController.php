@@ -52,9 +52,11 @@ abstract class BaseController extends Controller
     protected function scopeLanguages(Builder $query): Builder
     {
         if (!$this->isAdministrator()) {
+            /** @var string $table Configured language table name. */
+            $table = config('languages.table_languages');
             $query->whereIn(
-                config('languages.table_languages') . '.id',
-                $this->authUser()->languages()->pluck(config('languages.table_languages') . '.id')
+                $table . '.id',
+                $this->authUser()->languages()->pluck($table . '.id')
             );
         }
 

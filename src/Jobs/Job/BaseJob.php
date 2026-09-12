@@ -16,7 +16,9 @@ abstract class BaseJob implements ShouldQueue
 
     public function __construct()
     {
-        $this->onQueue(config('languages.queue_name'));
+        /** @var string|\UnitEnum|null $queue Configured queue name. */
+        $queue = config('languages.queue_name');
+        $this->onQueue($queue);
     }
 
     /**

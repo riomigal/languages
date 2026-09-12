@@ -13,12 +13,14 @@ class EnsureTranslator
      * Resolve the package translator and share the authorization context.
      *
      * @param Request $request
-     * @param Closure $next
+     * @param Closure(Request): Response $next
      * @return Response
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $authUser = Translator::find(auth(config('languages.translator_guard'))->user()?->id);
+        /** @var string $guard Configured translator guard name. */
+        $guard = config('languages.translator_guard');
+        $authUser = Translator::find(auth($guard)->user()?->id);
 
         if (!$authUser) {
             abort(403);

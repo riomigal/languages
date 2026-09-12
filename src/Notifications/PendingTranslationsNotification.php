@@ -16,10 +16,17 @@ class PendingTranslationsNotification extends Notification implements ShouldQueu
 
     protected int $total = 0;
 
+    /**
+     * @param Language $language The language whose pending translations are counted.
+     */
     public function __construct(protected ?Language $language)
     {
-        $this->queue = config('languages.queue_name');
-        $this->total = $this->language->translations()->needsTranslation()->count();
+        /** @var string|null $queue Configured queue name stored by Queueable. */
+        $queue = config('languages.queue_name');
+        $this->queue = $queue;
+        /** @var Language $language Required by the constructor contract; null remains unsupported at runtime. */
+        $language = $this->language;
+        $this->total = $language->translations()->needsTranslation()->count();
         $this->message = __('languages::pending-translations-notification.message', ['total' => $this->total]);
     }
 
@@ -54,8 +61,10 @@ class PendingTranslationsNotification extends Notification implements ShouldQueu
      */
     public function toMail(object $notifiable): MailMessage
     {
+        /** @var string $appName Configured application name. */
+        $appName = config('app.name');
         return (new MailMessage)
-            ->subject(config('app.name') . ' - ' . __('languages::pending-translations-notification.subject'))
+            ->subject($appName . ' - ' . __('languages::pending-translations-notification.subject'))
             ->line($this->message)
             ->action(__('languages::pending-translations-notification.button'), route('languages.login'));
     }
