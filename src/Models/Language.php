@@ -180,22 +180,35 @@ class Language extends Model
     /**
      * Create a new Eloquent model instance.
      *
-     * @param array $attributes
+     * @template TAttribute
+     * @param array<string, TAttribute> $attributes
      * @return void
      */
     public function __construct(array $attributes = [])
     {
-        $this->table = config('languages.table_languages');
-        $this->connection = config('languages.db_connection');
+        $table = config('languages.table_languages');
+        if ($table !== null && !is_string($table)) {
+            throw new \TypeError('languages.table_languages must be a string or null.');
+        }
+        $this->table = $table;
+        $connection = config('languages.db_connection');
+        if ($connection !== null && !is_string($connection) && !$connection instanceof \UnitEnum) {
+            throw new \TypeError('languages.db_connection must be a string, UnitEnum or null.');
+        }
+        $this->connection = $connection;
         parent::__construct($attributes);
     }
 
     /**
-     * @return BelongsToMany
+     * @return BelongsToMany<Translator, $this>
      */
     public function translators(): BelongsToMany
     {
-        return $this->belongsToMany(Translator::class, config('languages.table_translator_language'));
+        $table = config('languages.table_translator_language');
+        if ($table !== null && !is_string($table)) {
+            throw new \TypeError('languages.table_translator_language must be a string or null.');
+        }
+        return $this->belongsToMany(Translator::class, $table);
     }
 
     /**

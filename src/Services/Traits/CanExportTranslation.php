@@ -2,6 +2,7 @@
 
 namespace Riomigal\Languages\Services\Traits;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
@@ -39,6 +40,7 @@ trait CanExportTranslation
                     $query->exported(false);
                 });
 
+            /** @var array<array-key, string|null> $translations Stored values indexed by translation keys. */
             $translations = $query
                 ->pluck('value', 'key')->all();
 
@@ -71,7 +73,7 @@ trait CanExportTranslation
     /**
      * Update the content of the file
      *
-     * @param array $translations
+     * @param array<array-key, string|null> $translations
      * @param string $fullPath
      * @param string $type
      * @return void
@@ -114,20 +116,32 @@ trait CanExportTranslation
             $content = json_encode($content);
         }
 
-        File::put($fullPath, $content);
+        // file_put_contents previously wrote an empty string when JSON encoding failed.
+        File::put($fullPath, $content === false ? '' : $content);
     }
 
 
     protected function updateModelTranslation(Translation $translation, string $languageCode): void
     {
         $modelInstance = app($translation->namespace);
+        if (!$modelInstance instanceof Model) {
+            throw new \TypeError('Translation namespace must resolve to an Eloquent model.');
+        }
         $tableId = $modelInstance->getKeyName();
         $modelQuery = DB::table($modelInstance->getTable())->where($tableId, $translation->key);
         $model = $modelQuery->first();
         $column = $translation->group;
-        $data = $model->$column;
+        // A null property name was coerced to an empty string by PHP.
+        $data = $model->{$column ?? ''};
         if (is_string($data)) $data = json_decode($data, true);
         if (is_object($data)) $data = (array)$data;
+        if ($data !== null && $data !== false && !is_array($data)) {
+            throw new \TypeError('Model translation data must be an array, false or null.');
+        }
+        // PHP already promotes null and false to an array on offset assignment.
+        if ($data === false) {
+            $data = [];
+        }
         $data[$languageCode] = $translation->value;
         $modelQuery->update([
             $column => json_encode($data)

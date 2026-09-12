@@ -28,6 +28,10 @@ class OpenAITranslationService
         }
     }
 
+    /**
+     * @param array<array-key, string> $array Translation text indexed by caller-supplied keys.
+     * @return array<array-key, string> The same keys, with translated values.
+     */
     public function translateArray(Language $rootLanguage, Language $toLanguage, array $array, bool $stringTranslation = false): array
     {
         if(!Setting::getCached()->enable_open_ai_translations) {

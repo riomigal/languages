@@ -62,18 +62,27 @@ class Translation extends Model
     /**
      * Create a new Eloquent model instance.
      *
-     * @param array $attributes
+     * @template TAttribute
+     * @param array<string, TAttribute> $attributes
      * @return void
      */
     public function __construct(array $attributes = [])
     {
-        $this->table = config('languages.table_translations');
-        $this->connection = config('languages.db_connection');
+        $table = config('languages.table_translations');
+        if ($table !== null && !is_string($table)) {
+            throw new \TypeError('languages.table_translations must be a string or null.');
+        }
+        $this->table = $table;
+        $connection = config('languages.db_connection');
+        if ($connection !== null && !is_string($connection) && !$connection instanceof \UnitEnum) {
+            throw new \TypeError('languages.db_connection must be a string, UnitEnum or null.');
+        }
+        $this->connection = $connection;
         parent::__construct($attributes);
     }
 
     /**
-     * @return BelongsTo
+     * @return BelongsTo<Language, $this>
      */
     public function language(): BelongsTo
     {
@@ -81,7 +90,7 @@ class Translation extends Model
     }
 
     /**
-     * @return BelongsTo
+     * @return BelongsTo<Translator, $this>
      */
     public function approvedBy(): BelongsTo
     {
@@ -89,7 +98,7 @@ class Translation extends Model
     }
 
     /**
-     * @return BelongsTo
+     * @return BelongsTo<Translator, $this>
      */
     public function updatedBy(): BelongsTo
     {
@@ -97,9 +106,9 @@ class Translation extends Model
     }
 
     /**
-     * @param Builder $query
+     * @param Builder<Translation> $query
      * @param bool $value
-     * @return Builder
+     * @return Builder<Translation>
      */
     public function scopeIsUpdated(Builder $query, bool $value = true): Builder
     {
@@ -107,9 +116,9 @@ class Translation extends Model
     }
 
     /**
-     * @param Builder $query
+     * @param Builder<Translation> $query
      * @param bool $value
-     * @return Builder
+     * @return Builder<Translation>
      */
     public function scopeApproved(Builder $query, bool $value = true): Builder
     {
@@ -117,9 +126,9 @@ class Translation extends Model
     }
 
     /**
-     * @param Builder $query
+     * @param Builder<Translation> $query
      * @param bool $value
-     * @return Builder
+     * @return Builder<Translation>
      */
     public function scopeExported(Builder $query, bool $value = true): Builder
     {
@@ -127,9 +136,9 @@ class Translation extends Model
     }
 
     /**
-     * @param Builder $query
+     * @param Builder<Translation> $query
      * @param bool $value
-     * @return Builder
+     * @return Builder<Translation>
      */
     public function scopeIsVendor(Builder $query, bool $value = true): Builder
     {
@@ -137,9 +146,9 @@ class Translation extends Model
     }
 
     /**
-     * @param Builder $query
-     * @param array|string $value
-     * @return Builder
+     * @param Builder<Translation> $query
+     * @param array<array-key, string>|string $value
+     * @return Builder<Translation>
      */
     public function scopeType(Builder $query, array|string $value): Builder
     {
@@ -151,9 +160,9 @@ class Translation extends Model
     }
 
     /**
-     * @param Builder $query
-     * @param array|string $value
-     * @return Builder
+     * @param Builder<Translation> $query
+     * @param array<array-key, int|string>|string $value
+     * @return Builder<Translation>
      */
     public function scopeUpdatedBy(Builder $query, array|string $value): Builder
     {
@@ -166,9 +175,9 @@ class Translation extends Model
 
 
     /**
-     * @param Builder $query
-     * @param array|string $value
-     * @return Builder
+     * @param Builder<Translation> $query
+     * @param array<array-key, int|string>|string $value
+     * @return Builder<Translation>
      */
     public function scopeApprovedBy(Builder $query, array|string $value): Builder
     {
@@ -180,9 +189,9 @@ class Translation extends Model
     }
 
     /**
-     * @param Builder $query
+     * @param Builder<Translation> $query
      * @param bool $value
-     * @return Builder
+     * @return Builder<Translation>
      */
     public function scopeNeedsTranslation(Builder $query, bool $value = true): Builder
     {
@@ -193,10 +202,14 @@ class Translation extends Model
      * @param string $locale
      * @param string|null $group
      * @param string|null $namespace
-     * @return array
+     * @return array<array-key, string|null>
      */
     public static function getCachedTranslations(string $locale, string|null $group = null, string|null $namespace = null): array {
-        $cacheKey = config('languages.cache_key') . $locale . ($group ?? '') . ($namespace ?? '');
+        $cachePrefix = config('languages.cache_key');
+        if (!is_string($cachePrefix)) {
+            throw new \TypeError('languages.cache_key must be a string.');
+        }
+        $cacheKey = $cachePrefix . $locale . ($group ?? '') . ($namespace ?? '');
 
         return Cache::rememberForever($cacheKey, function() use ($locale, $group, $namespace) {
         $array = [];
@@ -231,7 +244,11 @@ class Translation extends Model
      */
     public static function unsetCachedTranslation(string $locale, string|null $group = null, string|null $namespace = null): void
     {
-        $cacheKey = config('languages.cache_key') . $locale . ($group ?? '') . ($namespace ?? '');
+        $cachePrefix = config('languages.cache_key');
+        if (!is_string($cachePrefix)) {
+            throw new \TypeError('languages.cache_key must be a string.');
+        }
+        $cacheKey = $cachePrefix . $locale . ($group ?? '') . ($namespace ?? '');
         Cache::forget($cacheKey);
     }
 

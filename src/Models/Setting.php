@@ -56,13 +56,22 @@ class Setting extends Model
     /**
      * Create a new Eloquent model instance.
      *
-     * @param array $attributes
+     * @template TAttribute
+     * @param array<string, TAttribute> $attributes
      * @return void
      */
     public function __construct(array $attributes = [])
     {
-        $this->table = config('languages.table_settings');
-        $this->connection = config('languages.db_connection');
+        $table = config('languages.table_settings');
+        if ($table !== null && !is_string($table)) {
+            throw new \TypeError('languages.table_settings must be a string or null.');
+        }
+        $this->table = $table;
+        $connection = config('languages.db_connection');
+        if ($connection !== null && !is_string($connection) && !$connection instanceof \UnitEnum) {
+            throw new \TypeError('languages.db_connection must be a string, UnitEnum or null.');
+        }
+        $this->connection = $connection;
         parent::__construct($attributes);
     }
 
@@ -73,9 +82,15 @@ class Setting extends Model
      */
     public static function getCached(): Setting
     {
-        return Cache::rememberForever(config('languages.cache_key') . '_settings', function() {
+        $cachePrefix = config('languages.cache_key');
+        if (!is_string($cachePrefix)) {
+            throw new \TypeError('languages.cache_key must be a string.');
+        }
+        $setting = Cache::rememberForever($cachePrefix . '_settings', function() {
             return Setting::first();
         });
+        // The declared return type already rejects an absent settings row.
+        return $setting ?? throw new \TypeError('Cached settings must be a Setting, null given.');
     }
 
     /**
@@ -85,14 +100,21 @@ class Setting extends Model
      */
     public static function getFreshCached(): Setting
     {
-        Cache::forget(config('languages.cache_key') . '_settings');
-        Cache::forget(config('languages.cache_key') . '_has_db_loader_on');
+        $cachePrefix = config('languages.cache_key');
+        if (!is_string($cachePrefix)) {
+            throw new \TypeError('languages.cache_key must be a string.');
+        }
+        Cache::forget($cachePrefix . '_settings');
+        Cache::forget($cachePrefix . '_has_db_loader_on');
         return self::getCached();
     }
 
     public static function setJobsRunning(bool $value = true): Setting
     {
         $setting = Setting::first();
+        if ($setting === null) {
+            throw new \Error('Attempt to assign property "process_running" on null');
+        }
         $setting->process_running = $value;
         $setting->save();
         return $setting;
@@ -100,6 +122,10 @@ class Setting extends Model
 
     public static function getDomains(): ?string
     {
-        return Setting::getCached()->domains ?? config('languages.multiple_db_hosts');
+        $domains = Setting::getCached()->domains ?? config('languages.multiple_db_hosts');
+        if ($domains !== null && !is_string($domains)) {
+            throw new \TypeError('languages.multiple_db_hosts must be a string or null.');
+        }
+        return $domains;
     }
 }

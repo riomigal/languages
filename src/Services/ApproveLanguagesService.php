@@ -18,6 +18,9 @@ class ApproveLanguagesService
             });
     }
 
+    /**
+     * @return array{approved: true, updated_translation: false, needs_translation: false, old_value: null, approved_by: int, previous_updated_by: null, previous_approved_by: null}
+     */
     public function approvedTranslationUpdateArray(int $authUserId): array
     {
         return [

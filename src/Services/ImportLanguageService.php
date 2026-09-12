@@ -16,9 +16,17 @@ class ImportLanguageService
      */
     public function importLanguages(): void
     {
-        DB::connection(config('languages.db_connection'))->transaction(function () {
-            $directories = array_map('basename', File::directories(App::langPath()));
-            $directories = array_diff($directories, Language::pluck('code')->all());
+        $connection = config('languages.db_connection');
+        if ($connection !== null && !is_string($connection) && !$connection instanceof \UnitEnum) {
+            throw new \TypeError('languages.db_connection must be a string, UnitEnum or null.');
+        }
+        DB::connection($connection)->transaction(function () {
+            /** @var list<string> $directoryPaths Filesystem::directories() returns directory pathnames. */
+            $directoryPaths = File::directories(App::langPath());
+            $directories = array_map('basename', $directoryPaths);
+            /** @var list<string> $languageCodes */
+            $languageCodes = Language::pluck('code')->all();
+            $directories = array_diff($directories, $languageCodes);
             if ($directories) {
                 $languageArray = collect(Language::LANGUAGES)->whereIn('code', $directories)
                     ->map(function($language) {

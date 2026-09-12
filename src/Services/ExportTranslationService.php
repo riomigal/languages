@@ -36,7 +36,7 @@ class ExportTranslationService
 
     public function exportTranslationsOnOtherHosts(): void
     {
-        $hosts = array_values(array_filter(array_map('trim', explode(',', Setting::getDomains()))));
+        $hosts = array_values(array_filter(array_map('trim', explode(',', Setting::getDomains() ?? ''))));
         if ($hosts === []) {
             return;
         }
@@ -51,12 +51,21 @@ class ExportTranslationService
         foreach($hosts as $host) {
             $response = Http::post($host . $path, ['api_key' => config('languages.api_shared_api_key')]);
             if($response->ok()) {
-                $message = $response->json()['message'];
+                $payload = $response->json();
+                if (!is_array($payload)) {
+                    throw new \TypeError('Export response must be a JSON object.');
+                }
+                $message = $payload['message'];
             } else {
                 $message = __('languages::translations.export_on_other_host_start_failed', ['host' => $host]);
                 $response->throw();
             }
             Translator::query()->admin()->each(function (Translator $translator) use ($message) {
+                if (!is_string($message) && !is_int($message) && !is_float($message) && !is_bool($message) && !$message instanceof \Stringable) {
+                    throw new \TypeError('Export response message must be a string.');
+                }
+                // FlashMessage's string parameter already coerces scalar messages.
+                $message = (string) $message;
                 $translator->notify(new FlashMessage( $message));
             });
         }
@@ -125,12 +134,14 @@ class ExportTranslationService
                 ->orderBy('group')
                 ->chunk(200, function ($translations) use ($language) {
                     foreach ($translations as $translation) {
+                        $namespace = $translation->namespace ?? throw new \TypeError('Translation namespace must be a string, null given.');
+                        $group = $translation->group ?? throw new \TypeError('Translation group must be a string, null given.');
                         if ($this->batch) {
-                            $this->updateTranslation($translation->type, $language->code, $translation->is_vendor, $translation->namespace, $translation->group, $this->forceExportAll);
+                            $this->updateTranslation($translation->type, $language->code, $translation->is_vendor, $namespace, $group, $this->forceExportAll);
 
 //                            $this->batch->add([new ExportUpdatedTranslation($translation->type, $language->code, $translation->is_vendor, $translation->namespace, $translation->group, $this->forceExportAll)]);
                         } else {
-                            $this->updateTranslation($translation->type, $language->code, $translation->is_vendor, $translation->namespace, $translation->group, $this->forceExportAll);
+                            $this->updateTranslation($translation->type, $language->code, $translation->is_vendor, $namespace, $group, $this->forceExportAll);
                         }
                     }
                 });

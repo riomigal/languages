@@ -54,29 +54,42 @@ class Translator extends Authenticatable
     /**
      * Create a new Eloquent model instance.
      *
-     * @param array $attributes
+     * @template TAttribute
+     * @param array<string, TAttribute> $attributes
      * @return void
      */
     public function __construct(array $attributes = [])
     {
-        $this->table = config('languages.table_translators');
-        $this->connection = config('languages.db_connection');
+        $table = config('languages.table_translators');
+        if ($table !== null && !is_string($table)) {
+            throw new \TypeError('languages.table_translators must be a string or null.');
+        }
+        $this->table = $table;
+        $connection = config('languages.db_connection');
+        if ($connection !== null && !is_string($connection) && !$connection instanceof \UnitEnum) {
+            throw new \TypeError('languages.db_connection must be a string, UnitEnum or null.');
+        }
+        $this->connection = $connection;
         parent::__construct($attributes);
     }
 
     /**
-     * @return BelongsToMany
+     * @return BelongsToMany<Language, $this>
      */
     public function languages(): BelongsToMany
     {
-        return $this->belongsToMany(Language::class, config('languages.table_translator_language'));
+        $table = config('languages.table_translator_language');
+        if ($table !== null && !is_string($table)) {
+            throw new \TypeError('languages.table_translator_language must be a string or null.');
+        }
+        return $this->belongsToMany(Language::class, $table);
     }
 
 
     /**
-     * @param Builder $query
+     * @param Builder<Translator> $query
      * @param bool $value
-     * @return Builder
+     * @return Builder<Translator>
      */
     public function scopeAdmin(Builder $query, bool $value = true): Builder
     {
@@ -85,11 +98,12 @@ class Translator extends Authenticatable
 
 
     /**
-     * @param array $existingLanguageIds
-     * @return array
+     * @param list<int> $existingLanguageIds
+     * @return list<string>
      */
     public static function notifyAdminImportedLanguages(array $existingLanguageIds): array
     {
+        /** @var list<string> $newLanguages Names plucked from the language models. */
         $newLanguages = Language::all()
             ->reject(function (Language $language) use ($existingLanguageIds) {
                 return in_array($language->id, $existingLanguageIds);
@@ -143,13 +157,15 @@ class Translator extends Authenticatable
 
     /**
      * @param int $total
-     * @param Collection $languages
+     * @param Collection<int, Language> $languages
      * @return int
      */
     public static function notifyAdminExportedTranslationsAllLanguages(int $total, Collection $languages): int
     {
         Translator::query()->admin()->each(function (Translator $translator) use ($total, $languages) {
-            $translator->notify(new FlashMessage($total ? __('languages::translations.export_languages_success', ['languages' => implode(', ', $languages->pluck('name')->all()), 'total' => $total]) . __('languages::global.reload_suggestion') : __('languages::translations.nothing_exported')));
+            /** @var list<string> $languageNames */
+            $languageNames = $languages->pluck('name')->all();
+            $translator->notify(new FlashMessage($total ? __('languages::translations.export_languages_success', ['languages' => implode(', ', $languageNames), 'total' => $total]) . __('languages::global.reload_suggestion') : __('languages::translations.nothing_exported')));
         });
         return $total;
     }

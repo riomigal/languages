@@ -15,7 +15,7 @@ class TranslationLoader extends FileLoader
      * @param string $group
      * @param string|null $namespace
      *
-     * @return array
+     * @return array<string, mixed> Translation lines, arbitrarily nested by group.
      */
     public function load($locale,  $group, $namespace = null): array
     {

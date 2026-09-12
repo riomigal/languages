@@ -6,6 +6,9 @@ use Illuminate\Support\Facades\DB;
 
 class BatchService {
 
+    /**
+     * @return array{int, int} Deleted jobs and cancelled batches.
+     */
     public function deleteBatches(): array
     {
         $batches = DB::table('job_batches')
