@@ -2,6 +2,8 @@
 
 namespace Riomigal\Languages\Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
+
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Riomigal\Languages\Jobs\Batch\BatchProcessor;
 use Riomigal\Languages\Jobs\ImportLanguagesJob;
@@ -41,9 +43,7 @@ class ImportLanguageServiceTest extends BaseTestCase
         $this->actingAs($this->admin);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function import_translation_service_languages_successful(): void
     {
         /**

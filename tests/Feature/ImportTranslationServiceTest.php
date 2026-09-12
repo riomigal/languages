@@ -2,6 +2,8 @@
 
 namespace Riomigal\Languages\Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
+
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use OpenAI\Laravel\Facades\OpenAI;
 use Riomigal\Languages\Helpers\LanguageHelper;
@@ -38,9 +40,7 @@ class ImportTranslationServiceTest extends BaseTestCase
         ImportLanguagesJob::dispatch((new ImportLanguageService()), $this->admin);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function import_translation_service_translations_successful(): void
     {
         /**
@@ -60,9 +60,7 @@ class ImportTranslationServiceTest extends BaseTestCase
         $this->assertEquals($total, Translation::count());
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function import_translation_service_missing_translations_successful(): void
     {
         /**

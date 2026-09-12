@@ -2,6 +2,8 @@
 
 namespace Riomigal\Languages\Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
+
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
@@ -35,9 +37,7 @@ class TranslatorTest extends BaseTestCase
         $this->admin = Translator::first();
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function trans_admin_can_access_translators_and_see_admin_options(): void
     {
         /**
@@ -57,18 +57,14 @@ class TranslatorTest extends BaseTestCase
 
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function trans_guest_cannot_access_translators_page(): void
     {
         Livewire::test(Translators::class)
             ->assertStatus(403);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function trans_no_admin_cannot_access_translators_page(): void
     {
         Livewire::actingAs(factory(Translator::class)->create())
@@ -76,9 +72,7 @@ class TranslatorTest extends BaseTestCase
             ->assertStatus(403);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function trans_admin_can_delete_user(): void
     {
         /**
@@ -109,9 +103,7 @@ class TranslatorTest extends BaseTestCase
 
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function trans_admin_cannot_delete_first_user_super_admin(): void
     {
 
@@ -133,9 +125,7 @@ class TranslatorTest extends BaseTestCase
 
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function trans_admin_can_create_a_user_success(): void
     {
         /**
@@ -171,9 +161,7 @@ class TranslatorTest extends BaseTestCase
         $this->assertEquals(2, Translator::count());
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function trans_admin_cannot_create_a_user_validation_fails(): void
     {
         /**
@@ -207,9 +195,7 @@ class TranslatorTest extends BaseTestCase
         $this->assertEquals(1, Translator::count());
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function trans_admin_can_update_users_password(): void
     {
         /**
@@ -240,9 +226,7 @@ class TranslatorTest extends BaseTestCase
         $this->assertTrue(Auth::attempt(['email' => $translator->email, 'password' => 'newvalue']));
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function trans_livewire_admin_can_search_translator(): void
     {
         /**

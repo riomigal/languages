@@ -2,6 +2,8 @@
 
 namespace Riomigal\Languages\Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
+
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use OpenAI\Laravel\Facades\OpenAI;
 use OpenAI\Responses\Chat\CreateResponse;
@@ -30,9 +32,7 @@ class OpenAITranslationServiceTest extends BaseTestCase
         $this->targetLanguage = $this->createLanguageByCode('de');
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function open_ai_translate_string_returns_original_text_when_feature_disabled(): void
     {
         $fake = OpenAI::fake();
@@ -45,9 +45,7 @@ class OpenAITranslationServiceTest extends BaseTestCase
         $fake->assertNothingSent();
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function open_ai_translate_array_returns_original_array_when_response_is_not_json(): void
     {
         $fake = OpenAI::fake([
@@ -76,9 +74,7 @@ class OpenAITranslationServiceTest extends BaseTestCase
         $fake->chat()->assertSent(1);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function open_ai_translate_array_returns_original_array_when_openai_throws_exception(): void
     {
         $fake = OpenAI::fake([
@@ -94,9 +90,7 @@ class OpenAITranslationServiceTest extends BaseTestCase
         $fake->chat()->assertSent(1);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function open_ai_translate_string_returns_translated_value_when_json_response_is_valid(): void
     {
         OpenAI::fake([
@@ -123,9 +117,7 @@ class OpenAITranslationServiceTest extends BaseTestCase
         $this->assertSame('Hallo Welt', $result);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function open_ai_translate_string_falls_back_when_valid_json_does_not_contain_t_00(): void
     {
         OpenAI::fake([

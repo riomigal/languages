@@ -2,6 +2,8 @@
 
 namespace Riomigal\Languages\Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
+
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Riomigal\Languages\Livewire\Languages;
@@ -41,9 +43,7 @@ class LanguageTest extends BaseTestCase
         $this->translator = $this->createUser($languages);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function lang_create_language(): void
     {
         $language = factory(Language::class)->create();
@@ -54,9 +54,7 @@ class LanguageTest extends BaseTestCase
         ], config('languages.db_connection'));
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function lang_livewire_admin_can_login_and_sees_admin_options(): void
     {
         /**
@@ -75,9 +73,7 @@ class LanguageTest extends BaseTestCase
             ->assertSee(__('languages::table.delete'));
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function lang_livewire_translator_can_login_and_doesnt_see_admin_options(): void
     {
         /**
@@ -96,18 +92,14 @@ class LanguageTest extends BaseTestCase
             ->assertDontSee(__('languages::table.delete'));
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function lang_livewire_user_not_authenticated_returns_403(): void
     {
         Livewire::test(Languages::class, ['translator', $this->admin])
             ->assertStatus(403);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function lang_livewire_admin_can_add_language(): void
     {
         /**
@@ -132,9 +124,7 @@ class LanguageTest extends BaseTestCase
         $this->assertEquals(2, Language::count());
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function lang_livewire_admin_can_delete_language(): void
     {
         /**
@@ -166,9 +156,7 @@ class LanguageTest extends BaseTestCase
         $this->assertNull(Language::where('code', $languageToDelete->code)->first());
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function lang_livewire_admin_can_search_language(): void
     {
         /**

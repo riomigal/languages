@@ -2,6 +2,8 @@
 
 namespace Riomigal\Languages\Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
+
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Riomigal\Languages\Jobs\ExportTranslationJob;
 use Riomigal\Languages\Jobs\ImportLanguagesJob;
@@ -75,9 +77,7 @@ class ExportTranslationServiceTest extends BaseTestCase
         ImportTranslationsJob::dispatch(new ImportTranslationService(), $this->admin);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function export_translation_service_tests_are_currently_disabled(): void
     {
         $this->assertTrue(true);

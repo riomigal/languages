@@ -2,6 +2,8 @@
 
 namespace Riomigal\Languages\Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
+
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Riomigal\Languages\Jobs\ImportLanguagesJob;
@@ -39,9 +41,7 @@ class TranslationsTest extends BaseTestCase
         ImportTranslationsJob::dispatch(new ImportTranslationService(), $this->admin);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function transl_admin_can_access_trans_service_and_see_admin_options(): void
     {
         /**
@@ -67,9 +67,7 @@ class TranslationsTest extends BaseTestCase
             ->assertDontSee(__('languages::translations.title', ['language' => $languageTwo->name, 'code' => $languageTwo->code]));
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function transl_translator_can_access_assigned_language_but_dont_see_admin_options(): void
     {
         /**
@@ -96,9 +94,7 @@ class TranslationsTest extends BaseTestCase
             ->assertDontSee(__('languages::translations.title', ['language' => $languageTwo->name, 'code' => $languageTwo->code]));
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function transl_translator_cannot_access_not_assigned_language(): void
     {
         /**
@@ -120,9 +116,7 @@ class TranslationsTest extends BaseTestCase
             ->assertStatus(403);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function transl_guest_cannot_access_page(): void
     {
         $this->language = Language::find(1);
