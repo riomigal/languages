@@ -157,10 +157,18 @@ trait CanCreateTranslation
                 $key = (string) $key;
                 $sharedIdentifier = $type . $namespace . $group . $key;
                 $sharedIdentifier = base64_encode($sharedIdentifier);
+
+                // Model translations carry their group in the key as "group.key".
+                // Derive it into a local, never into $group: reassigning the
+                // parameter leaked the previous iteration's group into the next
+                // shared identifier, which is the value used to link a translation
+                // across languages. array_pad guards a key with no separator, which
+                // previously raised an undefined-offset error.
+                $itemGroup = $group;
                 if($type == 'model') {
-                    [$group, $key] = explode('.', $key);
+                    [$itemGroup, $key] = array_pad(explode('.', $key, 2), 2, '');
                 }
-                $translationsArray[$sharedIdentifier] = $this->getTranslationArray($languageId, $languageCode, $sharedIdentifier, $type, $key, $value, $namespace, $group, $isVendor);
+                $translationsArray[$sharedIdentifier] = $this->getTranslationArray($languageId, $languageCode, $sharedIdentifier, $type, $key, $value, $namespace, $itemGroup, $isVendor);
             }
 
             $existingKeys = Translation::select('shared_identifier', 'language_code')
