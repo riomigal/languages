@@ -2,10 +2,10 @@
 
 namespace Riomigal\Languages\Services\Traits;
 
+use Carbon\CarbonInterface;
 use Illuminate\Bus\Batch;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Riomigal\Languages\Exceptions\MassCreateTranslationsException;
@@ -15,6 +15,66 @@ use Riomigal\Languages\Models\Setting;
 use Riomigal\Languages\Models\Translation;
 use Riomigal\Languages\Services\OpenAITranslationService;
 
+/**
+ * @phpstan-type TranslationAttributes array{
+ *     language_id: int,
+ *     language_code: string,
+ *     shared_identifier: string,
+ *     type: string,
+ *     namespace: string,
+ *     is_vendor: bool,
+ *     group: string,
+ *     key: string,
+ *     value: string,
+ *     approved: bool,
+ *     needs_translation: bool,
+ *     updated_translation: bool,
+ *     created_at: CarbonInterface,
+ *     updated_at: CarbonInterface,
+ *     exported?: bool
+ * }
+ * @phpstan-type StoredTranslation array{
+ *     id: int,
+ *     language_id: int,
+ *     language_code: string,
+ *     shared_identifier: string,
+ *     type: string,
+ *     namespace: string|null,
+ *     is_vendor: bool,
+ *     group: string|null,
+ *     key: string,
+ *     value: string|null,
+ *     old_value: string|null,
+ *     approved: bool,
+ *     needs_translation: bool,
+ *     updated_translation: bool,
+ *     updated_by: int|null,
+ *     previous_updated_by: int|null,
+ *     approved_by: int|null,
+ *     previous_approved_by: int|null,
+ *     exported: bool,
+ *     created_at: string|null,
+ *     updated_at: string|null
+ * }
+ * The backup shape describes validated scalar fields. Carbon can customize the
+ * JSON payloads of timestamp fields, which are passed through unchanged.
+ *
+ * @phpstan-type SerializedTranslation array{
+ *     language_id: int,
+ *     language_code: string,
+ *     shared_identifier: string,
+ *     type: string,
+ *     namespace: string,
+ *     is_vendor: bool,
+ *     group: string,
+ *     key: string,
+ *     value: string,
+ *     approved: bool,
+ *     needs_translation: bool,
+ *     updated_translation: bool,
+ *     exported: bool
+ * }
+ */
 trait CanCreateTranslation
 {
     /**
@@ -39,14 +99,17 @@ trait CanCreateTranslation
         Translation::query()
             ->where('language_code', $rootLanguage->code)
             ->chunkById(100,
-                function ($records) use ($rootLanguage, $batch) {
+                /** @param Collection<int, Translation> $records */
+                function (Collection $records) use ($rootLanguage, $batch): void {
                     foreach ($this->missingLanguages as $language) {
                         /** @var Language $language */
 
                         // Get array of all identifier
+                        /** @var list<string> $identifierArray */
                         $identifierArray = $records->pluck('shared_identifier')->all();
 
                         // Get array of language identifier found
+                        /** @var list<string> $identifierArrayTwo */
                         $identifierArrayTwo = Translation::query()
                             ->where('language_id', $language->id)
                             ->whereIn('shared_identifier', $identifierArray)->pluck('shared_identifier')->all();
@@ -55,11 +118,15 @@ trait CanCreateTranslation
                         $missingIdentifier = array_diff($identifierArray, $identifierArrayTwo);
 
                         $fromLanguageCode = $rootLanguage->code;
+                        /** @var int $chunkSize Configured in config/languages.php. */
+                        $chunkSize = Setting::getCached()->enable_open_ai_translations ? config('languages.max_open_ai_missing_trans') : 400;
                         Translation::query()
                             ->whereIn('shared_identifier', $missingIdentifier)
                             ->where('language_code', $fromLanguageCode)
-                            ->chunkById(Setting::getCached()->enable_open_ai_translations ? config('languages.max_open_ai_missing_trans') : 400,
-                                function ($translations) use ($language, $batch, $rootLanguage) {
+                            ->chunkById($chunkSize,
+                                /** @param Collection<int, Translation> $translations */
+                                function (Collection $translations) use ($language, $batch, $rootLanguage): void {
+                                    /** @var list<int> $translationIds */
                                     $translationIds = $translations->pluck('id')->all();
                                     if($batch) {
                                         $batch->add(new MassCreateEloquentTranslationsJob($translationIds, $language->id, $rootLanguage->id));
@@ -75,6 +142,7 @@ trait CanCreateTranslation
     }
 
     /**
+     * @param array<int|string, string> $content Flattened translation keys and their text.
      * @throws MassCreateTranslationsException
      */
     protected function massCreateTranslations(array $content, string $type, int $languageId, string $languageCode, string $namespace, string $group, bool $isVendor): void
@@ -85,6 +153,8 @@ trait CanCreateTranslation
                 $namespace = $group;
             }
             foreach ($content as $key => $value) {
+                // PHP turns numeric array keys into ints; the string parameters already coerced them.
+                $key = (string) $key;
                 $sharedIdentifier = $type . $namespace . $group . $key;
                 $sharedIdentifier = base64_encode($sharedIdentifier);
                 if($type == 'model') {
@@ -102,7 +172,6 @@ trait CanCreateTranslation
                 return !in_array($key, $existingKeys);
             }, ARRAY_FILTER_USE_BOTH);
 
-            $translationsArray = array_filter($translationsArray);
             if (count($translationsArray) > 0) {
                 $this->massInsertTranslations($translationsArray);
             }
@@ -123,7 +192,7 @@ trait CanCreateTranslation
     }
 
     /**
-     * @param array $translationIds
+     * @param list<int> $translationIds
      * @param Language $language
      * @param Language $rootLanguage
      * @return void
@@ -134,6 +203,7 @@ trait CanCreateTranslation
         try {
             $translationsArray = [];
             $openTranslateService = resolve(OpenAITranslationService::class);
+            /** @var list<StoredTranslation> $translations Eloquent attributes after casts and date serialization. */
             $translations = Translation::whereIn('id', $translationIds)->get()->toArray();
             foreach ($translations as $translation) {
                 if (!$this->translationExists($translation['shared_identifier'], $language->code)) {
@@ -143,9 +213,9 @@ trait CanCreateTranslation
                         $translation['shared_identifier'],
                         $translation['type'],
                         $translation['key'],
-                        $translation['value'],
-                        $translation['namespace'],
-                        $translation['group'],
+                        $translation['value'] ?? throw new \TypeError('Translation value must be a string, null given.'),
+                        $translation['namespace'] ?? throw new \TypeError('Translation namespace must be a string, null given.'),
+                        $translation['group'] ?? throw new \TypeError('Translation group must be a string, null given.'),
                         $translation['is_vendor'],
                         false,
                         true
@@ -155,7 +225,12 @@ trait CanCreateTranslation
                 }
             }
             try {
-                $tempTranslationsArray = json_decode(json_encode($translationsArray) ,true);
+                $encodedTranslations = json_encode($translationsArray);
+                // json_decode previously coerced false to an empty string on encoding failure.
+                $tempTranslationsArray = json_decode($encodedTranslations === false ? '' : $encodedTranslations, true);
+                if (!$this->isTranslationBackup($tempTranslationsArray)) {
+                    throw new \TypeError('Translation backup contains invalid attributes.');
+                }
 
                 // Get Open Api translated array
                 $translatedArrayResult = [];
@@ -164,7 +239,7 @@ trait CanCreateTranslation
                     $language,
                     collect($translationsArray)->mapWithKeys(function($translation, $index) {
                         return ['t_' . $index => $translation['value']];
-                    })->toArray()
+                    })->all()
                 );
                 if(empty($translatedArrayResult)) throw new \Exception('Open AI returned null value');
 
@@ -183,7 +258,7 @@ trait CanCreateTranslation
                         }
                     }
                     return $translation;
-                })->toArray();
+                })->all();
             } catch(\Exception $e) {
                 Log::warning('CanCreateTranslation::massCreateEloquentTranslations() ArrayTranslations failed -> ' . $e->getMessage(), [
                     'translationsArray' => $translationsArray,
@@ -193,7 +268,7 @@ trait CanCreateTranslation
 
                     $translationsArray = collect($translationsArray)->map(function ($translation, $index) use ($openTranslateService, $rootLanguage,
                         $language) {
-                        $tempValue = $translation['value'] ?? '';
+                        $tempValue = $translation['value'];
                         try {
                             $translation['value'] = $openTranslateService->translateString($rootLanguage, $language,  $translation['value']);
                             return $translation;
@@ -204,7 +279,7 @@ trait CanCreateTranslation
                             $translation['value'] = $tempValue;
                             return $translation;
                         }
-                    })->toArray();
+                    })->all();
 
             }
 
@@ -223,6 +298,9 @@ trait CanCreateTranslation
 
     }
 
+    /**
+     * @return TranslationAttributes|array{}
+     */
     protected function getNewTranslation(int $languageId, string $languageCode, string $sharedIdentifier, string $type, string $key, string $value, string $namespace, string $group, bool $isVendor): array
     {
         if (!$this->translationExists($sharedIdentifier, $languageCode)) {
@@ -231,6 +309,9 @@ trait CanCreateTranslation
         return [];
     }
 
+    /**
+     * @return TranslationAttributes
+     */
     protected function getTranslationArray(int $languageId, string $languageCode, string $sharedIdentifier, string $type, string $key, string $value, string $namespace, string $group, bool $isVendor, bool $approved = true, ?bool $needsTranslation = null): array
     {
         return [
@@ -249,6 +330,46 @@ trait CanCreateTranslation
             'created_at' => now(),
             'updated_at' => now()
         ];
+    }
+
+    /**
+     * Validate the decoded snapshot of newly generated translation attributes.
+     * Null is retained on JSON failure for the existing empty-collection fallback.
+     *
+     * @phpstan-assert-if-true list<SerializedTranslation>|null $translations
+     * @throws void
+     */
+    private function isTranslationBackup(mixed $translations): bool
+    {
+        if ($translations === null) {
+            return true;
+        }
+
+        if (!is_array($translations) || !array_is_list($translations)) {
+            return false;
+        }
+
+        foreach ($translations as $translation) {
+            if (!is_array($translation)
+                || !is_int($translation['language_id'] ?? null)
+                || !is_string($translation['language_code'] ?? null)
+                || !is_string($translation['shared_identifier'] ?? null)
+                || !is_string($translation['type'] ?? null)
+                || !is_string($translation['namespace'] ?? null)
+                || !is_bool($translation['is_vendor'] ?? null)
+                || !is_string($translation['group'] ?? null)
+                || !is_string($translation['key'] ?? null)
+                || !is_string($translation['value'] ?? null)
+                || !is_bool($translation['approved'] ?? null)
+                || !is_bool($translation['needs_translation'] ?? null)
+                || !is_bool($translation['updated_translation'] ?? null)
+                || !is_bool($translation['exported'] ?? null)
+            ) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -273,14 +394,32 @@ trait CanCreateTranslation
 
 
     /**
-     * @param array $translations
+     * The value type is carried through unchanged: translateArray() can return
+     * non-string JSON values, which this insertion method does not validate.
+     *
+     * @template TValue
+     * @param array<int|string, array{
+     *     language_id: int,
+     *     language_code: string,
+     *     shared_identifier: string,
+     *     type: string,
+     *     namespace: string,
+     *     is_vendor: bool,
+     *     group: string,
+     *     key: string,
+     *     value: TValue,
+     *     approved: bool,
+     *     needs_translation: bool,
+     *     updated_translation: bool,
+     *     exported?: bool
+     * }|array{}> $translations
      * @return void
      * @throws MassCreateTranslationsException
      */
     protected function massInsertTranslations(array $translations): void
     {
+        $translations = array_filter($translations);
         try {
-            $translations = array_filter($translations);
             Translation::insert($translations);
         } catch (\Exception $e) {
             $errorId = Str::random();

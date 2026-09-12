@@ -12,6 +12,9 @@ class MassCreateEloquentTranslationsJob extends BaseJob
 
     public int $timeout = 300;
 
+    /**
+     * @param list<int> $translationIds
+     */
     public function __construct(
         protected array  $translationIds,
         protected int $languageId,

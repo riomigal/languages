@@ -8,6 +8,10 @@ use Riomigal\Languages\Services\Traits\CanCreateTranslation;
 class MassCreateTranslationsJob extends BaseJob
 {
     use CanCreateTranslation;
+
+    /**
+     * @param array<int|string, string> $content
+     */
     public function __construct(
         protected array  $content,
         protected string $type,
