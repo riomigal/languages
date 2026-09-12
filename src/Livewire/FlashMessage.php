@@ -72,7 +72,10 @@ class FlashMessage extends Component
      */
     public function markAsRead(string $id): void
     {
-       DB::connection(config('languages.db_connection'))->table('notifications')->where('id', $id)->update(
+       DB::connection(config('languages.db_connection'))->table('notifications')
+            ->where('id', $id)
+            ->where('notifiable_id', $this->notifiable)
+            ->update(
             [
                 'read_at' => now()
             ]

@@ -347,7 +347,7 @@ class Languages extends AuthComponent
      */
     protected function checkImportedLanguages(): void
     {
-        $this->hasImportedLanguages = (bool) Language::first() > 1;
+        $this->hasImportedLanguages = Language::query()->exists();
     }
 
     /**

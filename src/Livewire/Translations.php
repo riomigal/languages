@@ -207,10 +207,15 @@ class Translations extends AuthComponent
      */
     public function showTranslateModal(int $id): void
     {
-        $this->translation = Translation::findOrFail($id);
+        $this->translation = $this->language->translations()->findOrFail($id);
         $this->translationExamples = Translation::where('shared_identifier', $this->translation->shared_identifier)->get();
         if (!$this->isAdministrator) {
-            $this->translationExamples->where('language_id', $this->authUser->languages->pluck('id')->all());
+            // Collection::where() returns a new collection; the previous code discarded
+            // the result, so examples from unpermitted languages stayed visible.
+            $this->translationExamples = $this->translationExamples->whereIn(
+                'language_id',
+                $this->authUser->languages->pluck('id')->all()
+            );
         }
         $this->translationExample = $this->translationExamples->where('language_id', $this->translateLanguageExampleId)->first();
         $this->openAiTranslateLanguageId = $this->translateLanguageExampleId;
@@ -250,7 +255,7 @@ class Translations extends AuthComponent
      */
     public function restoreRequestTranslation(int $id): void
     {
-        Translation::findOrFail($id)->update(['needs_translation' => false, 'approved' => true]);
+        $this->language->translations()->findOrFail($id)->update(['needs_translation' => false, 'approved' => true]);
     }
 
     /**
@@ -259,7 +264,7 @@ class Translations extends AuthComponent
      */
     public function requestTranslation(int $id): void
     {
-        Translation::findOrFail($id)->update(['needs_translation' => true, 'approved' => false]);
+        $this->language->translations()->findOrFail($id)->update(['needs_translation' => true, 'approved' => false]);
     }
 
     /**
@@ -327,7 +332,7 @@ class Translations extends AuthComponent
      */
     public function approveTranslation(int $id): void
     {
-        $translation =  Translation::findOrFail($id);
+        $translation = $this->language->translations()->findOrFail($id);
         $translation->update(resolve(ApproveLanguagesService::class)->approvedTranslationUpdateArray($this->authUser->id));
         resolve(ApproveLanguagesService::class)->resetTranslationCache($translation);
     }
@@ -363,7 +368,7 @@ class Translations extends AuthComponent
      */
     public function restoreTranslation(int $id): void
     {
-        $translation =  Translation::findOrFail($id);
+        $translation = $this->language->translations()->findOrFail($id);
         if ($translation->old_value && !$translation->approved) {
             $translation->value = $translation->old_value;
             $translation->old_value = null;
