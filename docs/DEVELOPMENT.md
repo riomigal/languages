@@ -2,9 +2,9 @@
 
 ## Requirements
 
-- PHP 8.1+
+- PHP 8.2+ (8.3+ to test against Laravel 13)
 - Composer
-- Node.js + npm
+- Node.js ^20.19 || >=22.12 (required by Vite 8) + npm
 
 ## Install
 

@@ -14,18 +14,11 @@
     "author": "riomigal",
     "license": "ISC",
     "devDependencies": {
-        "@defstudio/vite-livewire-plugin": "^3.0.2",
-        "@tailwindcss/forms": "^0.5.11",
-        "@tailwindcss/line-clamp": "^0.4.4",
-        "@tailwindcss/postcss": "^4.2.2",
         "@tailwindcss/typography": "^0.5.19",
-        "autoprefixer": "^10.4.27",
+        "@tailwindcss/vite": "^4.3.3",
         "flowbite": "^4.0.1",
-        "flowbite-typography": "^1.0.5",
-        "lodash": "^4.17.23",
-        "postcss": "^8.5.8",
         "tailwindcss": "^4.2.2",
-        "vite": "^7.3.1"
+        "vite": "^8.3.0"
     },
     "dependencies": {
         "alpinejs": "^3.15.8"

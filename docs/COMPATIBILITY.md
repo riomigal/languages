@@ -4,38 +4,40 @@
 
 The package Composer constraints currently allow:
 
-- `php`: `^8.1`
-- `illuminate/support`: `^9.0 || ^10.0 || ^11.0 || ^12.0`
-- `orchestra/testbench`: `^7.0 || ^8.0 || ^9.0 || ^10.0 || ^11.0`
+- `php`: `^8.2` (the constraint admits PHP 8.2-8.5; CI currently verifies 8.3 only)
+- `illuminate/support`: `^12.0 || ^13.0`
+- `orchestra/testbench`: `^10.0 || ^11.0`
+
+Laravel 9, 10 and 11 were dropped because every released version of those
+majors is blocked by unresolved Composer security advisories. `config.platform.php`
+is pinned to `8.2.0` so the lock file always resolves at the declared floor.
+Testing against Laravel 13 needs PHP 8.3+, because `orchestra/testbench ^11`
+requires it.
 
 ## Livewire
 
-The package supports both major lines declared in Composer:
+- `livewire/livewire`: `^3.0`
 
-- `livewire/livewire`: `^2.12 || ^3.0`
+Livewire 2 support was dropped: it never supported Laravel 12, so the
+`^2.12` branch was unreachable under the current constraints.
 
 ### Event Compatibility
 
-Livewire event API changed between v2 and v3:
-
-- v2 uses `emit(...)`
-- v3 uses `dispatch(...)`
-
-This package keeps compatibility through a shim trait:
-
-- `src/Livewire/Traits/DispatchesLegacyEvents.php`
-
-It dispatches events via:
-
-- `dispatch(...)` when running Livewire 3
-- `parent::emit(...)` fallback for Livewire 2
+The shim trait `src/Livewire/Traits/DispatchesLegacyEvents.php` still exists
+but is now vestigial: with `livewire/livewire: ^3.0` the `parent::emit(...)`
+fallback branch is unreachable. It is retained only until the Livewire layer
+is removed.
 
 ## Build Tooling
 
 Asset pipeline is Vite-based:
 
-- `vite.config.js`
+- `vite.config.mjs` (`.mjs` so Vite 8 loads it as ESM)
 - npm scripts in `package.json`
+
+Tailwind 4 is wired through `@tailwindcss/vite`. There is no `postcss.config.js`:
+`postcss` and `autoprefixer` were removed, since Tailwind 4 handles vendor
+prefixing via Lightning CSS.
 
 `laravel-mix` is intentionally not used.
 

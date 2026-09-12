@@ -31,11 +31,15 @@ Main documentation entrypoint:
 
 - Keep package tests running against SQLite in-memory testbench setup.
 - Do not reintroduce `laravel-mix`; this package now builds assets with Vite.
+- Tailwind 4 is wired via `@tailwindcss/vite`; there is no `postcss.config.js`.
+  Do not reintroduce `postcss`/`autoprefixer`.
+- The Vite config is `vite.config.mjs` (ESM); keep the `.mjs` extension.
+- Tests use PHPUnit attributes (`#[Test]`), not `/** @test */` doc-comments,
+  which PHPUnit 12 removes.
 - Keep docs/manual synchronized with code:
   - Update `docs/APPLICATION_MANUAL.md` and related docs for every feature addition, behavior change, or UI update.
-- Keep Livewire compatibility behavior in place:
-  - Livewire 3 uses `dispatch()`.
-  - Livewire 2 compatibility is handled by the legacy event shim trait.
+- Livewire 2 is no longer supported (`livewire/livewire: ^3.0`); the legacy
+  event shim trait is vestigial and kept only until the Livewire layer is removed.
 - If dependencies are changed, re-run:
   - `composer audit`
   - `npm audit`

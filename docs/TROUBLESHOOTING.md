@@ -87,18 +87,18 @@ npm audit
 ./vendor/bin/phpunit
 ```
 
-## Composer Blocks Laravel 9 Installation
+## Composer Blocks Laravel 9, 10 or 11
 
 Symptom:
 
-- Composer reports `laravel/framework ^9.52` is blocked by security advisories.
+- Composer reports `laravel/framework` is blocked by security advisories.
 
 Notes:
 
-- This block is enforced by Composer audit policy in the host application.
-- `riomigal/languages` no longer hard-requires `openai-php/laravel`; OpenAI is optional.
+- Every released version of Laravel 9, 10 and 11 is affected by unresolved advisories.
+- `riomigal/languages` therefore requires `^12.0 || ^13.0`. Laravel 9/10/11 are no longer supported.
+- `riomigal/languages` does not hard-require `openai-php/laravel`; OpenAI is optional.
 
-Resolution options:
+Resolution:
 
-1. Recommended: upgrade host app to a supported Laravel major without blocked advisories.
-2. Temporary workaround in host app: configure Composer audit policy (`ignore` specific advisory IDs or set `block-insecure` to `false`).
+- Upgrade the host app to Laravel 12 or 13.
