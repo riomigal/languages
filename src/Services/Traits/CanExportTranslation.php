@@ -96,7 +96,24 @@ trait CanExportTranslation
             if ($type == 'php') {
                 $content = File::getRequire($fullPath);
             } else {
-                $content = json_decode(File::get($fullPath), true);
+                $raw = File::get($fullPath);
+
+                if (trim($raw) === '') {
+                    $content = [];
+                } else {
+                    $content = json_decode($raw, true);
+
+                    // Refuse to continue on malformed JSON. Falling through left
+                    // $content null, which became [] below and silently replaced
+                    // every existing translation in the file with just the new keys.
+                    if (json_last_error() !== JSON_ERROR_NONE) {
+                        throw new \RuntimeException(sprintf(
+                            'Refusing to overwrite %s: the existing JSON is malformed (%s).',
+                            $fullPath,
+                            json_last_error_msg()
+                        ));
+                    }
+                }
             }
         }
         if(!is_array($content)) {
@@ -113,11 +130,23 @@ trait CanExportTranslation
                 var_export($content, true) .
                 ";";
         } else {
-            $content = json_encode($content);
+            $encoded = json_encode($content);
+
+            // Writing '' on failure truncated the file and destroyed every
+            // translation already exported to it. Fail instead; the caller marks
+            // the rows not-exported and surfaces an ExportFileException.
+            if ($encoded === false) {
+                throw new \RuntimeException(sprintf(
+                    'Refusing to write %s: json_encode failed (%s).',
+                    $fullPath,
+                    json_last_error_msg()
+                ));
+            }
+
+            $content = $encoded;
         }
 
-        // file_put_contents previously wrote an empty string when JSON encoding failed.
-        File::put($fullPath, $content === false ? '' : $content);
+        File::put($fullPath, $content);
     }
 
 
