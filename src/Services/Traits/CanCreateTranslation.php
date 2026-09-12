@@ -193,8 +193,8 @@ trait CanCreateTranslation
 
                     $translationsArray = collect($translationsArray)->map(function ($translation, $index) use ($openTranslateService, $rootLanguage,
                         $language) {
+                        $tempValue = $translation['value'] ?? '';
                         try {
-                            $tempValue =  $translation['value'];
                             $translation['value'] = $openTranslateService->translateString($rootLanguage, $language,  $translation['value']);
                             return $translation;
                         } catch(\Exception $e) {

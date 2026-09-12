@@ -171,7 +171,7 @@ class Language extends Model
     );
 
     /**
-     * @var array<int, string>
+     * @var list<string>
      */
     protected $fillable = [
         'name', 'code', 'native_name'
@@ -199,7 +199,7 @@ class Language extends Model
     }
 
     /**
-     * @return HasMany
+     * @return HasMany<Translation, $this>
      */
     public function translations(): HasMany
     {

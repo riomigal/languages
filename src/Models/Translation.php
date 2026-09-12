@@ -40,7 +40,7 @@ use Illuminate\Support\Facades\Cache;
 class Translation extends Model
 {
     /**
-     * @var array<int, string>
+     * @var list<string>
      */
     protected $fillable = [
         'language_id', 'language_code', 'shared_identifier', 'is_vendor', 'type', 'namespace',
