@@ -162,7 +162,29 @@ class LanguageTest extends BaseTestCase
         /**
          * Background
          */
-        $languages = factory(Language::class)->times(2)->create();
+        /**
+         * Pick two languages deterministically whose name and native_name share no
+         * substring with the fallback language. The factory draws at random from the
+         * full code list, so it could select another "English (...)" variant, which
+         * the search below legitimately matches - making assertDontSee fail roughly
+         * one run in five.
+         */
+        $needle = $this->fallbackLanguage->name;
+        $candidates = collect(Language::LANGUAGES)
+            ->reject(fn (array $language): bool => str_contains($language['name'], $needle)
+                || str_contains($needle, $language['name'])
+                || str_contains($language['native_name'], $needle))
+            ->whereNotIn('code', Language::query()->pluck('code')->all())
+            ->take(2)
+            ->values();
+
+        $languages = $candidates->map(
+            fn (array $language): Language => Language::query()->create([
+                'name' => $language['name'],
+                'native_name' => $language['native_name'],
+                'code' => $language['code'],
+            ])
+        );
 
         /**
          * Given there are three languages and a user wants to search for "English"
