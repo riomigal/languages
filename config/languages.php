@@ -36,7 +36,7 @@ return [
 
     'db_connection' => env('LANGUAGES_DB_CONNECTION', config('database.default')),
 
-    'api_shared_api_key' => env('LANGUAGES_API_SHARED_SECRET', 'eq9TDNfrGX66o=(3qy{;Em)J&@i(Nk'),
+    'api_shared_api_key' => env('LANGUAGES_API_SHARED_SECRET'),
 
     'multiple_db_hosts' => env('LANGUAGES_MULTIPLE_DB_HOSTS', ''),
 

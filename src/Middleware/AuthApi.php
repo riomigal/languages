@@ -21,8 +21,19 @@ class AuthApi
             'api_key' => 'required|string',
         ]);
 
-        if($data['api_key'] !== config('languages.api_shared_api_key')) {
-            return response()->json(['invalid_key' => 'Api key is invalid!', 401]);
+        $sharedKey = config('languages.api_shared_api_key');
+
+        // Fail closed: with no key configured the inter-host API is unavailable
+        // rather than falling back to a value that ships with the package.
+        if (!is_string($sharedKey) || $sharedKey === '') {
+            return response()->json(
+                ['invalid_key' => 'Api key is not configured!'],
+                503
+            );
+        }
+
+        if (!hash_equals($sharedKey, $data['api_key'])) {
+            return response()->json(['invalid_key' => 'Api key is invalid!'], 401);
         }
 
         return $next($request);
