@@ -8,7 +8,6 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Riomigal\Languages\Jobs\ApproveLanguagesJob;
 use Riomigal\Languages\Jobs\Batch\BatchProcessor;
-use Riomigal\Languages\Jobs\CreateTranslationPullRequestJob;
 use Riomigal\Languages\Jobs\ExportTranslationJob;
 use Riomigal\Languages\Jobs\UpdateTranslationJob;
 use Riomigal\Languages\Livewire\Traits\ChecksForRunningJobs;
@@ -18,7 +17,6 @@ use Riomigal\Languages\Models\Translator;
 use Riomigal\Languages\Notifications\FlashMessage;
 use Riomigal\Languages\Services\ApproveLanguagesService;
 use Riomigal\Languages\Services\ExportTranslationService;
-use Riomigal\Languages\Services\GitHubPullRequestService;
 use Riomigal\Languages\Services\OpenAITranslationService;
 
 class Translations extends AuthComponent
@@ -127,16 +125,6 @@ class Translations extends AuthComponent
     public array $approvedBy = [];
 
     /**
-     * @var bool
-     */
-    public bool $createPrOnExport = false;
-
-    /**
-     * @var bool
-     */
-    public bool $githubPrEnabled = false;
-
-    /**
      * @param Language $language
      * @return void
      */
@@ -155,7 +143,6 @@ class Translations extends AuthComponent
         $this->translateLanguageExampleId = $this->translateLanguageFallbackExampleId;
         $this->languages = Language::query()->get()->toArray();
         $this->translators = Translator::pluck('email', 'id')->toArray();
-        $this->githubPrEnabled = GitHubPullRequestService::isEnabled();
     }
 
     /**
@@ -419,15 +406,9 @@ class Translations extends AuthComponent
                 ->approved()
                 ->count();
             $language = $this->language;
-            $createPr = $this->createPrOnExport && $this->githubPrEnabled;
-            $finally = function () use (&$total, &$language, $createPr) {
+            $finally = function () use (&$total, &$language) {
                 Translator::notifyAdminExportedTranslationsPerLanguage($total, $language);
                 resolve(ExportTranslationService::class)->exportTranslationsOnOtherHosts();
-
-                // Create PR if enabled
-                if ($createPr && $total > 0) {
-                    CreateTranslationPullRequestJob::dispatch([$language->code], $total);
-                }
             };
 
             $this->emit('startBatchProgress', resolve(BatchProcessor::class)->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);

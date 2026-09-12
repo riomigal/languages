@@ -17,17 +17,6 @@ Main config file:
 - `LANGUAGES_API_SHARED_SECRET`
 - `LANGUAGES_MULTIPLE_DB_HOSTS` (comma-separated host list)
 
-### GitHub Pull Request Integration
-
-- `LANGUAGES_GITHUB_PR_ENABLED`
-- `LANGUAGES_GITHUB_PR_REPOSITORY` (format: `owner/repo`)
-- `LANGUAGES_GITHUB_PR_BASE_BRANCH` (default: `main`)
-- `LANGUAGES_GITHUB_PR_BRANCH_PREFIX` (default: `translations/export-`)
-- `LANGUAGES_GITHUB_PR_TOKEN`
-- `LANGUAGES_GITHUB_PR_LANG_PATH` (default: `lang`)
-- `LANGUAGES_GITHUB_PR_GIT_USER_NAME`
-- `LANGUAGES_GITHUB_PR_GIT_USER_EMAIL`
-
 ### OpenAI
 
 OpenAI integration is optional.
@@ -90,4 +79,3 @@ The **Settings** page updates the `languages_settings` row:
 2. Configure queue workers for package jobs.
 3. Configure `LANGUAGES_API_SHARED_SECRET` for multi-host sync.
 4. Rotate default admin credentials.
-5. Enable GitHub PR integration only with properly scoped tokens.

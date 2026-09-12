@@ -21,7 +21,6 @@ Exports approved translations from DB to files.
 Options:
 
 - `--force=1` export regardless of `exported` flag
-- `--create-pr` create GitHub PR if integration is configured
 
 ### `languages:export-translations-deployment`
 
@@ -57,12 +56,6 @@ php artisan languages:find-missing-translations
 
 ```bash
 php artisan languages:export-translations
-```
-
-### Export + Pull Request
-
-```bash
-php artisan languages:export-translations --create-pr
 ```
 
 ### Scheduled Maintenance

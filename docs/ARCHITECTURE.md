@@ -12,7 +12,6 @@
 - **Services**
   - Import/export/missing translation workflows
   - OpenAI translation support
-  - GitHub PR integration
 - **Jobs & Batches**
   - Async operations for imports, exports, and approvals
 
@@ -21,7 +20,7 @@
 1. Filesystem language files are imported into DB.
 2. Translators edit/approve translations in UI.
 3. Exports write approved DB values back to filesystem.
-4. Optional multi-host sync and GitHub PR creation run after exports.
+4. Optional multi-host sync runs after exports.
 
 ## Queue Usage
 

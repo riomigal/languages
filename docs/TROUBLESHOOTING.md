@@ -52,15 +52,6 @@ Checks:
 - `domains` list in settings uses full scheme (`http://` or `https://`)
 - network/firewall allows requests
 
-## GitHub PR Not Created
-
-Checks:
-
-- `LANGUAGES_GITHUB_PR_ENABLED=true`
-- repository format is `owner/repo`
-- token has required repository permissions
-- export actually produced changes
-
 ## Livewire 2/3 Event Issues
 
 This package contains a compatibility trait:
