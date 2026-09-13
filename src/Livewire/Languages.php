@@ -78,7 +78,9 @@ class Languages extends AuthComponent
     {
         [$jobs, $batches] = resolve(BatchService::class)->deleteBatches();
 
-        $hosts = array_filter(explode(',', Setting::getDomains()));
+        $hosts = Setting::multiHostEnabled()
+            ? array_filter(array_map('trim', explode(',', Setting::getDomains() ?? '')))
+            : [];
 
         if($hosts) {
             $hosts = array_diff($hosts, [request()->getSchemeAndHttpHost()]);

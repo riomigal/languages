@@ -47,7 +47,8 @@ Use this section to manage language records and run bulk language/translation op
 
 - If `allow_deleting_languages` is disabled, delete options are hidden.
 - Export behavior changes when `db_loader` is enabled.
-- Batch operations are blocked while another process is running.
+- Batch operations are blocked while a local package job or batch is running.
+  With multi-host coordination enabled, configured hosts are checked too.
 
 ## Translators
 
@@ -81,7 +82,8 @@ Use this section to configure package behavior for imports, exports, notificatio
 
 ### Main Controls
 
-- Shared domains (`domain_urls`) for multi-app sync checks
+- Enable multi-host coordination (`enable_multi_host`, off by default on new installs)
+- Shared domains (`domains`, required only when multi-host coordination is enabled)
 - Load translations from DB (`db_loader`)
 - Import vendor translations
 - Pending translation notifications
@@ -94,7 +96,31 @@ Use this section to configure package behavior for imports, exports, notificatio
 
 - Keep `db_loader` enabled only when runtime DB translation loading is required.
 - Enable pending notifications only when translators actively use email alerts.
-- Set shared domains only for valid reachable package installations.
+- Leave multi-host coordination off for a single project; shared domains can be empty.
+
+### Single Project and Multiple Hosts
+
+New installs work as a single project by default. With **Enable multi-host
+coordination** off, imports, exports and approvals check only local jobs and batches.
+Exports and job cancellation also stay local. No shared-host requests are sent,
+even if you keep previously configured domains in Settings.
+
+To use multiple hosts sharing the translation system:
+
+1. Save valid package installation URLs in **Domains**, separated by commas and
+   including `http://` or `https://`.
+2. Configure the same `LANGUAGES_API_SHARED_SECRET` on each participating host.
+3. Turn on **Enable multi-host coordination**.
+
+Enabled coordination checks other hosts for running jobs, propagates exports and
+cancels jobs on those hosts. Unreachable hosts are ignored during running-job checks.
+Turn the toggle off before clearing the domains field. Existing API endpoints remain
+available with the same authentication and behavior.
+
+On upgrade, existing settings with non-empty domains are automatically enabled so
+exports continue to propagate. Settings with null, empty or space-only domains stay
+disabled. A host list provided only through `LANGUAGES_MULTIPLE_DB_HOSTS` does not
+enable the toggle; save those URLs in Domains and enable coordination if needed.
 
 ### OpenAI Translation
 

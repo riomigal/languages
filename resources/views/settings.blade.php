@@ -10,10 +10,18 @@
                     <div class="peer-focus:font-medium absolute text-sm text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:left-0 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">{{__('languages::settings.main_domain.label')}}</div>
                     <span class="text-xs font-light text-gray-500 dark:text-gray-300 pb-3 my-1">{{__('languages::settings.main_domain.info')}}</span>
             </div>
+            @include('languages::component.switch', [
+                    'name' => 'setting.enable_multi_host',
+                    'label' => __('languages::settings.enable_multi_host.label'),
+                    'info' => __('languages::settings.enable_multi_host.info'),
+                    'live' => true,
+                    'checked' => $setting['enable_multi_host'],
+                    ])
             @include('languages::component.input', [
                           'label' => __('languages::settings.domains.label'),
                           'name' => 'setting.domains',
-                          'required' => true,
+                          'required' => $setting['enable_multi_host'],
+                          'live' => true,
                           'info' => __('languages::settings.domains.info'),
                        ])
             @include('languages::component.switch', [

@@ -5,9 +5,13 @@ return [
         'label' => 'Main Domain',
         'info' => 'The main domain where the translations process is executed. This value has to be changed in the language config file.',
     ],
+    'enable_multi_host' => [
+        'label' => 'Enable multi-host coordination',
+        'info' => 'Leave disabled for a single project. Enable to check running jobs, export translations and cancel jobs on shared hosts.',
+    ],
     'domains' => [
         'label' => 'Domains',
-        'info' => 'Add all Domains that are sharing the translations system and have it enabled. Separate domains with comma and with http:// or https://. E.g. http://example.com,https://example.com.'
+        'info' => 'Required only when multi-host coordination is enabled. Add all domains sharing the translation system, separated by commas and including http:// or https://. E.g. http://example.com,https://example.com.'
     ],
     'import_settings' => 'Import Settings',
     'db_loader_text' => 'Load Translations from DB (Make sure to import before the translations from the filesystem)',

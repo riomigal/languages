@@ -14,8 +14,26 @@ Main config file:
 
 ### Multi-Host / API Sync
 
+Single-project installs need no shared hosts or API secret. The Settings toggle
+`enable_multi_host` defaults to `false` on new installs.
+
 - `LANGUAGES_API_SHARED_SECRET`
 - `LANGUAGES_MULTIPLE_DB_HOSTS` (comma-separated host list)
+
+To coordinate multiple installations, save the shared URLs in **Settings > Domains**,
+including `http://` or `https://`, and turn on **Enable multi-host coordination**.
+Configure the same `LANGUAGES_API_SHARED_SECRET` on the participating hosts.
+The environment host list remains a fallback when the saved `domains` value is `null`;
+it does not enable multi-host coordination by itself.
+
+When the toggle is off, job gating checks only local `jobs` and `job_batches`.
+Job checks, exports and job cancellation send no requests to shared hosts, even if
+domains remain saved. API endpoints remain registered with their existing contracts.
+
+The upgrade migration enables multi-host for existing settings where `domains` is
+neither `NULL` nor empty after `TRIM(domains)`, preserving configured installations.
+Rows with null, empty or space-only domains stay disabled. The migration also clears
+cached settings so the backfilled value takes effect.
 
 ### OpenAI
 
@@ -65,6 +83,7 @@ In `config/openai.php`:
 The **Settings** page updates the `languages_settings` row:
 
 - `domains`
+- `enable_multi_host` (default: `false`; requires non-empty `domains` when enabled)
 - `db_loader`
 - `import_vendor`
 - `enable_pending_notifications`
@@ -77,5 +96,5 @@ The **Settings** page updates the `languages_settings` row:
 
 1. Set a dedicated `LANGUAGES_DB_CONNECTION` if needed.
 2. Configure queue workers for package jobs.
-3. Configure `LANGUAGES_API_SHARED_SECRET` for multi-host sync.
+3. For multi-host sync, configure shared domains and `LANGUAGES_API_SHARED_SECRET`, then enable multi-host coordination in Settings.
 4. Rotate default admin credentials.

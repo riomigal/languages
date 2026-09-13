@@ -50,7 +50,7 @@ class UpdateSettingFieldRequest extends FormRequest
     }
 
     /**
-     * Validate just the selected field, using its name as the input key.
+     * Validate the selected field and require saved domains when enabling multi-host.
      *
      * @return array<string, string>
      */
@@ -58,11 +58,17 @@ class UpdateSettingFieldRequest extends FormRequest
     {
         $field = $this->field();
 
-        return [$field => self::FIELD_RULES[$field]];
+        $rules = [$field => self::FIELD_RULES[$field]];
+
+        if ($field === 'enable_multi_host') {
+            $rules['domains'] = self::FIELD_RULES['domains'];
+        }
+
+        return $rules;
     }
 
     /**
-     * Supply the saved multi-host flag as context, never as another autosaved field.
+     * Use saved values for the other field so submitted context cannot bypass validation.
      *
      * @return array<string, mixed>
      */
@@ -72,9 +78,13 @@ class UpdateSettingFieldRequest extends FormRequest
         /** @var array<string, mixed> $data Unvalidated input under a supported, non-numeric field name. */
         $data = $this->only($field);
 
-        if ($field === 'domains') {
+        if ($field === 'domains' || $field === 'enable_multi_host') {
             $setting = Setting::query()->first();
-            $data['enable_multi_host'] = (bool) ($setting?->getAttributes()['enable_multi_host'] ?? false);
+            if ($field === 'domains') {
+                $data['enable_multi_host'] = $setting->enable_multi_host ?? false;
+            } else {
+                $data['domains'] = $setting?->domains;
+            }
         }
 
         return $data;

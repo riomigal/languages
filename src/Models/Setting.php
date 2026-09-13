@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Cache;
  * @property bool $enable_automatic_pending_notifications
  * @property bool $enable_open_ai_translations
  * @property bool $process_running
+ * @property bool $enable_multi_host
  * @property string|null $domains
  * @property bool $import_only_from_root_language
  * @property bool $allow_deleting_languages
@@ -34,6 +35,7 @@ class Setting extends Model
         'enable_automatic_pending_notifications',
         'enable_open_ai_translations',
         'process_running',
+        'enable_multi_host',
         'domains',
         'import_only_from_root_language',
         'allow_deleting_languages',
@@ -49,6 +51,7 @@ class Setting extends Model
         'enable_automatic_pending_notifications' => 'boolean',
         'enable_open_ai_translations' => 'boolean',
         'process_running' => 'boolean',
+        'enable_multi_host' => 'boolean',
         'import_only_from_root_language' => 'boolean',
         'allow_deleting_languages' => 'boolean',
     ];
@@ -118,6 +121,11 @@ class Setting extends Model
         $setting->process_running = $value;
         $setting->save();
         return $setting;
+    }
+
+    public static function multiHostEnabled(): bool
+    {
+        return self::getCached()->enable_multi_host;
     }
 
     public static function getDomains(): ?string

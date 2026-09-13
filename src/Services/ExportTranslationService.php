@@ -36,6 +36,10 @@ class ExportTranslationService
 
     public function exportTranslationsOnOtherHosts(): void
     {
+        if (!Setting::multiHostEnabled()) {
+            return;
+        }
+
         $hosts = array_values(array_filter(array_map('trim', explode(',', Setting::getDomains() ?? ''))));
         if ($hosts === []) {
             return;

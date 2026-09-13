@@ -27,7 +27,12 @@ trait ChecksForRunningJobs
             return true;
         }
 
-        $hosts = array_filter(array_map('trim', explode(',', Setting::getDomains())));
+        if (!Setting::multiHostEnabled()) {
+            $this->jobIsRunningMessage($fromCommandLine, false);
+            return false;
+        }
+
+        $hosts = array_filter(array_map('trim', explode(',', Setting::getDomains() ?? '')));
 
         if($hosts) {
             $hosts = array_diff($hosts, [request()->getSchemeAndHttpHost()]);

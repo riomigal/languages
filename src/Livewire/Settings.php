@@ -8,17 +8,18 @@ use Riomigal\Languages\Models\Setting;
 class Settings extends AuthComponent
 {
     /**
-     * @var Setting
+     * @var array<string, mixed>
      */
-    public Setting $setting;
+    public array $setting = [];
 
     /**
-     * @return array
+     * @return array<string, string>
      */
     public function getRules(): array
     {
         return [
-            'setting.domains' => 'required',
+            'setting.domains' => 'nullable|required_if:setting.enable_multi_host,true',
+            'setting.enable_multi_host' => 'boolean',
             'setting.db_loader' => 'boolean',
             'setting.import_vendor' => 'boolean',
             'setting.enable_pending_notifications' => 'boolean',
@@ -35,23 +36,36 @@ class Settings extends AuthComponent
     public function mount(): void
     {
         parent::init();
-        $this->setting = $this->query();
         if (!$this->isAdministrator) {
             abort(403);
+        }
+
+        $setting = $this->query();
+        foreach (array_keys($this->getRules()) as $key) {
+            $field = substr($key, strlen('setting.'));
+            $this->setting[$field] = $setting->getAttribute($field);
         }
     }
 
 
     /**
-     * @param $key
-     * @param $value
+     * @param string $key
+     * @param mixed $value
      * @return void
      */
-    public function updated($key, $value): void
+    public function updated(string $key, mixed $value): void
     {
+        if (!array_key_exists($key, $this->getRules())) {
+            abort(422);
+        }
+
         $this->validateOnly($key);
-        $this->setting->{str_replace('setting.', '',$key)} = $value;
-        $this->setting->save();
+        if ($key === 'setting.enable_multi_host') {
+            $this->validateOnly('setting.domains');
+        }
+        $setting = $this->query();
+        $setting->setAttribute(substr($key, strlen('setting.')), $value);
+        $setting->save();
         Setting::getFreshCached();
     }
 
