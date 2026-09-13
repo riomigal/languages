@@ -6,6 +6,7 @@ use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Foundation\Http\Middleware\TrimStrings;
 use Illuminate\Support\ServiceProvider;
 use Riomigal\Languages\Console\Commands\DeveloperDownloadToLocalCommand;
 use Riomigal\Languages\Console\Commands\ExportTranslationAfterDeployment;
@@ -53,7 +54,9 @@ class LanguagesServiceProvider extends ServiceProvider
         view()->composer('languages::partials.batch-progress', function (\Illuminate\View\View $view): void {
             $view->with('batch', resolve(\Riomigal\Languages\Services\BatchService::class)->progress());
         });
-        \Illuminate\Foundation\Http\Middleware\TrimStrings::except(['translatedValue']);
+        // Translation values are content: leading and trailing whitespace can be
+        // meaningful, so exempt the field from global input trimming.
+        TrimStrings::except(['translatedValue']);
         $this->loadMigrations();
         $this->loadAssets();
         $this->loadCommands();
