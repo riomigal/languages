@@ -6,6 +6,7 @@ use Illuminate\Http\Client\Pool;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Livewire\Component;
 use Riomigal\Languages\Livewire\LanguagesToastMessage;
 use Riomigal\Languages\Models\Setting;
 
@@ -100,8 +101,8 @@ trait ChecksForRunningJobs
 
     private function emitToast(string $message, string $type, int $duration = 3000): void
     {
-        if(method_exists($this, 'emit')) {
-            call_user_func([$this, 'emit'], 'showToast', $message, $type, $duration);
+        if ($this instanceof Component) {
+            $this->dispatch('showToast', message: $message, type: $type, duration: $duration);
         }
     }
 }

@@ -4,12 +4,9 @@ namespace Riomigal\Languages\Livewire;
 
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
-use Riomigal\Languages\Livewire\Traits\DispatchesLegacyEvents;
 
 class LanguagesToastMessage extends Component
 {
-    use DispatchesLegacyEvents;
-
     const MESSAGE_TYPES = [
         'SUCCESS' => 'SUCCESS',
         'DELETED' => 'DELETED',
@@ -44,7 +41,7 @@ class LanguagesToastMessage extends Component
         }
         $this->showMessage = true;
 
-        $this->emit('closeToastMessage', $duration);
+        $this->dispatch('closeToastMessage', duration: $duration);
     }
 
     public function close(): void
@@ -57,6 +54,8 @@ class LanguagesToastMessage extends Component
      */
     public function render(): View
     {
-        return view('languages::languages-toast-message');
+        /** @phpstan-var view-string $viewName */
+        $viewName = 'languages::languages-toast-message';
+        return view($viewName);
     }
 }

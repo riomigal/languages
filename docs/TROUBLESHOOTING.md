@@ -85,13 +85,12 @@ Checks:
 - `domains` list in settings uses full scheme (`http://` or `https://`)
 - network/firewall allows requests
 
-## Livewire 2/3 Event Issues
+## Livewire Event Issues
 
-This package contains a compatibility trait:
-
-- `src/Livewire/Traits/DispatchesLegacyEvents.php`
-
-If custom components are added, keep event dispatching compatible with both majors.
+This package requires Livewire 3 and uses `dispatch()` directly. Custom components
+should pass named parameters: `message`, `type` and `duration` for `showToast`,
+`id` for `startBatchProgress`, and `duration` for `closeToastMessage`.
+The `showTranslationModal` and `hideTranslationModal` events have no parameters.
 
 ## NPM Audit / Composer Audit Failures
 

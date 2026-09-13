@@ -19,6 +19,9 @@ use Riomigal\Languages\Services\ApproveLanguagesService;
 use Riomigal\Languages\Services\ExportTranslationService;
 use Riomigal\Languages\Services\OpenAITranslationService;
 
+/**
+ * @phpstan-type LanguageRow array{id: int, name: string, native_name: string, code: string, created_at: string|null, updated_at: string|null}
+ */
 class Translations extends AuthComponent
 {
     use ChecksForRunningJobs;
@@ -39,12 +42,12 @@ class Translations extends AuthComponent
     public Translation|null $translationExample = null;
 
     /**
-     * @var Collection|\Illuminate\Database\Eloquent\Collection|null
+     * @var Collection<int, Translation>|\Illuminate\Database\Eloquent\Collection<int, Translation>|null
      */
     public Collection|\Illuminate\Database\Eloquent\Collection|null $translationExamples = null;
 
     /**
-     * @var array
+     * @var array<int, string>
      */
     public array $translators = [];
 
@@ -74,12 +77,12 @@ class Translations extends AuthComponent
     public string $translatedValue = '';
 
     /**
-     * @var array
+     * @var list<LanguageRow>
      */
     public array $languages;
 
     /**
-     * @var string[]
+     * @var array<int|string, string|bool|null>
      */
     protected $queryString = ['search', 'page', 'needs_translation', 'approved', 'updated_translation', 'types', 'exported'];
 
@@ -110,17 +113,17 @@ class Translations extends AuthComponent
     public bool|null $exported = null;
 
     /**
-     * @var array
+     * @var array<int, string>
      */
     public array $types = [];
 
     /**
-     * @var array
+     * @var array<int, int|string>
      */
     public array $updatedBy = [];
 
     /**
-     * @var array
+     * @var array<int, int|string>
      */
     public array $approvedBy = [];
 
@@ -134,19 +137,27 @@ class Translations extends AuthComponent
         $this->language = $language;
         $this->currentLanguageId = $this->language->id;
         if (!$this->isAdministrator) {
-            $languages = $this->authUser->languages()->pluck(config('languages.table_languages') . '.id')->all();
+            $table = config('languages.table_languages');
+            if ($table !== null && !is_string($table)) {
+                throw new \TypeError('languages.table_languages must be a string or null.');
+            }
+            $languages = $this->authUser->languages()->pluck($table . '.id')->all();
             if (!in_array($this->language->id, $languages)) {
                 abort(403);
             }
         }
         $this->translateLanguageFallbackExampleId = Language::query()->where('code', config('app.fallback_locale'))->firstOrFail()->id;
         $this->translateLanguageExampleId = $this->translateLanguageFallbackExampleId;
-        $this->languages = Language::query()->get()->toArray();
-        $this->translators = Translator::pluck('email', 'id')->toArray();
+        /** @var list<LanguageRow> $languages Serialized language records, including timestamps. */
+        $languages = Language::query()->get()->toArray();
+        $this->languages = $languages;
+        /** @var array<int, string> $translators Translator IDs mapped to email addresses. */
+        $translators = Translator::pluck('email', 'id')->toArray();
+        $this->translators = $translators;
     }
 
     /**
-     * @return LengthAwarePaginator
+     * @return LengthAwarePaginator<int, Translation>
      */
     public function query(): LengthAwarePaginator
     {
@@ -167,19 +178,27 @@ class Translations extends AuthComponent
                 });
             })->when($this->needs_translation !== null, function ($query) {
                 $query->where(function ($query) {
-                    $query->needsTranslation($this->needs_translation);
+                    if ($this->needs_translation !== null) {
+                        $query->needsTranslation($this->needs_translation);
+                    }
                 });
             })->when($this->approved !== null, function ($query) {
                 $query->where(function ($query) {
-                    $query->approved($this->approved);
+                    if ($this->approved !== null) {
+                        $query->approved($this->approved);
+                    }
                 });
             })->when($this->updated_translation !== null, function ($query) {
                 $query->where(function ($query) {
-                    $query->isUpdated($this->updated_translation);
+                    if ($this->updated_translation !== null) {
+                        $query->isUpdated($this->updated_translation);
+                    }
                 });
             })->when($this->is_vendor !== null, function ($query) {
                 $query->where(function ($query) {
-                    $query->isVendor($this->is_vendor);
+                    if ($this->is_vendor !== null) {
+                        $query->isVendor($this->is_vendor);
+                    }
                 });
             })->when(!empty($this->types), function ($query) {
                 $query->where(function ($query) {
@@ -187,7 +206,9 @@ class Translations extends AuthComponent
                 });
             })->when($this->exported !== null, function ($query) {
                 $query->where(function ($query) {
-                    $query->exported($this->exported);
+                    if ($this->exported !== null) {
+                        $query->exported($this->exported);
+                    }
                 });
             })->when(!empty($this->updatedBy), function ($query) {
                 $query->where(function ($query) {
@@ -224,8 +245,11 @@ class Translations extends AuthComponent
                 ->where('language_id', $this->translateLanguageFallbackExampleId)->first();
             $this->openAiTranslateLanguageId = $this->translateLanguageExampleId;
         }
+        if ($this->translation->value === null) {
+            throw new \TypeError('Cannot assign null to property ' . self::class . '::$translatedValue of type string');
+        }
         $this->translatedValue = $this->translation->value;
-        $this->dispatchBrowserEvent('showTranslationModal');
+        $this->dispatch('showTranslationModal');
     }
 
     /**
@@ -272,7 +296,7 @@ class Translations extends AuthComponent
      */
     public function hideTranslationModal(): void
     {
-        $this->dispatchBrowserEvent('hideTranslationModal');
+        $this->dispatch('hideTranslationModal');
     }
 
     /**
@@ -280,9 +304,15 @@ class Translations extends AuthComponent
      */
     public function updateAllTranslations(): void
     {
+        if ($this->translation === null) {
+            throw new \Error('Attempt to read property "value" on null');
+        }
         if ($this->translation->value != $this->translatedValue) {
             $rootLanguage = $this->translation->language;
             $batchArray = [];
+            if ($this->translationExamples === null) {
+                throw new \Error('Call to a member function each() on null');
+            }
             $this->translationExamples->each(function (Translation $translation) use ($rootLanguage, &$batchArray) {
                 $batchArray[] = new UpdateTranslationJob($rootLanguage, $translation, $this->translatedValue, $this->authUser);
             });
@@ -294,7 +324,7 @@ class Translations extends AuthComponent
             };
 
             $this->updateTranslation(false);
-            $this->emit('startBatchProgress', resolve(BatchProcessor::class)->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
+            $this->dispatch('startBatchProgress', id: resolve(BatchProcessor::class)->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
         }
     }
 
@@ -305,6 +335,9 @@ class Translations extends AuthComponent
      */
     public function updateTranslation(bool $showSuccess = true): void
     {
+        if ($this->translation === null) {
+            throw new \Error('Attempt to read property "value" on null');
+        }
         if ($this->translation->value != $this->translatedValue) {
             $this->translation->exported = false;
             $this->translation->needs_translation = false;
@@ -321,7 +354,7 @@ class Translations extends AuthComponent
             $this->translation->save();
             $this->hideTranslationModal();
             if ($showSuccess) {
-                $this->emit('showToast', __('languages::translations.update_success_message'), LanguagesToastMessage::MESSAGE_TYPES['SUCCESS'], 4000);
+                $this->dispatch('showToast', message: __('languages::translations.update_success_message'), type: LanguagesToastMessage::MESSAGE_TYPES['SUCCESS'], duration: 4000);
             }
         }
     }
@@ -356,7 +389,7 @@ class Translations extends AuthComponent
                 Translator::notifyAdminApprovedTranslationsPerLanguage($notApprovedLanguagesTotal, $language);
             };
 
-            $this->emit('startBatchProgress', resolve(BatchProcessor::class)->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
+            $this->dispatch('startBatchProgress', id: resolve(BatchProcessor::class)->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
         } else {
             $this->authUser->notify(new FlashMessage(__('languages::translations.nothing_approved')));
         }
@@ -416,7 +449,7 @@ class Translations extends AuthComponent
                 resolve(ExportTranslationService::class)->exportTranslationsOnOtherHosts();
             };
 
-            $this->emit('startBatchProgress', resolve(BatchProcessor::class)->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
+            $this->dispatch('startBatchProgress', id: resolve(BatchProcessor::class)->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
         } else {
             $this->authUser->notify(new FlashMessage(__('languages::translations.nothing_exported')));
         }
@@ -445,9 +478,13 @@ class Translations extends AuthComponent
      */
     public function render(): View
     {
-        return view('languages::translations', [
+        /** @phpstan-var view-string $viewName */
+        $viewName = 'languages::translations';
+        $view = view($viewName, [
             'data' => $this->query()
-        ])
-            ->layout('languages::layouts.app');
+        ]);
+        $view->layout('languages::layouts.app');
+
+        return $view;
     }
 }

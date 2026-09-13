@@ -23,10 +23,10 @@ Livewire 2 support was dropped: it never supported Laravel 12, so the
 
 ### Event Compatibility
 
-The shim trait `src/Livewire/Traits/DispatchesLegacyEvents.php` still exists
-but is now vestigial: with `livewire/livewire: ^3.0` the `parent::emit(...)`
-fallback branch is unreachable. It is retained only until the Livewire layer
-is removed.
+Components use Livewire 3 `dispatch()` calls with named event parameters.
+The legacy event shim and its unreachable Livewire 2 fallback branches have
+been removed. Toast messages, batch progress and modal events retain their
+existing names and payloads.
 
 ## Build Tooling
 

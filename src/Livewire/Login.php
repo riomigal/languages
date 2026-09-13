@@ -48,7 +48,7 @@ class Login extends Component
      */
     public function mount(): void
     {
-        if (auth(config('languages.translator_guard'))->check()) {
+        if (auth($this->translatorGuard())->check()) {
             redirect(route('languages.languages'));
         };
     }
@@ -61,13 +61,17 @@ class Login extends Component
         try {
             $this->rateLimit(10);
         } catch (TooManyRequestsException $exception) {
-            $this->addError('email', "Slow down! Please wait another {$exception->secondsUntilAvailable} seconds to log in.",);
+            $secondsUntilAvailable = $exception->secondsUntilAvailable;
+            if (!is_int($secondsUntilAvailable)) {
+                throw new \TypeError('The rate limiter retry delay must be an integer.');
+            }
+            $this->addError('email', "Slow down! Please wait another {$secondsUntilAvailable} seconds to log in.",);
             return null;
         }
 
         $this->validate();
 
-        if (!auth(config('languages.translator_guard'))->attempt([
+        if (!auth($this->translatorGuard())->attempt([
             'email' => $this->email,
             'password' => $this->password,
         ])) {
@@ -75,9 +79,24 @@ class Login extends Component
             return null;
         }
 
-        auth(config('languages.translator_guard'))->login(Translator::where('email', $this->email)->first(), $this->remember);
+        $guard = auth($this->translatorGuard());
+        $translator = Translator::where('email', $this->email)->first();
+        if ($translator === null) {
+            throw new \TypeError('The authenticated translator must exist.');
+        }
+        $guard->login($translator, $this->remember);
 
         return redirect(route('languages.languages'));
+    }
+
+    private function translatorGuard(): ?string
+    {
+        $guard = config('languages.translator_guard');
+        if ($guard !== null && !is_string($guard)) {
+            throw new \TypeError('languages.translator_guard must be a string or null.');
+        }
+
+        return $guard;
     }
 
     /**
@@ -85,8 +104,12 @@ class Login extends Component
      */
     public function render(): View
     {
-        return view('languages::login',
-            ['data' => Language::query()->paginate(1)])
-            ->layout('languages::layouts.app');
+        /** @phpstan-var view-string $viewName */
+        $viewName = 'languages::login';
+        $view = view($viewName,
+            ['data' => Language::query()->paginate(1)]);
+        $view->layout('languages::layouts.app');
+
+        return $view;
     }
 }

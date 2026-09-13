@@ -83,6 +83,11 @@ class Manual extends Component
 
     public function render(): View
     {
-        return view('languages::manual')->layout('languages::layouts.app');
+        /** @phpstan-var view-string $viewName */
+        $viewName = 'languages::manual';
+        $view = view($viewName);
+        $view->layout('languages::layouts.app');
+
+        return $view;
     }
 }

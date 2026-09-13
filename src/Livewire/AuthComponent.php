@@ -6,12 +6,11 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Model;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Riomigal\Languages\Livewire\Traits\DispatchesLegacyEvents;
 use Riomigal\Languages\Models\Translator;
 
 abstract class AuthComponent extends Component
 {
-    use WithPagination, DispatchesLegacyEvents;
+    use WithPagination;
 
     /**
      * @var string
@@ -24,17 +23,17 @@ abstract class AuthComponent extends Component
     public ?bool $isAdministrator = false;
 
     /**
-     * @var string[]
+     * @var array<int|string, string|bool|null> Property names and three-state filter values.
      */
     protected $queryString = ['search', 'page'];
 
     /**
-     * @return void
+     * The mounted component always has a translator; init() aborts for guests.
      */
-    public ?Translator $authUser;
+    public Translator $authUser;
 
     /**
-     * @return LengthAwarePaginator|Model
+     * @return LengthAwarePaginator<int, covariant Model>|Model
      */
     abstract public function query(): LengthAwarePaginator|Model;
 
@@ -43,8 +42,13 @@ abstract class AuthComponent extends Component
      */
     public function init(): void
     {
-        $this->authUser = Translator::find(auth(config('languages.translator_guard'))->user()?->id);
-        if(!$this->authUser) abort(403);
+        $guard = config('languages.translator_guard');
+        if ($guard !== null && !is_string($guard)) {
+            throw new \TypeError('languages.translator_guard must be a string or null.');
+        }
+        $authUser = Translator::find(auth($guard)->user()?->id);
+        if (!$authUser) abort(403);
+        $this->authUser = $authUser;
         $this->isAdministrator = $this->authUser->admin;
     }
 
@@ -99,13 +103,13 @@ abstract class AuthComponent extends Component
      */
     public function showNoAuthorizationMessage(): void
     {
-        $this->emit('showToast', 'Action not authorized!', LanguagesToastMessage::MESSAGE_TYPES['WARNING']);
+        $this->dispatch('showToast', message: 'Action not authorized!', type: LanguagesToastMessage::MESSAGE_TYPES['WARNING'], duration: 3000);
     }
 
     /**
      * @return void
      */
     public function handleException(): void {
-        $this->emit('showToast', __('languages::global.something_wrong'), LanguagesToastMessage::MESSAGE_TYPES['WARNING'], 4000);
+        $this->dispatch('showToast', message: __('languages::global.something_wrong'), type: LanguagesToastMessage::MESSAGE_TYPES['WARNING'], duration: 4000);
     }
 }

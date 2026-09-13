@@ -2,7 +2,6 @@
 
 namespace Riomigal\Languages\Livewire;
 
-use Illuminate\Bus\DatabaseBatchRepository;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
@@ -39,7 +38,11 @@ class BatchExecution extends Component
         $batch = DB::table('job_batches')
             ->where('name', config('languages.batch_name'))
             ->whereNull('finished_at')->whereNull('cancelled_at')->first();
-        $this->batchId = ($batch) ? $batch->id : null;
+        $batchId = ($batch) ? $batch->id : null;
+        if ($batchId !== null && !is_string($batchId)) {
+            throw new \TypeError('A job batch ID must be a string or null.');
+        }
+        $this->batchId = $batchId;
     }
 
 
@@ -72,7 +75,11 @@ class BatchExecution extends Component
      */
     public function render(): View
     {
-        return view('languages::batch-execution')
-            ->layout('languages::layouts.app');
+        /** @phpstan-var view-string $viewName */
+        $viewName = 'languages::batch-execution';
+        $view = view($viewName);
+        $view->layout('languages::layouts.app');
+
+        return $view;
     }
 }

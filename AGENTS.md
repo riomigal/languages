@@ -42,8 +42,8 @@ Main documentation entrypoint:
   which PHPUnit 12 removes.
 - Keep docs/manual synchronized with code:
   - Update `docs/APPLICATION_MANUAL.md` and related docs for every feature addition, behavior change, or UI update.
-- Livewire 2 is no longer supported (`livewire/livewire: ^3.0`); the legacy
-  event shim trait is vestigial and kept only until the Livewire layer is removed.
+- Livewire 2 is no longer supported (`livewire/livewire: ^3.0`); use direct
+  `dispatch()` calls with named event parameters.
 - If dependencies are changed, re-run:
   - `composer audit`
   - `npm audit`

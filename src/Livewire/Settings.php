@@ -82,11 +82,15 @@ class Settings extends AuthComponent
      */
     public function render(): View
     {
-        return view('languages::settings',
+        /** @phpstan-var view-string $viewName */
+        $viewName = 'languages::settings';
+        $view = view($viewName,
             [
                 'data' => $this->query(),
             ]
-        )
-            ->layout('languages::layouts.app');
+        );
+        $view->layout('languages::layouts.app');
+
+        return $view;
     }
 }

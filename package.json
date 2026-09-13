@@ -14,6 +14,7 @@
     "author": "riomigal",
     "license": "ISC",
     "devDependencies": {
+        "@playwright/test": "^1.63.0",
         "@tailwindcss/typography": "^0.5.19",
         "@tailwindcss/vite": "^4.3.3",
         "flowbite": "^4.0.1",

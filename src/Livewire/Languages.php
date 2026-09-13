@@ -9,6 +9,9 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\In;
+use Illuminate\Validation\Rules\NotIn;
+use Illuminate\Validation\Rules\Unique;
 use Riomigal\Languages\Jobs\ApproveLanguagesJob;
 use Riomigal\Languages\Jobs\Batch\BatchProcessor;
 use Riomigal\Languages\Jobs\ExportTranslationJob;
@@ -39,7 +42,7 @@ class Languages extends AuthComponent
     public string $language;
 
     /**
-     * @var array
+     * @var list<string>
      */
     public array $languageCodes;
 
@@ -63,13 +66,21 @@ class Languages extends AuthComponent
     /**
      * Validates language codes
      *
-     * @return array
+     * @return array<string, list<In|NotIn|Unique>>
      */
     public function getRules(): array
     {
+        $connection = config('languages.db_connection');
+        $table = config('languages.table_languages');
+        if ($connection !== null && !is_string($connection)) {
+            throw new \TypeError('languages.db_connection must be a string or null for validation.');
+        }
+        if ($table !== null && !is_string($table)) {
+            throw new \TypeError('languages.table_languages must be a string or null.');
+        }
         return [
             'language' => [
-                Rule::in($this->languageCodes), Rule::notIn(Language::query()->pluck('code')->all()), Rule::unique(config('languages.db_connection') . '.' . config('languages.table_languages'), 'code')
+                Rule::in($this->languageCodes), Rule::notIn(Language::query()->pluck('code')->all()), Rule::unique($connection . '.' . $table, 'code')
             ]
         ];
     }
@@ -95,15 +106,15 @@ class Languages extends AuthComponent
         }
 
         if (($jobs + $batches)) {
-            $this->emit('showToast', __('languages::global.jobs.delete_success', ['batches' => $batches, 'jobs' => $jobs]), LanguagesToastMessage::MESSAGE_TYPES['SUCCESS']);
-            $this->emit('startBatchProgress', null);
+            $this->dispatch('showToast', message: __('languages::global.jobs.delete_success', ['batches' => $batches, 'jobs' => $jobs]), type: LanguagesToastMessage::MESSAGE_TYPES['SUCCESS'], duration: 3000);
+            $this->dispatch('startBatchProgress', id: null);
             return true;
         }
         if(!$this->anotherJobIsRunning()) {
             Setting::setJobsRunning(false);
         }
-        $this->emit('showToast', __('languages::global.jobs.delete_not_found'), LanguagesToastMessage::MESSAGE_TYPES['WARNING']);
-        $this->emit('startBatchProgress', null);
+        $this->dispatch('showToast', message: __('languages::global.jobs.delete_not_found'), type: LanguagesToastMessage::MESSAGE_TYPES['WARNING'], duration: 3000);
+        $this->dispatch('startBatchProgress', id: null);
         return false;
     }
 
@@ -122,12 +133,13 @@ class Languages extends AuthComponent
             new ImportLanguagesJob()
         ];
 
+        /** @var list<int> $languages Auto-incrementing language primary keys. */
         $languages = Language::pluck('id')->toArray();
         $finally = function () use (&$languages) {
             Translator::notifyAdminImportedLanguages($languages);
         };
 
-        $this->emit('startBatchProgress', $batchProcessor->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
+        $this->dispatch('startBatchProgress', id: $batchProcessor->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
     }
 
     /**
@@ -159,7 +171,7 @@ class Languages extends AuthComponent
             });
         };
 
-        $this->emit('startBatchProgress', $batchProcessor->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
+        $this->dispatch('startBatchProgress', id: $batchProcessor->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
     }
 
     /**
@@ -187,7 +199,7 @@ class Languages extends AuthComponent
             });
         };
 
-        $this->emit('startBatchProgress', $batchProcessor->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
+        $this->dispatch('startBatchProgress', id: $batchProcessor->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
     }
 
     /**
@@ -214,7 +226,7 @@ class Languages extends AuthComponent
                 });
             };
 
-            $this->emit('startBatchProgress', resolve(BatchProcessor::class)->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
+            $this->dispatch('startBatchProgress', id: resolve(BatchProcessor::class)->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
         } else {
             $this->authUser->notify(new FlashMessage(__('languages::translations.nothing_approved')));
         }
@@ -254,7 +266,7 @@ class Languages extends AuthComponent
                 Translator::notifyAdminExportedTranslationsAllLanguages($total, $languages);
                 resolve(ExportTranslationService::class)->exportTranslationsOnOtherHosts();
             };
-            $this->emit('startBatchProgress', resolve(BatchProcessor::class)->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
+            $this->dispatch('startBatchProgress', id: resolve(BatchProcessor::class)->execute($batchArray, null, null, $finally)->dispatchAfterResponse()->id);
 
         } else {
             $this->authUser->notify(new FlashMessage(__('languages::translations.nothing_exported')));
@@ -274,7 +286,7 @@ class Languages extends AuthComponent
             $language = Language::query()->findOrFail($id);
             $language->translators()->detach();
             $language->delete();
-            $this->emit('showToast', __('languages::languages.deleted'), LanguagesToastMessage::MESSAGE_TYPES['WARNING']);
+            $this->dispatch('showToast', message: __('languages::languages.deleted'), type: LanguagesToastMessage::MESSAGE_TYPES['WARNING'], duration: 3000);
             return true;
         }
         return false;
@@ -288,6 +300,7 @@ class Languages extends AuthComponent
     public function create(): bool
     {
         if (parent::create()) {
+            /** @var array{language: string} $data Validated language-code selection. */
             $data = $this->validate();
             $languageCodes = array_flip($this->languageCodes);
             $language = Language::query()->create(Language::LANGUAGES[$languageCodes[$data['language']]]);
@@ -295,7 +308,7 @@ class Languages extends AuthComponent
             if(!File::exists($langPath)) {
                 File::makeDirectory($langPath);
             }
-            $this->emit('showToast', __('languages::languages.created', ['language' => $language->name]), LanguagesToastMessage::MESSAGE_TYPES['SUCCESS']);
+            $this->dispatch('showToast', message: __('languages::languages.created', ['language' => $language->name]), type: LanguagesToastMessage::MESSAGE_TYPES['SUCCESS'], duration: 3000);
             return true;
         }
         return false;
@@ -318,11 +331,11 @@ class Languages extends AuthComponent
     }
 
     /**
-     * @return LengthAwarePaginator
+     * @return LengthAwarePaginator<int, Language>
      */
     public function query(): LengthAwarePaginator
     {
-        if ($this->authUser?->admin) {
+        if ($this->authUser->admin) {
             $query = Language::query();
         } else {
             $query = $this->authUser->languages();
@@ -357,9 +370,13 @@ class Languages extends AuthComponent
      */
     public function render(): View
     {
-        return view('languages::languages',
+        /** @phpstan-var view-string $viewName */
+        $viewName = 'languages::languages';
+        $view = view($viewName,
             ['data' => $this->query(),
-                'languages' => Language::LANGUAGES])
-            ->layout('languages::layouts.app');
+                'languages' => Language::LANGUAGES]);
+        $view->layout('languages::layouts.app');
+
+        return $view;
     }
 }

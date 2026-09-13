@@ -146,7 +146,11 @@ class MultiHostCoordinationTest extends BaseTestCase
         Livewire::actingAs(Translator::query()->firstOrFail())
             ->test(Languages::class)
             ->call('deleteJobs')
-            ->assertReturned(true);
+            ->assertReturned(true)
+            ->assertDispatched('showToast',
+                message: __('languages::global.jobs.delete_success', ['batches' => 1, 'jobs' => 1]),
+                type: 'SUCCESS', duration: 3000)
+            ->assertDispatched('startBatchProgress', id: null);
 
         $this->assertSame(0, DB::table('jobs')->count());
         $this->assertNotNull(DB::table('job_batches')->value('cancelled_at'));
@@ -175,7 +179,14 @@ class MultiHostCoordinationTest extends BaseTestCase
         Livewire::actingAs(Translator::query()->firstOrFail())
             ->test(Languages::class)
             ->call('deleteJobs')
-            ->assertReturned(false);
+            ->assertReturned(false)
+            ->assertDispatched('showToast',
+                message: __('languages::global.import.start_message'),
+                type: 'SUCCESS', duration: 6000)
+            ->assertDispatched('showToast',
+                message: __('languages::global.jobs.delete_not_found'),
+                type: 'WARNING', duration: 3000)
+            ->assertDispatched('startBatchProgress', id: null);
 
         $this->assertFalse(Setting::query()->firstOrFail()->process_running);
         Http::assertNothingSent();

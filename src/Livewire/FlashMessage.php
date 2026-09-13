@@ -9,7 +9,7 @@ use Livewire\Component;
 class FlashMessage extends Component
 {
     /**
-     * @var array
+     * @var array<string, string> Notification UUIDs mapped to JSON data.
      */
     public array $notifications = [];
 
@@ -33,7 +33,18 @@ class FlashMessage extends Component
      */
     public function mount(): void
     {
-        $this->notifiable = auth(config('languages.translator_guard'))->id();
+        $guard = config('languages.translator_guard');
+        if ($guard !== null && !is_string($guard)) {
+            throw new \TypeError('languages.translator_guard must be a string or null.');
+        }
+        $notifiable = auth($guard)->id();
+        if ($notifiable === null) {
+            throw new \TypeError('Cannot assign null to property ' . self::class . '::$notifiable of type int');
+        }
+        if (is_string($notifiable) && !is_numeric($notifiable)) {
+            throw new \TypeError('The notification recipient ID must be numeric.');
+        }
+        $this->notifiable = (int) $notifiable;
         $this->updateNotifications();
     }
 
@@ -48,7 +59,7 @@ class FlashMessage extends Component
      * @return void
      */
     public function markAllAsRead(): void {
-        DB::connection(config('languages.db_connection'))->table('notifications')->whereIn('id', array_keys($this->notifications))->update([
+        DB::connection($this->databaseConnection())->table('notifications')->whereIn('id', array_keys($this->notifications))->update([
             'read_at' => now()
         ]);
         $this->updateNotifications();
@@ -60,8 +71,10 @@ class FlashMessage extends Component
      */
     public function updateNotifications(): void
     {
-        $this->notifications = DB::connection(config('languages.db_connection'))->table('notifications')->where('notifiable_id', $this->notifiable)
+        /** @var array<string, string> $notifications The data column is text, keyed by UUID. */
+        $notifications = DB::connection($this->databaseConnection())->table('notifications')->where('notifiable_id', $this->notifiable)
             ->whereNull('read_at')->orderBy('created_at', 'DESC')->pluck('data', 'id')->all();
+        $this->notifications = $notifications;
 
         $this->totalNotifications = count($this->notifications);
     }
@@ -72,7 +85,7 @@ class FlashMessage extends Component
      */
     public function markAsRead(string $id): void
     {
-       DB::connection(config('languages.db_connection'))->table('notifications')
+       DB::connection($this->databaseConnection())->table('notifications')
             ->where('id', $id)
             ->where('notifiable_id', $this->notifiable)
             ->update(
@@ -86,12 +99,26 @@ class FlashMessage extends Component
         }
     }
 
+    private function databaseConnection(): string|\UnitEnum|null
+    {
+        $connection = config('languages.db_connection');
+        if ($connection !== null && !is_string($connection) && !$connection instanceof \UnitEnum) {
+            throw new \TypeError('languages.db_connection must be a string, UnitEnum or null.');
+        }
+
+        return $connection;
+    }
+
     /**
      * @return View
      */
     public function render(): View
     {
-        return view('languages::flash-message')
-            ->layout('languages::layouts.app');
+        /** @phpstan-var view-string $viewName */
+        $viewName = 'languages::flash-message';
+        $view = view($viewName);
+        $view->layout('languages::layouts.app');
+
+        return $view;
     }
 }
