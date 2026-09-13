@@ -77,6 +77,48 @@ In `config/openai.php`:
 - `translatable_models` (array of model classes using JSON translatable fields)
 - `open_ai_model`
 - `max_open_ai_missing_trans`
+- `cache_key` (default: `languages_cache`; scopes settings, translation entries and their shared version)
+
+### DB Loader and Cache
+
+`db_loader` defaults to `true` for new installations, including the initial settings
+row. The upgrade migration changes the column default only; it never updates existing
+rows or overrides a saved `true` or `false`. Its rollback restores the `false` default
+without modifying existing rows. Laravel 12/13 support this schema change natively;
+no `doctrine/dbal` dependency is added. The migration also clears the cached loader
+selection, which console startup may have set to file mode before the settings table
+existed on a fresh install.
+
+DB mode loads cached translations from the database and skips `lang/` file exports.
+Model translation exports continue. File mode remains available by disabling
+`db_loader` in Settings and exporting approved translations.
+
+The database is a hard dependency for rendering web requests in DB mode.
+`LanguagesTranslatorServiceProvider::registerLoader()` falls back to Laravel's file
+loader on a database exception only during console registration (`runningInConsole()`).
+Web requests go through `loadTranslationsArray()` without that exception guard, and
+uncached translations query the database directly. Database failures propagate; there
+is no automatic web fallback. Failures in translation lookups after console registration
+are also outside that guard. This preserves existing behavior because DB-mode language
+files may be missing or stale.
+
+Set `CACHE_STORE=redis` or `CACHE_STORE=memcached` (or `CACHE_DRIVER` if that is the
+environment variable your application's cache configuration uses). `file` is acceptable
+on a single server. Do not use `database`: caching DB rows in the DB to avoid reading DB
+rows defeats the purpose. Queue workers and web processes must share the same store and
+prefix; hosts sharing translations should use the same Redis or Memcached cache.
+
+Translation entries are cached forever under versioned keys. The shared version lives
+at `config('languages.cache_key') . ':version'`. Initialization and version bumps use a
+cache lock, including with the file store. Package writes advance it after commit;
+reads inside transactions bypass the shared cache so uncommitted values cannot leak
+into it. Existing targeted invalidation uses the same key builder as cache reads.
+Older versions become unreachable and remain stored until cache eviction or clearing.
+
+Custom bulk writes, raw SQL and writes with model events disabled must call
+`Translation::invalidateCacheAfterWrite()` on the configured package connection after
+the write. This schedules the version bump after commit. Normal `Translation` model
+saves/deletes and all package bulk write paths already do this.
 
 ## Settings Managed in UI
 
@@ -84,7 +126,7 @@ The **Settings** page updates the `languages_settings` row:
 
 - `domains`
 - `enable_multi_host` (default: `false`; requires non-empty `domains` when enabled)
-- `db_loader`
+- `db_loader` (default: `true` on new installs; existing values are preserved)
 - `import_vendor`
 - `enable_pending_notifications`
 - `enable_automatic_pending_notifications`

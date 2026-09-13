@@ -58,6 +58,7 @@ trait CanExportTranslation
 
             $this->updateFileContent($translations, $path, $type);
             $query->update(['exported' => true]);
+            Translation::invalidateCacheAfterWrite();
 
         } catch (\Exception $e) {
             $errorId = Str::random();
@@ -66,6 +67,7 @@ trait CanExportTranslation
                 'errorMessage' => $e->getMessage()
             ]);
             $query->update(['exported' => false]);
+            Translation::invalidateCacheAfterWrite();
             throw new ExportFileException($e->getMessage(), __('languages::exceptions.export_file_error', ['relativePathname' => $path, 'errorId' => $errorId]), 0);
         }
     }

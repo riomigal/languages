@@ -60,6 +60,19 @@ class Translation extends Model
     ];
 
     /**
+     * Invalidate runtime translations after individual creates, updates and deletes.
+     */
+    protected static function booted(): void
+    {
+        static::saved(function (Translation $translation): void {
+            $translation->getConnection()->afterCommit(static::bumpCacheVersion(...));
+        });
+        static::deleted(function (Translation $translation): void {
+            $translation->getConnection()->afterCommit(static::bumpCacheVersion(...));
+        });
+    }
+
+    /**
      * Create a new Eloquent model instance.
      *
      * @template TAttribute
@@ -205,13 +218,21 @@ class Translation extends Model
      * @return array<array-key, string|null>
      */
     public static function getCachedTranslations(string $locale, string|null $group = null, string|null $namespace = null): array {
-        $cachePrefix = config('languages.cache_key');
-        if (!is_string($cachePrefix)) {
-            throw new \TypeError('languages.cache_key must be a string.');
+        // Never publish uncommitted values to the shared cache, including on rollback.
+        if ((new self())->getConnection()->transactionLevel() > 0) {
+            return self::loadTranslations($locale, $group, $namespace);
         }
-        $cacheKey = $cachePrefix . $locale . ($group ?? '') . ($namespace ?? '');
 
-        return Cache::rememberForever($cacheKey, function() use ($locale, $group, $namespace) {
+        return Cache::rememberForever(self::translationCacheKey($locale, $group, $namespace), function() use ($locale, $group, $namespace) {
+            return self::loadTranslations($locale, $group, $namespace);
+        });
+    }
+
+    /**
+     * @return array<array-key, string|null>
+     */
+    private static function loadTranslations(string $locale, ?string $group, ?string $namespace): array
+    {
         $array = [];
         Translation::select(
             'language_code',
@@ -233,7 +254,6 @@ class Translation extends Model
                 $array[$translation->key] = $translation->approved ? $translation->value : $translation->old_value;
             });
         return $array;
-        });
     }
 
     /**
@@ -244,12 +264,83 @@ class Translation extends Model
      */
     public static function unsetCachedTranslation(string $locale, string|null $group = null, string|null $namespace = null): void
     {
+        Cache::forget(self::translationCacheKey($locale, $group, $namespace));
+    }
+
+    /**
+     * Bulk writes bypass model events; call this after each successful bulk write.
+     */
+    public static function invalidateCacheAfterWrite(): void
+    {
+        (new self())->getConnection()->afterCommit(static::bumpCacheVersion(...));
+    }
+
+    /**
+     * Advance the shared version without depending on targeted cache-key matching.
+     */
+    public static function bumpCacheVersion(): void
+    {
+        self::cacheVersion(true);
+    }
+
+    /**
+     * Build the key once for both cache reads and targeted invalidation.
+     */
+    private static function translationCacheKey(string $locale, ?string $group, ?string $namespace): string
+    {
+        return self::cachePrefix() . ':v' . self::cacheVersion()
+            . ':' . $locale . ':' . ($group ?? '') . ':' . ($namespace ?? '');
+    }
+
+    /**
+     * Reads are lock-free once initialized. Serialize initialization and bumps,
+     * since file-cache increments and rememberForever initialization are not atomic.
+     */
+    private static function cacheVersion(bool $increment = false): int
+    {
+        $cacheKey = self::cachePrefix() . ':version';
+        $version = self::readCacheVersion($cacheKey);
+        if (!$increment && is_int($version)) {
+            return $version;
+        }
+
+        $version = Cache::lock($cacheKey . ':lock', 10)->block(5, function () use ($cacheKey, $increment): int {
+            $version = self::readCacheVersion($cacheKey);
+            if ($increment || !is_int($version)) {
+                // A time-based floor avoids reusing old keys if just the version is evicted.
+                $version = max(is_int($version) ? $version + 1 : 0, (int) (microtime(true) * 1000000));
+                Cache::forever($cacheKey, $version);
+            }
+
+            return $version;
+        });
+
+        if (!is_int($version)) {
+            throw new \TypeError('Translation cache version must be an integer.');
+        }
+
+        return $version;
+    }
+
+    private static function readCacheVersion(string $cacheKey): ?int
+    {
+        $version = Cache::get($cacheKey);
+        // Redis may return an integer stored without serialization as a string.
+        if (is_string($version) && ctype_digit($version)) {
+            return (int) $version;
+        }
+
+        return is_int($version) ? $version : null;
+    }
+
+    private static function cachePrefix(): string
+    {
         $cachePrefix = config('languages.cache_key');
         if (!is_string($cachePrefix)) {
             throw new \TypeError('languages.cache_key must be a string.');
         }
-        $cacheKey = $cachePrefix . $locale . ($group ?? '') . ($namespace ?? '');
-        Cache::forget($cacheKey);
+
+        return $cachePrefix;
     }
 
     /**

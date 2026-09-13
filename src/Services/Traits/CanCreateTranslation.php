@@ -429,6 +429,9 @@ trait CanCreateTranslation
         $translations = array_filter($translations);
         try {
             Translation::insert($translations);
+            if ($translations !== []) {
+                Translation::invalidateCacheAfterWrite();
+            }
         } catch (\Exception $e) {
             $errorId = Str::random();
             $languageCode = $translations[0]['language_code'];

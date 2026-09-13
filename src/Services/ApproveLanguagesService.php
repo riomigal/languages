@@ -15,6 +15,7 @@ class ApproveLanguagesService
                 foreach ($translations as $translation) {
                     $this->resetTranslationCache($translation);
                 }
+                Translation::invalidateCacheAfterWrite();
             });
     }
 

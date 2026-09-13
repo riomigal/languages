@@ -10,6 +10,7 @@ use Riomigal\Languages\Jobs\ImportLanguagesJob;
 use Riomigal\Languages\Jobs\ImportTranslationsJob;
 use Riomigal\Languages\Livewire\Translations;
 use Riomigal\Languages\Models\Language;
+use Riomigal\Languages\Models\Setting;
 use Riomigal\Languages\Models\Translator;
 use Riomigal\Languages\Services\ImportLanguageService;
 use Riomigal\Languages\Services\ImportTranslationService;
@@ -44,6 +45,10 @@ class TranslationsTest extends BaseTestCase
     #[Test]
     public function transl_admin_can_access_trans_service_and_see_admin_options(): void
     {
+        // File export controls belong to the supported file-loader mode.
+        Setting::query()->firstOrFail()->update(['db_loader' => false]);
+        Setting::getFreshCached();
+
         /**
          * Given there are 4 languages with translations
          */

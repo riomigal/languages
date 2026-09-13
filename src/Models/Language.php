@@ -178,6 +178,16 @@ class Language extends Model
     ];
 
     /**
+     * Cascading translation deletes do not dispatch Translation model events.
+     */
+    protected static function booted(): void
+    {
+        static::deleted(function (Language $language): void {
+            $language->getConnection()->afterCommit(Translation::bumpCacheVersion(...));
+        });
+    }
+
+    /**
      * Create a new Eloquent model instance.
      *
      * @template TAttribute

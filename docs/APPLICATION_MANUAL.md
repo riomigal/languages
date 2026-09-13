@@ -84,7 +84,7 @@ Use this section to configure package behavior for imports, exports, notificatio
 
 - Enable multi-host coordination (`enable_multi_host`, off by default on new installs)
 - Shared domains (`domains`, required only when multi-host coordination is enabled)
-- Load translations from DB (`db_loader`)
+- Load translations from DB (`db_loader`, on by default on new installs)
 - Import vendor translations
 - Pending translation notifications
 - Automatic pending notifications
@@ -94,9 +94,42 @@ Use this section to configure package behavior for imports, exports, notificatio
 
 ### Recommended Defaults
 
-- Keep `db_loader` enabled only when runtime DB translation loading is required.
+- Keep `db_loader` enabled to serve translations from the database without exporting language files.
 - Enable pending notifications only when translators actively use email alerts.
 - Leave multi-host coordination off for a single project; shared domains can be empty.
+
+### Database and File Loading
+
+New installs enable **Load translations from DB** (`db_loader`). The initial settings
+row and the column default are `true`. The upgrade migration changes only the column
+default, leaving every existing row's saved value untouched. Rolling it back restores
+the `false` default without changing saved values.
+
+In DB mode, import translations once and approve changes as usual. Runtime translations
+come from the database through a cache. Exports skip `lang/` files, so a deployment
+cannot overwrite exported translations; model translation exports still run. File mode
+remains supported: disable the toggle when you need exported `lang/` files for version
+control or a static deployment, then export approved translations.
+
+**The database is a hard dependency for rendering web requests in DB mode.**
+`LanguagesTranslatorServiceProvider::registerLoader()` catches database failures and
+falls back to Laravel's file loader only when `runningInConsole()` is true, during
+loader registration. Web requests have no equivalent fallback and database failures
+propagate. Cached entries may satisfy individual lookups, but cache misses need the
+database. The console guard does not catch failures during later translation lookups.
+This behavior is preserved; file translations may be absent or outdated in DB mode.
+
+**`CACHE_DRIVER` must not be `database` in DB mode.** Laravel 12/13 applications
+normally select the store with `CACHE_STORE`; the same rule applies there. Caching
+database rows in the database to avoid reading database rows defeats the point.
+Use `redis` or `memcached`; `file` is acceptable on one server. Web processes and queue
+workers must use the same cache store and prefix. Multiple hosts sharing translations
+should use a shared Redis or Memcached cache so version changes reach every host.
+
+Translation cache entries have no TTL. Their keys include a shared, monotonically
+increasing version that advances after translation writes commit, including package
+bulk imports, approvals and deletes. Targeted invalidation remains in place, while
+each version bump also makes entries missed by targeted invalidation unreachable.
 
 ### Single Project and Multiple Hosts
 
@@ -146,4 +179,5 @@ enable the toggle; save those URLs in Domains and enable coordination if needed.
 
 - “A process is running in the background”: clear running jobs/batches, or start queue worker.
 - Missing new language in UI: run import languages and refresh page.
-- Export not writing files: verify filesystem permissions and package export settings.
+- Export not writing files: this is expected with `db_loader` enabled; in file mode, verify filesystem permissions and package export settings.
+- Database outage in DB mode: restore database connectivity; web requests do not automatically fall back to language files.

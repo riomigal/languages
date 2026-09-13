@@ -30,6 +30,10 @@ Main documentation entrypoint:
 ## Important Project Rules
 
 - Keep package tests running against SQLite in-memory testbench setup.
+- New installs use the DB translation loader; upgrades must preserve saved `db_loader` values.
+- Translation cache keys are versioned. Keep targeted invalidation, and call
+  `Translation::invalidateCacheAfterWrite()` for bulk translation writes that bypass
+  model events so the shared version advances after commit.
 - Do not reintroduce `laravel-mix`; this package now builds assets with Vite.
 - Tailwind 4 is wired via `@tailwindcss/vite`; there is no `postcss.config.js`.
   Do not reintroduce `postcss`/`autoprefixer`.

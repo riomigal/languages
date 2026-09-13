@@ -57,6 +57,7 @@ class DeveloperDownloadToLocalCommand extends Command
             }
             $this->info('Deleting all languages in DB');
             Language::query()->delete();
+            Translation::invalidateCacheAfterWrite();
             $this->info('Inserting all languages in DB');
             /** @var list<array<string, scalar|null>> $languages Serialized LanguageResource records. */
             $languages = $response['data'];
@@ -69,11 +70,13 @@ class DeveloperDownloadToLocalCommand extends Command
             }
             $this->info('Deleting All Translations in DB');
             Translation::query()->delete();
+            Translation::invalidateCacheAfterWrite();
 
             $this->info('Inserting Translations 1 in DB');
             /** @var array{data: list<array<string, scalar|null>>, meta: array{last_page: int}} $payload Paginated TranslationResource response. */
             $payload = $response->json();
             Translation::insert($payload['data']);
+            Translation::invalidateCacheAfterWrite();
             for($page = 2; $page <= $payload['meta']['last_page']; $page++) {
                 $this->info('Requesting Translations 2');
                 $response = $this->sendGetPaginatedTranslationsRequest(['page' => $page]);
@@ -84,6 +87,7 @@ class DeveloperDownloadToLocalCommand extends Command
                 /** @var array{data: list<array<string, scalar|null>>, meta: array{last_page: int}} $payload Paginated TranslationResource response. */
                 $payload = $response->json();
                 Translation::insert($payload['data']);
+                Translation::invalidateCacheAfterWrite();
             }
             $DB->commit();
             $this->info('All translation inserted');

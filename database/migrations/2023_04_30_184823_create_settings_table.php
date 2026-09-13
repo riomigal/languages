@@ -15,7 +15,7 @@ return new class extends Migration
         if(!Schema::connection(config('languages.db_connection'))->hasTable(config('languages.table_settings'))) {
             Schema::connection(config('languages.db_connection'))->create(config('languages.table_settings'), function (Blueprint $table) {
                 $table->bigIncrements('id');
-                $table->boolean('db_loader')->default(false);
+                $table->boolean('db_loader')->default(true);
                 $table->boolean('import_vendor')->default(false);
                 $table->timestamps();
             });
@@ -25,7 +25,7 @@ return new class extends Migration
              */
             if(!Setting::query()->first()) {
                 Setting::query()->create(
-                    ['db_loader' => false]
+                    ['db_loader' => true]
                 );
             }
         }
