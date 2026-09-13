@@ -1,0 +1,22 @@
+# Standalone app definition used to serve the package for Playwright.
+#
+# Testbench also reads this during PHPUnit runs and materialises a skeleton .env
+# in vendor/orchestra/testbench-core/laravel/. phpunit.xml therefore pins
+# CACHE_STORE and QUEUE_CONNECTION explicitly so the suite never inherits
+# whatever that generated file defaults to.
+providers:
+  - Riomigal\Languages\LanguagesServiceProvider
+  - Riomigal\Languages\LanguagesTranslatorServiceProvider
+
+migrations: true
+
+seeders: false
+
+env:
+  - APP_KEY="base64:2fl+Ktvkfl+Fuz4Qp/A75G2RTiWVA/ZoKZvp6fiiM10="
+  - APP_DEBUG=true
+  - DB_CONNECTION=sqlite
+  - DB_DATABASE=tests/e2e/.data/e2e.sqlite
+  - CACHE_STORE=array
+  - SESSION_DRIVER=array
+  - QUEUE_CONNECTION=sync

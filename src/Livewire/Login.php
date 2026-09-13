@@ -6,6 +6,8 @@ use DanHarrin\LivewireRateLimiting\Exceptions\TooManyRequestsException;
 use DanHarrin\LivewireRateLimiting\WithRateLimiting;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Routing\Redirector;
+use Livewire\Features\SupportRedirects\Redirector as LivewireRedirector;
 use Livewire\Component;
 use Riomigal\Languages\Models\Language;
 use Riomigal\Languages\Models\Translator;
@@ -54,9 +56,14 @@ class Login extends Component
     }
 
     /**
-     * @return RedirectResponse|null
+     * Livewire 3's redirect() returns Livewire\Features\SupportRedirects\Redirector,
+     * not an Illuminate RedirectResponse. Declaring the narrower Illuminate type
+     * made every successful login throw a TypeError, so the application could not
+     * be logged into at all.
+     *
+     * @return RedirectResponse|Redirector|LivewireRedirector|null
      */
-    public function login(): ?RedirectResponse
+    public function login(): RedirectResponse|Redirector|LivewireRedirector|null
     {
         try {
             $this->rateLimit(10);

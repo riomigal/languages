@@ -1,3 +1,4 @@
+<div>
 @if(auth(config('languages.translator_guard'))->check() && auth(config('languages.translator_guard'))->user()->admin)
     <div x-data="{open: @entangle('batchId'), progress: @entangle('progress')}">
         <div
@@ -11,4 +12,4 @@
         </div>
     </div>
 @endif
-
+</div>
