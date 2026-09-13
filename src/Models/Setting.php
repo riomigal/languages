@@ -90,9 +90,28 @@ class Setting extends Model
         if (!is_string($cachePrefix)) {
             throw new \TypeError('languages.cache_key must be a string.');
         }
-        return Cache::rememberForever($cachePrefix . '_settings', function(): Setting {
-            return Setting::first() ?? throw new MissingSettingsException();
+        /**
+         * Cache the attributes, not the model instance.
+         *
+         * Serialising an Eloquent object into the cache depends on the class
+         * being resolvable at unserialize time and on the store not restricting
+         * allowed classes. Laravel 13 returns __PHP_Incomplete_Class here, which
+         * violated this method's return type and produced a 500 on every page.
+         * An attribute array survives any store and any framework version.
+         *
+         * @var array<string, mixed> $attributes
+         */
+        $attributes = Cache::rememberForever($cachePrefix . '_settings', function(): array {
+            $setting = Setting::first() ?? throw new MissingSettingsException();
+
+            return $setting->getAttributes();
         });
+
+        $setting = new Setting();
+        $setting->setRawAttributes($attributes, true);
+        $setting->exists = true;
+
+        return $setting;
     }
 
     /**
