@@ -4,3 +4,18 @@
 @source "../views/**/*.blade.php";
 @source "../js/**/*.js";
 @source "../../node_modules/flowbite/**/*.js";
+
+[hidden] { display: none !important; }
+
+button[aria-busy="true"]::before {
+    content: '';
+    display: inline-block;
+    width: 0.875rem;
+    height: 0.875rem;
+    margin-right: 0.5rem;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: languages-spin 1s linear infinite;
+}
+@keyframes languages-spin { to { transform: rotate(360deg); } }

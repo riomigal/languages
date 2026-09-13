@@ -25,7 +25,7 @@ class StoreLanguageRequest extends FormRequest
     /**
      * Validate language codes using the existing creation rules.
      *
-     * @return array<string, list<In|NotIn|Unique>>
+     * @return array<string, list<string|In|NotIn|Unique>>
      */
     public function rules(): array
     {
@@ -35,6 +35,7 @@ class StoreLanguageRequest extends FormRequest
         $table = config('languages.table_languages');
         return [
             'language' => [
+                'required', 'string',
                 Rule::in(array_column(Language::LANGUAGES, 'code')),
                 Rule::notIn(Language::query()->pluck('code')->all()),
                 Rule::unique($connection . '.' . $table, 'code'),

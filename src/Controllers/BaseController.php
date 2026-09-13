@@ -63,6 +63,11 @@ abstract class BaseController extends Controller
         return $query;
     }
 
+    protected function authorizeLanguage(Language $language): void
+    {
+        abort_unless($this->scopeLanguages(Language::query())->whereKey($language->id)->exists(), 403);
+    }
+
     /**
      * Resolve a translation only within a permitted language, otherwise deny access.
      *
@@ -72,9 +77,7 @@ abstract class BaseController extends Controller
      */
     protected function resolveTranslation(int $id, Language $language): Translation
     {
-        if (!$this->isAdministrator() && !$this->scopeLanguages(Language::query())->whereKey($language->getKey())->exists()) {
-            abort(403);
-        }
+        $this->authorizeLanguage($language);
 
         $translation = $language->translations()->find($id);
 

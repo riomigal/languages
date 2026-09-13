@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { login, resetDatabase, formField, settingControl, expectNoServerError } from './helpers.js';
 
 async function toggleSetting(page, name) {
-    // The visible switch is an unlabeled native label around a checkbox.
+    // The visible switch is a native label around its named checkbox.
     await page.locator(`[id="setting.${name}"]`).locator('label').click();
 }
 
@@ -14,8 +14,7 @@ test.describe('settings', () => {
         await expect(page.getByRole('heading', { name: 'Settings', exact: true })).toBeVisible();
     });
 
-    // BUG-E2E-04: Allow deleting languages changes visually but is not saved.
-    test.fixme('toggling Allow deleting languages persists across reloads', async ({ page, context }) => {
+    test('toggling Allow deleting languages persists across reloads', async ({ page, context }) => {
         const toggle = settingControl(page, 'allow_deleting_languages');
         await expect(page.getByText('Allow deleting languages.', { exact: true })).toBeVisible();
         await expect(toggle).toBeChecked();

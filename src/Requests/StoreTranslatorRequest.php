@@ -6,6 +6,8 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Unique;
+use Illuminate\Validation\Rules\Exists;
+use Riomigal\Languages\Models\Language;
 use Riomigal\Languages\Models\Translator;
 
 class StoreTranslatorRequest extends FormRequest
@@ -21,7 +23,7 @@ class StoreTranslatorRequest extends FormRequest
     }
 
     /**
-     * @return array<string, string|list<string|Unique>>
+     * @return array<string, string|list<string|Unique|Exists>>
      */
     public function rules(): array
     {
@@ -37,7 +39,8 @@ class StoreTranslatorRequest extends FormRequest
             'last_name' => 'required|string|min:2',
             'password' => 'required|string|min:8',
             'password_confirmation' => 'required|string|same:password',
-            'languages' => $this->boolean('admin') ? 'nullable|array' : 'required|array',
+            'languages' => $this->boolean('admin') ? 'nullable|array' : 'required|array|min:1',
+            'languages.*' => ['integer', 'distinct', Rule::exists(Language::class, 'id')],
         ];
     }
 
@@ -50,6 +53,7 @@ class StoreTranslatorRequest extends FormRequest
     {
         /** @var array{email: string, phone?: string|null, first_name: string, last_name: string, admin?: bool|0|1|'0'|'1'|null} $attributes Validated profile fields. */
         $attributes = $this->safe()->only(['email', 'phone', 'first_name', 'last_name', 'admin']);
+        $attributes['admin'] = $this->boolean('admin');
         /** @var string $password Validated by required|string|min:8. */
         $password = $this->validated('password');
         $attributes['password'] = Hash::make($password);

@@ -3,14 +3,7 @@ import { ADMIN, login } from './helpers.js';
 
 test.describe('authentication', () => {
     test('the login page renders for an anonymous visitor', async ({ page }) => {
-        /**
-         * Regression: the layout rendered <livewire:batch-execution/>
-         * unconditionally while that component's template was wrapped entirely in
-         * an is-admin @if. An anonymous visitor therefore got an empty render and
-         * Livewire raised "missing root tag", making the login page a 500. No
-         * server-side test caught it because none rendered the full layout while
-         * logged out.
-         */
+        // Anonymous pages must render the full layout without requiring a translator.
         const response = await page.goto('/translator/login');
 
         expect(response.status()).toBe(200);

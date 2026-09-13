@@ -40,8 +40,7 @@ test.describe('translators', () => {
         await expect(page.getByRole('heading', { name: 'Translators', exact: true })).toBeVisible();
     });
 
-    // BUG-E2E-05: Clicking Create Translator does not open the form.
-    test.fixme('admin creates a translator that remains in the list after reload', async ({ page }) => {
+    test('admin creates a translator that remains in the list after reload', async ({ page }) => {
         await expect(translatorRow(page)).toHaveCount(0);
         await createTranslator(page);
         for (const value of [NEW_TRANSLATOR.first_name, NEW_TRANSLATOR.last_name, NEW_TRANSLATOR.phone, 'English']) {
@@ -56,8 +55,7 @@ test.describe('translators', () => {
         }
     });
 
-    // BUG-E2E-05: Clicking Edit does not open the translator form.
-    test.fixme('editing a translator persists the changed profile', async ({ page }) => {
+    test('editing a translator persists the changed profile', async ({ page }) => {
         const original = {
             email: TRANSLATOR.email,
             first_name: 'Regular',
@@ -94,8 +92,7 @@ test.describe('translators', () => {
         }
     });
 
-    // BUG-E2E-05: The broken Edit action blocks the language assignment form.
-    test.fixme('assigning another language persists both selected languages', async ({ page }) => {
+    test('assigning another language persists both selected languages', async ({ page }) => {
         const row = translatorRow(page, TRANSLATOR.email);
         await row.getByText('Edit', { exact: true }).click();
         const form = page.locator('#createOrUpdateForm');

@@ -4,7 +4,7 @@ namespace Riomigal\Languages\Console\Commands;
 
 
 use Illuminate\Console\Command;
-use Riomigal\Languages\Livewire\Traits\ChecksForRunningJobs;
+use Riomigal\Languages\Services\Traits\ChecksForRunningJobs;
 use Riomigal\Languages\Models\Language;
 use Riomigal\Languages\Models\Setting;
 use Riomigal\Languages\Models\Translation;

@@ -1,120 +1,51 @@
-@php use Illuminate\Support\Str; @endphp
 <div class="relative overflow-x-auto">
-    <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-        <tr>
-            @foreach($thead as $field)
-                <th scope="col" class="px-4 py-3">{{$field}}</th>
-            @endforeach
-            <th scope="col" class="px-4 py-3">
-                <span class="sr-only">{{__('languages::table.actions')}}</span>
-            </th>
-        </tr>
-        </thead>
-        <tbody>
-        @if(isset($action))
-            @php
-                $action  = array_flip($action);
-            @endphp
-        @endif
+<table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+    <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+        <tr>@foreach($thead as $heading)<th scope="col" class="px-4 py-3">{{ $heading }}</th>@endforeach<th scope="col" class="px-4 py-3">{{ __('languages::table.actions') }}</th></tr>
+    </thead>
+    <tbody>
         @foreach($data as $item)
-            <tr class="responsive border-b @if($item->needs_translation) dark:bg-gray-900 bg-gray-100 @endif">
-                @foreach($tbody as $key => $field)
-                    <td class="responsive px-4 py-3 break-all">
-{{--                        <span class="responsive-th font-bold">{!! $thead[$key] . ':&nbsp;' !!}</span>--}}
-                        @if(isset($relations[$field]))
-                            <p>{{ trim(implode(', ', $item->{$field}()->pluck($relations[$field])->all())) }}
+            <tr class="border-b dark:border-gray-700">
+                @foreach($tbody as $field)
+                    <td class="px-4 py-3 break-words">
+                        @if($field === 'languages')
+                            {{ $item->languages->pluck('name')->implode(', ') }}
                         @elseif(is_bool($item->{$field}))
                             @include('languages::component.boolean-icon', ['boolean' => $item->{$field}])
                         @else
-                            <p class="min-w-16">{{ Str::limit(trim($item->{$field}), 100) }}</p>
+                            {{ $item->{$field} }}
                         @endif
                     </td>
                 @endforeach
-                @if(isset($action) || isset($route))
-                    <td
-                            class="responsive px-4 py-3 flex items-center justify-end">
-                        <ul class="flex flex-wrap py-1 text-sm text-gray-700 dark:text-gray-200">
+                <td class="px-4 py-3">
+                    <div class="flex flex-wrap items-center justify-end gap-2">
+                        @if($kind === 'languages')
+                            <a href="{{ route('languages.translations', $item) }}" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-600">{{ __('languages::table.view') }}</a>
+                            @if($isAdministrator && \Riomigal\Languages\Models\Setting::getCached()->allow_deleting_languages)
+                                @include('languages::partials.action-form', ['url' => route('languages.languages.delete', $item), 'text' => __('languages::table.delete'), 'fields' => []])
+                            @endif
+                        @elseif($kind === 'translators')
+                            <a href="{{ route('languages.translators.edit', $item) }}" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-600">{{ __('languages::table.edit') }}</a>
+                            @if($item->id !== 1)
+                                @include('languages::partials.action-form', ['url' => route('languages.translators.delete', $item), 'text' => __('languages::table.delete'), 'fields' => []])
+                            @endif
+                        @else
+                            <button type="button" data-translation-url="{{ route('languages.translations.modal', ['language' => $language, 'id' => $item->id]) }}" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-600">{{ __('languages::translations.table.action.translate') }}</button>
                             @if($isAdministrator)
-                                @if(isset($action['needs_translation']) && !$item->needs_translation)
-                                    <li>
-                                        <a wire:click.prevent="requestTranslation({{$item->id}})"
-                                           class="block cursor-pointer py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">{{__('languages::translations.table.action.needs_translation')}}</a>
-                                    </li>
+                                @php($parameters = ['language' => $language, 'id' => $item->id] + request()->query())
+                                @if(!$item->approved && $item->value !== null && $item->value !== '')
+                                    @include('languages::partials.action-form', ['url' => route('languages.translations.approve', $parameters), 'text' => __('languages::translations.table.action.approve'), 'fields' => []])
                                 @endif
-                                @if(isset($action['restore_needs_translation']) && $item->needs_translation)
-                                    <li>
-                                        <a wire:click.prevent="restoreRequestTranslation({{$item->id}})"
-                                           class="block cursor-pointer py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">{{__('languages::translations.table.action.restore_needs_translation')}}</a>
-                                    </li>
-                                @endif
-                                @if(isset($action['restore_translation']) && !$item->approved && $item->old_value)
-                                    <li>
-                                        <a wire:click.prevent="restoreTranslation({{$item->id}})"
-                                           class="block cursor-pointer py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">{{__('languages::translations.table.action.restore_translation')}}</a>
-                                    </li>
+                                @include('languages::partials.action-form', ['url' => route('languages.translations.' . ($item->needs_translation ? 'restore-request' : 'request'), $parameters), 'text' => __('languages::translations.table.action.' . ($item->needs_translation ? 'restore_needs_translation' : 'needs_translation')), 'fields' => []])
+                                @if(!$item->approved && $item->old_value !== null)
+                                    @include('languages::partials.action-form', ['url' => route('languages.translations.restore', $parameters), 'text' => __('languages::translations.table.action.restore_translation'), 'fields' => []])
                                 @endif
                             @endif
-                            @if(isset($action['translate']))
-                                <li>
-                                    <a wire:click.prevent="showTranslateModal({{$item->id}})"
-                                       class="block cursor-pointer py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">{{__('languages::translations.table.action.translate')}}</a>
-                                </li>
-                            @endif
-                            @if(isset($route) && $route)
-                                <li>
-                                    <a href="{{ route($route['name'], [$route['parameter'] => $item]) }}"
-                                       class="block py-2 cursor-pointer px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">{{__('languages::table.view')}}</a>
-                                </li>
-                            @endif
-                            @if($isAdministrator)
-                                @if(isset($action['approve_translation']) && !$item->approved && $item->value)
-                                    <li>
-                                        <button wire:click.prevent="approveTranslation({{$item->id}})" type="button" class="text-white bg-green-700 hover:bg-green-800 focus:ring-green-300  dark:bg-green-600 dark:hover:bg-green-700  dark:focus:ring-green-800 focus:ring-4 font-medium rounded-lg text-xs px-5 py-2.5 mr-2 mb-2 p-1 focus:outline-none">{{__('languages::translations.table.action.approve')}}</button>
-                                    </li>
-                                @endif
-                                @if(isset($action['edit']))
-                                    <li>
-                                        <a wire:click.prevent="showForm({{$item->id}})"
-                                           class="block cursor-pointer py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">{{__('languages::table.edit')}}</a>
-                                    </li>
-                                @endif
-                                @if(isset($action['delete']))
-                                    <li>
-                                        <a wire:click.prevent="delete({{$item->id}})"
-                                           class="block cursor-pointer py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">{{__('languages::table.delete')}}</a>
-                                    </li>
-                                @endif
-                            @endif
-                        </ul>
-                    </td>
-                @endif
+                        @endif
+                    </div>
+                </td>
             </tr>
         @endforeach
-        </tbody>
-    </table>
-    @pushonce('styles')
-        <style>
-            .responsive-th {
-                display: none;
-            }
-
-            @media only screen and (max-width: 768px) {
-                td.responsive {
-                    display: flex;
-                    margin: 1px;
-                    padding: 1px;
-                    font-size: 1.1rem
-                }
-
-                .responsive-th {
-                    display: block;
-                }
-
-                thead {
-                    display: none;
-                }
-            }
-        </style>
-    @endpushonce
+    </tbody>
+</table>
 </div>

@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
-use Livewire\Livewire;
 use Riomigal\Languages\Console\Commands\DeveloperDownloadToLocalCommand;
 use Riomigal\Languages\Console\Commands\ExportTranslationAfterDeployment;
 use Riomigal\Languages\Console\Commands\ExportTranslations;
@@ -16,14 +15,6 @@ use Riomigal\Languages\Console\Commands\ImportLanguages;
 use Riomigal\Languages\Console\Commands\ImportTranslations;
 use Riomigal\Languages\Console\Commands\PruneLanguageBatches;
 use Riomigal\Languages\Console\Commands\SendAutomaticPendingNotifications;
-use Riomigal\Languages\Livewire\BatchExecution;
-use Riomigal\Languages\Livewire\FlashMessage;
-use Riomigal\Languages\Livewire\LanguagesToastMessage;
-use Riomigal\Languages\Livewire\Login;
-use Riomigal\Languages\Livewire\Manual;
-use Riomigal\Languages\Livewire\Settings;
-use Riomigal\Languages\Livewire\Translations;
-use Riomigal\Languages\Livewire\Translators;
 use Riomigal\Languages\Middleware\AuthApi;
 use Riomigal\Languages\Middleware\AuthTranslator;
 use Riomigal\Languages\Models\Setting;
@@ -59,8 +50,11 @@ class LanguagesServiceProvider extends ServiceProvider
         $this->loadTranslations();
         $this->loadRoutes();
         $this->loadViews();
+        view()->composer('languages::partials.batch-progress', function (\Illuminate\View\View $view): void {
+            $view->with('batch', resolve(\Riomigal\Languages\Services\BatchService::class)->progress());
+        });
+        \Illuminate\Foundation\Http\Middleware\TrimStrings::except(['translatedValue']);
         $this->loadMigrations();
-        $this->loadLivewireComponents();
         $this->loadAssets();
         $this->loadCommands();
 
@@ -130,6 +124,8 @@ class LanguagesServiceProvider extends ServiceProvider
         /** @var string $authGuard Configured authentication middleware alias. */
         $authGuard = config('languages.auth_guard');
         app('router')->aliasMiddleware($authGuard, AuthTranslator::class);
+        app('router')->aliasMiddleware('languages.translator', \Riomigal\Languages\Middleware\EnsureTranslator::class);
+        app('router')->aliasMiddleware('languages.admin', \Riomigal\Languages\Middleware\EnsureAdmin::class);
         app('router')->aliasMiddleware('laravel-languages-auth-api', AuthApi::class);
         app('router')->pushMiddlewareToGroup($translatorGuard, \Illuminate\Cookie\Middleware\EncryptCookies::class);
         app('router')->pushMiddlewareToGroup($translatorGuard, \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class);
@@ -138,22 +134,6 @@ class LanguagesServiceProvider extends ServiceProvider
         app('router')->pushMiddlewareToGroup($translatorGuard, \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class);
         app('router')->pushMiddlewareToGroup($translatorGuard, \Illuminate\Routing\Middleware\SubstituteBindings::class);
         app('router')->aliasMiddleware($translatorGuard, \Riomigal\Languages\Middleware\Translator::class);
-    }
-
-    /**
-     * @return void
-     */
-    protected function loadLivewireComponents(): void
-    {
-        Livewire::component('translators', Translators::class);
-        Livewire::component('login', Login::class);
-        Livewire::component('translations', Translations::class);
-        Livewire::component('languages', \Riomigal\Languages\Livewire\Languages::class);
-        Livewire::component('toast', LanguagesToastMessage::class);
-        Livewire::component('flash-message', FlashMessage::class);
-        Livewire::component('batch-execution', BatchExecution::class);
-        Livewire::component('settings', Settings::class);
-        Livewire::component('manual', Manual::class);
     }
 
     /**

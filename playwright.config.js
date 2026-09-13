@@ -7,7 +7,7 @@ const PORT = process.env.E2E_PORT ?? '8099';
  * they need neither the sibling host application nor a running MySQL instance.
  *
  * These cover what PHPUnit structurally cannot: that the rendered controls are
- * actually wired up. A Livewire or fetch-driven control can render perfectly and
+ * actually wired up. A JavaScript-driven control can render perfectly and
  * still submit nothing, and a server-side test asserting on HTML will not notice.
  */
 export default defineConfig({

@@ -5,10 +5,8 @@ namespace Riomigal\Languages\Tests\Feature;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Validator;
-use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
-use Riomigal\Languages\Livewire\Settings;
 use Riomigal\Languages\Models\Setting;
 use Riomigal\Languages\Models\Translator;
 use Riomigal\Languages\Requests\UpdateSettingFieldRequest;
@@ -21,24 +19,16 @@ class MultiHostSettingsTest extends BaseTestCase
     #[Test]
     public function an_administrator_can_enable_and_disable_multi_host_then_clear_domains(): void
     {
-        $component = Livewire::actingAs(Translator::query()->firstOrFail())
-            ->test(Settings::class)
-            ->assertSee(__('languages::settings.enable_multi_host.label'))
-            ->set('setting.domains', 'https://one.example')
-            ->set('setting.enable_multi_host', true)
-            ->assertHasNoErrors();
-
+        $this->actingAs(Translator::query()->firstOrFail());
+        $this->get(route('languages.settings'))->assertSee(__('languages::settings.enable_multi_host.label'));
+        $this->post(route('languages.settings.update', 'domains'), ['domains' => 'https://one.example'])->assertSessionHasNoErrors();
+        $this->post(route('languages.settings.update', 'enable_multi_host'), ['enable_multi_host' => true])->assertSessionHasNoErrors();
         $this->assertTrue(Setting::query()->firstOrFail()->enable_multi_host);
         $this->assertTrue(Setting::multiHostEnabled());
-
-        $component->set('setting.domains', '')
-            ->assertHasErrors(['setting.domains' => 'required_if']);
+        $this->post(route('languages.settings.update', 'domains'), ['domains' => ''])->assertSessionHasErrors('domains');
         $this->assertSame('https://one.example', Setting::query()->firstOrFail()->domains);
-
-        $component->set('setting.enable_multi_host', false)
-            ->set('setting.domains', '')
-            ->assertHasNoErrors();
-
+        $this->post(route('languages.settings.update', 'enable_multi_host'), ['enable_multi_host' => false])->assertSessionHasNoErrors();
+        $this->post(route('languages.settings.update', 'domains'), ['domains' => ''])->assertSessionHasNoErrors();
         $this->assertFalse(Setting::multiHostEnabled());
         $this->assertEmpty(Setting::query()->firstOrFail()->domains);
     }
@@ -46,34 +36,45 @@ class MultiHostSettingsTest extends BaseTestCase
     #[Test]
     public function multi_host_cannot_be_enabled_in_settings_without_domains(): void
     {
-        Livewire::actingAs(Translator::query()->firstOrFail())
-            ->test(Settings::class)
-            ->set('setting.enable_multi_host', true)
-            ->assertHasErrors(['setting.domains' => 'required_if']);
-
+        $this->actingAs(Translator::query()->firstOrFail())
+            ->post(route('languages.settings.update', 'enable_multi_host'), ['enable_multi_host' => true])->assertSessionHasErrors('domains');
         $this->assertFalse(Setting::query()->firstOrFail()->enable_multi_host);
     }
 
     #[Test]
     public function settings_reject_an_invalid_multi_host_flag(): void
     {
-        Livewire::actingAs(Translator::query()->firstOrFail())
-            ->test(Settings::class)
-            ->set('setting.enable_multi_host', 'invalid')
-            ->assertHasErrors(['setting.enable_multi_host' => 'boolean']);
-
+        $this->actingAs(Translator::query()->firstOrFail())
+            ->post(route('languages.settings.update', 'enable_multi_host'), ['enable_multi_host' => 'invalid'])->assertSessionHasErrors('enable_multi_host');
         $this->assertFalse(Setting::query()->firstOrFail()->enable_multi_host);
     }
 
     #[Test]
     public function settings_do_not_allow_internal_model_fields_to_be_updated(): void
     {
-        Livewire::actingAs(Translator::query()->firstOrFail())
-            ->test(Settings::class)
-            ->set('setting.process_running', true)
-            ->assertStatus(422);
-
+        $this->actingAs(Translator::query()->firstOrFail())
+            ->post(route('languages.settings.update', 'process_running'), ['process_running' => true])->assertNotFound();
         $this->assertFalse(Setting::query()->firstOrFail()->process_running);
+    }
+
+    #[Test]
+    public function invalid_domains_do_not_block_saving_an_unrelated_setting(): void
+    {
+        $this->actingAs(Translator::query()->firstOrFail());
+        $this->post(route('languages.settings.update', 'enable_multi_host'), ['enable_multi_host' => true])->assertSessionHasErrors('domains');
+        $this->post(route('languages.settings.update', 'allow_deleting_languages'), ['allow_deleting_languages' => true, 'domains' => []])->assertRedirect();
+        $this->assertTrue(Setting::getCached()->allow_deleting_languages);
+        $this->assertFalse(Setting::getCached()->enable_multi_host);
+    }
+
+    #[Test]
+    public function background_polling_does_not_consume_redirect_validation_errors(): void
+    {
+        $this->actingAs(Translator::firstOrFail());
+        $this->post(route('languages.settings.update', 'enable_multi_host'), ['enable_multi_host' => true])->assertSessionHasErrors('domains');
+        $this->getJson(route('languages.notifications'))->assertOk();
+        $this->get(route('languages.settings'))->assertOk()->assertSee('Domains are required when multi-host coordination is enabled.');
+        $this->get(route('languages.settings'))->assertOk()->assertDontSee('Domains are required when multi-host coordination is enabled.');
     }
 
     #[Test]
@@ -89,8 +90,8 @@ class MultiHostSettingsTest extends BaseTestCase
             'enable_multi_host' => $enabled,
             'domains' => $domains,
         ]);
-        $request = UpdateSettingFieldRequest::create('/settings/' . $field, 'PATCH', $input);
-        $route = new Route('PATCH', 'settings/{field}', fn () => null);
+        $request = UpdateSettingFieldRequest::create('/settings/' . $field, 'POST', $input);
+        $route = new Route('POST', 'settings/{field}', fn () => null);
         $route->bind($request);
         $request->setRouteResolver(fn (): Route => $route);
 

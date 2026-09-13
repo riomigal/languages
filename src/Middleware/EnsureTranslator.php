@@ -26,6 +26,11 @@ class EnsureTranslator
             abort(403);
         }
 
+        // Background JSON requests must not consume a form redirect's flash data.
+        if ($request->expectsJson()) {
+            $request->session()->reflash();
+        }
+
         $request->attributes->set('authUser', $authUser);
         $request->attributes->set('isAdministrator', (bool) $authUser->admin);
 

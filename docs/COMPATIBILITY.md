@@ -14,19 +14,12 @@ is pinned to `8.2.0` so the lock file always resolves at the declared floor.
 Testing against Laravel 13 needs PHP 8.3+, because `orchestra/testbench ^11`
 requires it.
 
-## Livewire
+## UI runtime
 
-- `livewire/livewire`: `^3.0`
-
-Livewire 2 support was dropped: it never supported Laravel 12, so the
-`^2.12` branch was unreachable under the current constraints.
-
-### Event Compatibility
-
-Components use Livewire 3 `dispatch()` calls with named event parameters.
-The legacy event shim and its unreachable Livewire 2 fallback branches have
-been removed. Toast messages, batch progress and modal events retain their
-existing names and payloads.
+The interface uses server-rendered Blade, ordinary HTML forms and vanilla JavaScript.
+No Livewire or Alpine runtime is required. Flowbite utility classes and its build-time
+CSS plugin remain; Flowbite JavaScript is not imported. Republish the compiled package
+assets and replace any old overridden views when adopting the controller UI.
 
 ## Build Tooling
 

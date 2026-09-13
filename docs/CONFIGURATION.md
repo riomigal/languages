@@ -140,3 +140,8 @@ The **Settings** page updates the `languages_settings` row:
 2. Configure queue workers for package jobs.
 3. For multi-host sync, configure shared domains and `LANGUAGES_API_SHARED_SECRET`, then enable multi-host coordination in Settings.
 4. Rotate default admin credentials.
+
+Each Settings control submits and validates only its own field using an ordinary
+POST and redirect. JavaScript submits on change; a Save button works without it.
+Enabling multi-host validates against saved Domains, so save Domains first.
+Invalid Domains do not prevent changes to unrelated settings.

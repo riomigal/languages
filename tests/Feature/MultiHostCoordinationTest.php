@@ -7,11 +7,9 @@ use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Notification;
-use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
-use Riomigal\Languages\Livewire\Languages;
-use Riomigal\Languages\Livewire\Traits\ChecksForRunningJobs;
+use Riomigal\Languages\Services\Traits\ChecksForRunningJobs;
 use Riomigal\Languages\Models\Setting;
 use Riomigal\Languages\Models\Translator;
 use Riomigal\Languages\Services\ExportTranslationService;
@@ -143,14 +141,13 @@ class MultiHostCoordinationTest extends BaseTestCase
         $this->insertLocalBatch();
         Http::fake();
 
-        Livewire::actingAs(Translator::query()->firstOrFail())
-            ->test(Languages::class)
-            ->call('deleteJobs')
-            ->assertReturned(true)
-            ->assertDispatched('showToast',
-                message: __('languages::global.jobs.delete_success', ['batches' => 1, 'jobs' => 1]),
-                type: 'SUCCESS', duration: 3000)
-            ->assertDispatched('startBatchProgress', id: null);
+        $this->actingAs(Translator::query()->firstOrFail())
+            ->post(route('languages.languages.cancel-jobs'))
+            ->assertRedirect(route('languages.languages'))
+            ->assertSessionHas('toast', [
+                'message' => __('languages::global.jobs.delete_success', ['batches' => 1, 'jobs' => 1]),
+                'type' => 'SUCCESS', 'duration' => 3000,
+            ]);
 
         $this->assertSame(0, DB::table('jobs')->count());
         $this->assertNotNull(DB::table('job_batches')->value('cancelled_at'));
@@ -176,17 +173,13 @@ class MultiHostCoordinationTest extends BaseTestCase
         Setting::setJobsRunning();
         Http::fake();
 
-        Livewire::actingAs(Translator::query()->firstOrFail())
-            ->test(Languages::class)
-            ->call('deleteJobs')
-            ->assertReturned(false)
-            ->assertDispatched('showToast',
-                message: __('languages::global.import.start_message'),
-                type: 'SUCCESS', duration: 6000)
-            ->assertDispatched('showToast',
-                message: __('languages::global.jobs.delete_not_found'),
-                type: 'WARNING', duration: 3000)
-            ->assertDispatched('startBatchProgress', id: null);
+        $this->actingAs(Translator::query()->firstOrFail())
+            ->post(route('languages.languages.cancel-jobs'))
+            ->assertRedirect(route('languages.languages'))
+            ->assertSessionHas('toast', [
+                'message' => __('languages::global.jobs.delete_not_found'),
+                'type' => 'WARNING', 'duration' => 3000,
+            ]);
 
         $this->assertFalse(Setting::query()->firstOrFail()->process_running);
         Http::assertNothingSent();
@@ -243,6 +236,7 @@ class MultiHostCoordinationTest extends BaseTestCase
             'pending_jobs' => 1,
             'failed_jobs' => 0,
             'failed_job_ids' => '[]',
+            'options' => serialize([]),
             'created_at' => now()->timestamp,
             'cancelled_at' => $cancelledAt,
             'finished_at' => $finishedAt,

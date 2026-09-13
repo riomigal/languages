@@ -1,13 +1,7 @@
-<div class="relative w-full max-w-md">
-    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-        <svg aria-hidden="true" class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none"
-             stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-        </svg>
-    </div>
-    <input type="search" id="default-search" wire:model.debounce.800ms="search"
-           class="block w-full p-4 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-           placeholder="{{ __('languages::filter.search.placeholder') }}">
-</div>
-
+<form method="GET" action="{{ url()->current() }}" data-search class="flex gap-2 items-center">
+    @include('languages::partials.query-fields', ['except' => ['search', 'page', 'create', 'password']])
+    <label for="search" class="sr-only">Search</label>
+    <input type="search" id="search" name="search" value="{{ $search ?? '' }}" placeholder="Search" autocomplete="off"
+           class="block w-full p-2 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+    <button type="submit" class="p-2 text-blue-700 dark:text-blue-300">Search</button>
+</form>

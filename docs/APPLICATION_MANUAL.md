@@ -6,7 +6,7 @@ This is the manual displayed inside the translation panel at the `languages.manu
 
 ### Install, publish, and migrate
 
-The package requires PHP 8.2 or later within PHP 8, Laravel 12 or 13, and Livewire 3, as declared in `composer.json`. Run installation commands from your Laravel application directory:
+The package requires PHP 8.2 or later within PHP 8 and Laravel 12 or 13, as declared in `composer.json`. Run installation commands from your Laravel application directory:
 
 ```bash
 composer require riomigal/languages
@@ -36,9 +36,9 @@ The default login URL is `/translator/login`. When no translator exists, the mig
 - Password: `aaaaaaaa`
 - First and last name: `admin`
 
-Sign in, open **Translators**, edit the administrator, and use **Update password** immediately. Set a password of at least eight characters and enter the same confirmation. Profile updates alone do not change passwords. Translator ID `1` cannot be deleted through the component, but its profile and password can be edited.
+Sign in, open **Translators**, edit the administrator, and use **Update password** immediately. Set a password of at least eight characters and enter the same confirmation. Profile updates alone do not change passwords. Translator ID `1` cannot be deleted through the application, but its profile and password can be edited.
 
-The login form has email, password, and **Remember me** controls. Invalid credentials remain on the login screen; repeated attempts are rate limited and show a retry delay. Accounts use the package's `languages_translator` session guard. Use **Logout** in the navigation to end the session.
+The login form has email, password, and **Remember me** controls. Invalid credentials remain on the login screen; login is limited to ten attempts per IP address per minute and shows the retry delay after that limit. Accounts use the package's `languages_translator` session guard. Use **Logout** in the navigation to end the session.
 
 UI routes are registered only when `config('languages.main_server_domain')` exactly matches `config('app.url')`. The main-server value comes from `LANGUAGES_MAIN_SERVER_DOMAIN`, defaulting to the application URL. `LANGUAGES_ENABLED=false` disables the package's UI/API registration and custom loader. Route prefixes and screen paths are configurable in `config/languages.php`.
 
@@ -70,15 +70,15 @@ The list shows language code, name, and native name, sorted by code, with ten ro
 
 **Add Language** opens a selector from the package's supported language list. Choose an unused code and press **Add**. Duplicate or unsupported codes are rejected. This creates a language record and, if absent, its locale directory under `lang/`, including when DB loading is enabled. It does not create translated entries. **Close** hides the form.
 
-The row **Delete** action is shown only to administrators when `allow_deleting_languages` is enabled. It detaches translator assignments and deletes the language; its translation records are removed by the database's cascading foreign key. It does not delete language files or the locale directory, so a later filesystem import can recreate the language. There is no confirmation dialog in this action. Preserve the configured fallback language, since the translation editor requires its record.
+The row **Delete** action is shown only to administrators when `allow_deleting_languages` is enabled. It detaches translator assignments and deletes the language; its translation records are removed by the database's cascading foreign key. It does not delete language files or the locale directory, so a later filesystem import can recreate the language. There is no confirmation dialog in this action. Keep the fallback language if its values should be available as translation examples.
 
 ### Import and fill missing entries
 
 All toolbar operations below are presented to administrators:
 
 - **Import Languages** queues discovery of supported locale directories under the language path. Existing codes are skipped.
-- **Import Translations** queues PHP, JSON, optional vendor, and configured model imports. This button appears when the current language-list page contains rows. The import covers the configured language set, not just the visible search results.
-- **Find Missing Translations** queues creation of missing records by shared translation identifier. It uses the language matching `app.locale`, or the first language if that record is absent, as its source. Only source-language identifiers are copied to other languages; this does not scan application code for translation calls or merge keys from every language into the root. Existing counterparts are left alone. With OpenAI enabled, the button shows an OpenAI indicator and missing values are offered for automatic translation. Otherwise the source text is copied for later editing.
+- **Import Translations** queues PHP, JSON, optional vendor, and configured model imports. The import covers the configured language set, not just the visible search results.
+- **Find Missing Translations** queues creation of missing records by shared translation identifier. It uses the language matching `app.locale`, or the first language if that record is absent, as its source. Only source-language identifiers are copied to other languages; this does not scan application code for translation calls or merge keys from every language into the root. Existing counterparts are left alone. With OpenAI enabled, missing values are offered for automatic translation. Otherwise the source text is copied for later editing.
 
 Vendor import reads published overrides under `lang/vendor/{namespace}/` before the registered package translation directory, so an already imported override is retained. PHP translation files must return arrays; JSON files must decode to arrays. Nested keys are flattened for storage, and PHP subdirectories are retained in the group name.
 
@@ -88,7 +88,7 @@ Vendor import reads published overrides under `lang/vendor/{namespace}/` before 
 
 With `db_loader` off, **Export All Languages** queues export for languages containing approved, not-updated, not-exported rows. It exports application/vendor files and model translations. If no eligible rows exist, a notification reports that nothing was exported.
 
-With `db_loader` on, the button is named **Export All Translated Models**. Its initial selection considers only eligible model rows. **Current limitation:** the all-language component creates export jobs without passing the model-only flag. If eligible model rows exist, those jobs can also export eligible PHP/JSON rows for the selected languages. For a model-only export in DB mode, use **Export Translated Models** on an individual language or `php artisan languages:export-translations`, which passes the setting correctly.
+With `db_loader` on, **Export All Translated Models** limits both the initial selection and each export job to model rows. PHP/JSON rows are left for DB delivery.
 
 After a UI export batch finishes, enabled multi-host coordination requests forced exports on the other configured hosts. The normal export CLI does not perform this propagation.
 
@@ -100,7 +100,7 @@ Open a language using **Languages > View**. The default route is `/translator/tr
 
 ### Table, search, and multi-select filters
 
-The table displays ID, Vendor, Namespace, Group, Needs Translation, Approved, Approved By, Updated, Updated By, Exported, Key, Content, and Old Content. Updater and approver columns show names; filter choices show translator email addresses. Long table values are shortened to 100 characters; open **Translate** for the full editable value. The table has twenty rows per page.
+The table displays ID, Vendor, Namespace, Group, Needs Translation, Approved, Approved By, Updated, Updated By, Exported, Key, Content, and Old Content. Updater and approver columns show names; filter choices show translator email addresses. Values are displayed as plain text; open **Translate** to edit the full value. The table has twenty rows per page.
 
 **Search** matches ID, namespace, group, key, current value, and old value. A submitted search change resets pagination to page one.
 
@@ -124,13 +124,13 @@ Open **State Filters**. Each button cycles through **gray: no restriction**, **g
 
 For requested work, set Needs Translation to green. For review after editing, set Approved to red and Updated to green. For ordinary file export candidates, use Approved green, Updated red, and Exported red. These filters affect the table only; bulk approval/export uses its own full-language query.
 
-Some search and multi-select bindings are deferred until the component sends a Livewire request. A state-filter click sends a request. If a filter seems unchanged, see **Troubleshooting**; choosing an input value alone does not guarantee an immediate refresh in the current templates.
+Search submits after a short typing pause or on Enter. State filters and multi-select changes submit GET forms and reload the page, resetting pagination. URLs retain `search`, `page`, `needs_translation`, `approved`, `updated_translation`, `is_vendor`, `exported`, `types[]`, `updatedBy[]`, and `approvedBy[]`. A state button cycles the parameter from absent to `true`, then `false`, then absent. Bookmark, reload, and Back/Forward restore those selections. Translator assignment filtering uses `selectedLanguages[]`.
 
 ### Example language and translate modal
 
-Select **Example Language** before opening a row's **Translate** action. This chooses the source example, not the language being edited. It defaults to `app.fallback_locale`. If the selected example is absent or empty, the component attempts to display the fallback-language value.
+Select **Example Language** before opening a row's **Translate** action. This chooses the source example, not the language being edited. It defaults to `app.fallback_locale` when that language is permitted, or the current language otherwise. If the selected example is absent or empty, the editor uses the permitted fallback-language value.
 
-The modal shows the translation identifier, the example text, a textarea containing the current value, and expandable language-code buttons for other available examples. Those buttons exclude the current and root languages. A non-admin's example collection is limited to assigned languages; however, the example-language selector lists all languages and the separate fallback lookup can display the fallback language even when it is not assigned.
+The modal shows the translation identifier, example text, a textarea containing the current value, and expandable language-code summaries for available examples sharing its identifier. The selector, examples, and fallback lookup are all restricted to assigned languages for non-admins. Example text is escaped rather than rendered as HTML.
 
 Use **Close modal** to dismiss the editor without saving its textarea changes.
 
@@ -138,9 +138,9 @@ Use **Close modal** to dismiss the editor without saving its textarea changes.
 
 **Update Translation** saves only when the textarea differs from the stored value. It saves the prior value and updater/approver information when beginning an edit, sets the acting translator as updater, clears the current approver, and marks the row updated, unapproved, and not exported. It also clears Needs Translation. Further edits before approval retain the same original old value. Saving does not automatically approve or export the text.
 
-**Translate with OPEN AI** appears when OpenAI is enabled, the current language is not the root language, and a non-empty example exists. It sends the example text for translation into the current language and replaces the textarea with the result. Review it and press **Update Translation** to save. This button itself does not save the translation.
+**Translate with OPEN AI** appears when OpenAI is enabled and a non-empty permitted example exists. It uses the actual example language, including after fallback, as the source. A suggestion fills an untouched textarea without saving. If you already edited the draft, or edit it while the request is running, the suggestion appears separately with **Use suggestion**. This keeps your draft until you explicitly replace it. Review the text and use **Update Translation** to save. Loading and failure states leave the editor usable; closing the modal cancels its pending request.
 
-**Update & auto-translate others (OPEN AI)** appears when OpenAI is enabled and the current language is the root language. If the value changed, it saves the root edit and queues updates for the existing translations sharing its identifier in the modal's example collection, including the current-language entry. For a non-admin, that collection is limited to assigned languages. It does not create absent counterparts; use Find Missing Translations first. The resulting updates remain unapproved and not exported.
+**Update & auto-translate others (OPEN AI)** is restricted to administrators and appears when OpenAI is enabled and the current language is the root language. If the value changed, it saves the root edit once and queues updates for the other existing translations sharing its identifier. It does not create absent counterparts; use Find Missing Translations first. The resulting updates remain unapproved and not exported.
 
 OpenAI support is optional and requires `openai-php/laravel`, valid `config/openai.php` API settings, and the feature toggle. The package sends source text to OpenAI and asks it to preserve Laravel placeholders such as `:name`; review the result. `languages.open_ai_model` selects the requested model and `languages.max_open_ai_missing_trans` controls missing-translation request chunk size. Failed requests, a missing integration, or responses with missing/extra keys or non-string values preserve the service's original input. In the modal that input is the example text, so an unchanged source sentence is not proof of successful translation. Missing languages or null input return unchanged without a request; array requests retain empty strings and `"0"`.
 
@@ -148,10 +148,10 @@ OpenAI support is optional and requires `openai-php/laravel`, valid `config/open
 
 The following row controls are shown to administrators:
 
-- **Approve** appears for an unapproved row with a truthy current value. It accepts the current text, records the approver, clears Needs Translation and Updated, removes Old Content and the saved previous updater/approver references, and invalidates translation cache entries. It does not write files or set Exported to true. The row button is absent for an empty value or the string `"0"`; bulk approval has no such check.
+- **Approve** appears for an unapproved row with a non-empty current value. It accepts the current text, records the approver, clears Needs Translation and Updated, removes Old Content and the saved previous updater/approver references, and invalidates translation cache entries. It does not write files or set Exported to true. The string `"0"` is a valid value. The row button is absent for an empty value; bulk approval has no such check.
 - **Request translation** appears when Needs Translation is false. It sets Needs Translation true and Approved false. It does not save an old value or send an email by itself.
 - **Remove translation request** appears when Needs Translation is true. It sets Needs Translation false and Approved true. It leaves the other flags unchanged; it is not equivalent to the full Approve action.
-- **Restore** appears for an unapproved row with a truthy Old Content value. It restores that value and the prior updater/approver, clears the saved history and Updated flag, and marks the row approved and exported. It does not write files or explicitly clear Needs Translation. There is one saved old value, not a revision history; after approval clears it, Restore is unavailable.
+- **Restore** appears for an unapproved row with a saved Old Content value, including an empty string or `"0"`. It restores that value and the prior updater/approver, clears the saved history and Updated flag, and marks the row approved and exported. It does not write files or explicitly clear Needs Translation. There is one saved old value, not a revision history; after approval clears it, Restore is unavailable.
 
 ### Approve and export a whole language
 
@@ -169,13 +169,13 @@ This screen, normally `/translator/translators`, is restricted to administrators
 
 ### Create, edit, assign languages, and delete
 
-Use the create-form button to enter email, phone, first name, last name, password, password confirmation, language assignments, and the Admin switch. Email must be valid and unique; first and last names need at least two characters. Phone is shown as required in the template but backend validation permits it to be empty; a supplied phone must be unique. Passwords need at least eight characters and matching confirmation.
+Use the create-form button to enter email, phone, first name, last name, password, password confirmation, language assignments, and the Admin switch. Email must be valid and unique; first and last names need at least two characters. Phone is optional; a supplied phone must be unique. Passwords need at least eight characters and matching confirmation.
 
-A non-admin requires a non-empty language assignment array. Admin accounts can be saved without assignments and can access all languages. Explicit assignments still determine which language notifications an account receives.
+A non-admin requires at least one valid language assignment. Duplicate or nonexistent assignment IDs are rejected. Admin accounts can be saved without assignments and can access all languages. Explicit assignments still determine which language notifications an account receives.
 
 **Create** saves a new account. **Edit** opens an existing account; **Update** saves profile, admin status, and the selected assignment list. Saving replaces the existing assignments with that list. **Close** hides the form. Account creation does not send an invitation or password email.
 
-Use row **Delete** to remove an account. Translator ID `1` is protected by the component even though the generic table can display its Delete link. Other deletions have no confirmation dialog in the component.
+Use row **Delete** to remove an account. Translator ID `1` has no Delete control and its delete endpoint rejects the action. Other deletions submit directly without a confirmation dialog.
 
 ### Password changes and pending notifications
 
@@ -189,23 +189,23 @@ Automatic reminders use a separate command and toggle, described in the CLI refe
 
 The Settings screen, normally `/translator/settings`, is restricted to administrators. It displays the configured main-server domain as read-only text, plus eight toggles and the Domains field. Change the main-server value through `LANGUAGES_MAIN_SERVER_DOMAIN` or application configuration.
 
-There is no Save button. The component validates and saves individual fields when their Livewire updates arrive, then refreshes cached settings and loader selection. **Enable multi-host coordination** and **Domains** use live bindings. The remaining switches currently use deferred bindings, so clicking them alone may not submit a change; verify persistence after a component request and reload. Errors are shown beside the relevant field.
+Each field has its own POST form and validation. With JavaScript, a toggle change or leaving the Domains input submits that field and reloads Settings. Without JavaScript, use the field's Save button. An invalid field does not block saving an unrelated valid field. The server refreshes cached settings after each successful write. Inline errors keep the attempted value for correction; reloading again shows the stored state. Enabling multi-host requires saved Domains, so save Domains first.
 
 ### Settings reference
 
 These are the nine user-editable columns. Defaults below describe a fresh installation, not a saved upgrade configuration.
 
-- **`db_loader`**, default `true`: selects the database translation loader instead of Laravel's ordinary file loader. Use it to publish approved application translations directly from the database without routine file export. Disable it when runtime language files are the required delivery format. The single-language and normal CLI exports use model-only export when it is on; see the documented all-language and forced-export exceptions. Existing installations retain their saved true or false value when the default changes.
+- **`db_loader`**, default `true`: selects the database translation loader instead of Laravel's ordinary file loader. Use it to publish approved application translations directly from the database without routine file export. Disable it when runtime language files are the required delivery format. The UI and normal CLI exports use model-only export when it is on; see the documented forced-export exceptions. Existing installations retain their saved true or false value when the default changes.
 - **`import_vendor`**, default `false`: includes registered vendor namespaces during translation import. With DB loading enabled and this setting off, namespaced vendor translations continue to use the parent file loader. Turning it on makes those namespaces use database translations too, so import them before relying on DB delivery. Use it when translators should manage package/vendor text. It does not delete previously imported vendor records when disabled or filter existing vendor rows out of file exports.
 - **`enable_open_ai_translations`**, default `false`: enables OpenAI calls for missing-translation generation and editor actions, and exposes the relevant buttons. Use it after configuring the optional integration. It does not automatically translate every existing row or approve generated text; enabling it without the integration leaves the service returning its input.
 - **`enable_pending_notifications`**, default `false`: shows the manual pending-notification action in the translator edit form. Use it when administrators should request reminders for individual accounts. It does not schedule reminders and is not checked by the automatic notification command.
 - **`enable_automatic_pending_notifications`**, default `false`: allows the automatic pending-notification command to iterate every translator's explicit assignments. Use it with your own command schedule. It works independently of `enable_pending_notifications`; the package does not register an active schedule for it.
 - **`import_only_from_root_language`**, default `false`: limits translation imports, including model/vendor import passes, to the language matching `app.locale`. Use it when root-language sources are authoritative and other languages are maintained in the panel. It does not restrict Import Languages or delete existing non-root rows. Find Missing Translations can subsequently create root-language counterparts in the other languages.
-- **`allow_deleting_languages`**, default `false`: exposes the language Delete links to administrators. Enable it when removing language records and their translations is intentional. This is a UI visibility setting; `Languages::delete()` checks administrator status but does not itself check this toggle.
+- **`allow_deleting_languages`**, default `false`: exposes the language Delete links to administrators. Enable it when removing language records and their translations is intentional. The delete endpoint checks both administrator status and this toggle.
 - **`enable_multi_host`**, default `false`: adds configured-host job checks and allows UI export/cancellation propagation. Leave it off for one project. When off, saved domains do not trigger those requests. When enabling it through Settings, a non-empty Domains field is required. Existing non-blank saved domains are enabled by the upgrade migration; an environment-only host list does not enable the feature.
-- **`domains`**, default `null`: comma-separated installation URLs used for multi-host requests. Include `http://` or `https://`, for example `https://one.example,https://two.example`, with no trailing slash. The code trims list entries and appends the API route paths. Use this only for participating installations. When the saved value is null, `LANGUAGES_MULTIPLE_DB_HOSTS` is the fallback; a saved empty string does not use that fallback. Turn multi-host off before clearing the field. The Settings component enforces presence when enabled, but does not test URL syntax or reachability.
+- **`domains`**, default `null`: comma-separated installation URLs used for multi-host requests. Include `http://` or `https://`, for example `https://one.example,https://two.example`, with no trailing slash. The code trims list entries and appends the API route paths. Use this only for participating installations. When the saved value is null, `LANGUAGES_MULTIPLE_DB_HOSTS` is the fallback; a saved empty string does not use that fallback. Turn multi-host off before clearing the field. The setting request enforces presence when enabled, but does not test URL syntax or reachability.
 
-The table also contains an internal `process_running` flag, ID, and timestamps. They are not Settings controls; the component rejects updates to fields outside the nine listed above. Job gating reads actual queue/batch records rather than relying solely on `process_running`.
+The table also contains an internal `process_running` flag, ID, and timestamps. They are not Settings controls; the controller rejects updates to fields outside the nine listed above. Job gating reads actual queue/batch records rather than relying solely on `process_running`.
 
 ## How Translations Are Served
 
@@ -217,7 +217,7 @@ Laravel's translation loader reads cached database entries for the requested loc
 
 DB loading itself writes nothing to `lang/`. With the normal DB workflow, import once, edit, and approve; there are no exported application translation files for a deployment to clobber. **`languages:export-translations-deployment` is unnecessary for DB-loader delivery.** Application translations remain in the database across filesystem deployments. Model translations still need export to their JSON columns in the application database.
 
-The setting is not a global filesystem-write prohibition: Add Language creates a directory; the all-language models button has the limitation documented above; the deployment command and inter-host forced-export endpoint do not pass the model-only flag and can write files even with `db_loader` enabled.
+The setting is not a global filesystem-write prohibition: Add Language creates a directory; the deployment command and inter-host forced-export endpoint do not pass the model-only flag and can write files even with `db_loader` enabled.
 
 **The database becomes a hard dependency for rendering web requests in DB-loader mode.** Database failures propagate during web loader registration and uncached lookups. The database-exception fallback to Laravel's file loader exists only under `runningInConsole()` during loader registration. It does not cover later console lookups or provide an automatic web fallback during an outage. Cached entries can satisfy individual lookups, but are not a complete substitute for a working database.
 
@@ -283,13 +283,13 @@ php artisan queue:work --queue=languageProcessor
 
 With a synchronous queue connection, work runs in the triggering process instead of requiring a worker. CLI import, missing-translation, and export commands call their services synchronously; their queued notifications can still require a worker. The automatic reminder command queues notifications rather than delivering mail itself.
 
-Administrators get a batch progress indicator, which polls while visible and disappears after completion. Completion messages can ask you to reload to see updated rows; progress completion does not itself reload the table.
+Signed-in users get a batch progress indicator. Page loads recover an already running batch, and a redirect from a newly started action carries its batch ID. Progress polls once per second while the tab is visible, pauses while hidden, and stops when the batch finishes, is cancelled, or disappears. Completion produces a toast. Reload the table to see changed rows; polling does not reload it automatically.
 
 ### Why an action may be blocked
 
-UI import, find-missing, bulk approval, and export actions refuse to start when the package queue has jobs or a matching batch is unfinished and not cancelled. The four normal import/find/export CLI commands use the same guard. This reduces overlapping bulk writes; even queued package notifications can keep the job check active. Multi-host adds the peer checks described above.
+Imports, find-missing, exports, bulk approval, update-and-auto-translate, and every single-row mutation (update, approve, request, remove request, restore) refuse to start while a package job or unfinished, uncancelled batch exists. Modal reads and AI draft suggestions remain available because they do not write translations. The normal import/find/export CLI commands use the shared guard too. Multi-host adds the peer checks described above; unreachable peers are ignored.
 
-This is not a lock around every operation. Individual translation updates, approval/request/restore row actions, and update-and-auto-translate do not call this running-job guard. The deployment-export, developer-download, prune, and automatic-notification commands also do not use it. Avoid concurrent maintenance operations yourself.
+The running-job check reduces overlapping writes but is not an atomic lock against simultaneous requests. Cancellation, language/account management, and settings changes remain available. Coordinate maintenance with active workers; cancellation cannot interrupt work already executing.
 
 The local guard and cancellation service query the `jobs` and `job_batches` tables on the default database connection. `languages.db_connection` configures package models and migrations but does not redirect every queue-table query. Keep the queue/batch setup consistent with those queries. A non-database queue is not cleared by deleting database `jobs` rows.
 
@@ -313,18 +313,17 @@ A non-admin translator's normal UI allows them to:
 - Search, paginate, and use every translation filter on those languages.
 - Choose an example language, open Translate, read the available examples, and update text for review.
 - Use OpenAI translation when its toggle and source/example conditions are met.
-- Use update-and-auto-translate when assigned to the root language; existing counterparts are limited to the assigned-language example collection.
 - Read this manual, use their notification controls, switch theme, and log out.
 
 The UI does not show non-admins the bulk language toolbar, approval/request/restore controls, export controls, translator management, or Settings. It has no non-admin account-management screen.
 
-**Current enforcement limits:** UI visibility is not consistent server-side authorization. `Translations` row actions resolve IDs within the mounted language, and mounting an unassigned language is rejected, but approval, request/removal, restore, and bulk approval/export methods have no explicit administrator check. The Languages import/find/approve/export/cancel methods likewise rely on admin-only controls without their own role check. Non-admin calls to these public Livewire methods are not all rejected merely because the controls are hidden. Language create/delete do check administrator status; Translators and Settings reject non-admin mounting. The fallback example lookup can also expose fallback text outside the assigned example collection. Treat these as limitations of the current implementation, not as stronger access guarantees.
+All privileged endpoints enforce administrator authorization on the server. Every per-row translation action resolves its ID through the requested language and checks the translator's language assignments; a foreign row ID returns 403 without changing data. Non-admins can edit permitted translations and request draft suggestions, but cannot approve, request, restore, bulk-update, export, manage accounts, change settings, or run language maintenance. Notification reads, unread changes, and mark-all operations are scoped to the authenticated translator and notifiable type.
 
 ### Navigation, theme, and notifications
 
 Navigation includes Languages and Manual for signed-in translators, with Translators and Settings added for admins. Open the compact navigation menu on small screens. The theme button switches light/dark mode and stores the preference in the browser; before a choice is saved it follows the system preference.
 
-The notification button shows the unread count. Open it to read messages, close the panel without marking them read, dismiss one message to mark it read, or use **Mark all as read**. Notifications refresh periodically while the component is visible. Immediate success/warning toasts are separate and can be closed; they also dismiss after their configured duration.
+The notification button shows the unread count. Open it to read messages, close the panel without marking them read, dismiss one message to mark it read, or use **Mark all as read**. Notifications refresh every five seconds while the tab is visible and pause in hidden tabs. Immediate toasts are separate: success, deleted, info, or warning, with a dismissal button and timer. The theme retains `localStorage["color-theme"]` and updates both the document's `.dark` class and `data-theme` attribute.
 
 ## CLI Reference
 
@@ -475,13 +474,13 @@ Import Translations only visits stored languages, and root-only/vendor settings 
 
 ### Filters or settings appear not to save
 
-Current templates use deferred `wire:model` bindings for search, multi-selects, and most Settings switches. Changes may wait for the next Livewire request from the same component. State-filter buttons trigger such a request in Translations; Domains and the multi-host switch use live updates in Settings. A full page reload discards unsent changes, so it is not a substitute for submitting them. Verify saved settings by reloading after an update and check inline validation errors. Multi-host cannot be enabled with an empty Domains field, or Domains cleared while it remains enabled.
+Search and filters reload the page with query parameters. Settings fields submit independently on change. Wait for navigation to finish before reloading, and check inline errors when a setting is rejected. Save Domains before enabling multi-host, and disable multi-host before clearing Domains. If controls do nothing, rebuild and republish the package assets, then check for failed JavaScript or network requests. Batch and notification polling intentionally pause in hidden tabs.
 
 ### Approved content is not visible or files are unchanged
 
 In file mode, approve edits and export them. Normal exports skip unapproved, updated, or already-exported rows; use `--force=1` only when re-exporting approved, not-updated content is needed. Verify filesystem permissions and PHP/JSON source validity. Malformed existing JSON and JSON encoding failures abort an export rather than silently replacing the file with invalid content.
 
-In DB mode, absence of file writes in the normal workflow is expected. Check the stored approval and old-value state, cache configuration, and shared cache prefix. A false Exported flag does not prevent DB delivery. Model columns still need model export. The deployment command, peer forced-export endpoint, and the all-language models-button limitation explain possible file writes despite the DB setting.
+In DB mode, absence of file writes in the normal workflow is expected. Check the stored approval and old-value state, cache configuration, and shared cache prefix. A false Exported flag does not prevent DB delivery. Model columns still need model export. The deployment command and peer forced-export endpoint can write files despite the DB setting.
 
 ### Database, cache, or settings failures
 

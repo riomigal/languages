@@ -5,10 +5,8 @@ namespace Riomigal\Languages\Tests\Feature;
 use PHPUnit\Framework\Attributes\Test;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Livewire\Livewire;
 use Riomigal\Languages\Jobs\ImportLanguagesJob;
 use Riomigal\Languages\Jobs\ImportTranslationsJob;
-use Riomigal\Languages\Livewire\Translations;
 use Riomigal\Languages\Models\Language;
 use Riomigal\Languages\Models\Setting;
 use Riomigal\Languages\Models\Translator;
@@ -29,6 +27,8 @@ class TranslationsTest extends BaseTestCase
      * @var Language
      */
     protected Language $language;
+
+    protected Translator $admin;
 
     /**
      * @return void
@@ -58,8 +58,8 @@ class TranslationsTest extends BaseTestCase
         /**
          * When an admin user accesses the Translatiosn UI of en
          */
-        Livewire::actingAs($this->admin)
-            ->test(Translations::class, ['language' => $this->language])
+        $this->actingAs($this->admin)
+            ->get(route('languages.translations', $this->language))
             /**
              * Then he should see all options
              */
@@ -85,8 +85,8 @@ class TranslationsTest extends BaseTestCase
         /**
          * When the translator accesses an assigned langauge
          */
-        Livewire::actingAs($translator)
-            ->test(Translations::class, ['language' => $this->language])
+        $this->actingAs($translator)
+            ->get(route('languages.translations', $this->language))
             /**
              * Then he should see only translator available options
              */
@@ -113,8 +113,8 @@ class TranslationsTest extends BaseTestCase
         /**
          * When the translator accesses an not assigned langauge
          */
-        Livewire::actingAs($translator)
-            ->test(Translations::class, ['language' => $this->language])
+        $this->actingAs($translator)
+            ->get(route('languages.translations', $this->language))
             /**
              * Then it should returns 403
              */
@@ -125,8 +125,8 @@ class TranslationsTest extends BaseTestCase
     public function transl_guest_cannot_access_page(): void
     {
         $this->language = Language::find(1);
-        Livewire::test(Translations::class, ['language' => $this->language])
-            ->assertStatus(403);
+        $this->get(route('languages.translations', $this->language))
+            ->assertRedirect(route('languages.login'));
     }
 
 

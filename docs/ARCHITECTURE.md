@@ -1,34 +1,52 @@
 # Architecture
 
-## High-Level Components
+## UI and authorization
 
-- **Service Providers**
-  - `LanguagesServiceProvider`
-  - `LanguagesTranslatorServiceProvider`
-- **Livewire UI**
-  - `Languages`, `Translations`, `Translators`, `Settings`, `Login`
-- **Domain Models**
-  - `Language`, `Translation`, `Translator`, `Setting`
-- **Services**
-  - Import/export/missing translation workflows
-  - OpenAI translation support
-- **Jobs & Batches**
-  - Async operations for imports, exports, and approvals
+Controllers in `src/Controllers` render Blade pages in `resources/views`. The package
+URL prefix and screen segments still come from `config('languages.*_url')`.
+Navigation, search, filters and pagination are full GET requests. Other mutations
+are CSRF-protected POST forms followed by redirects, including independent settings
+forms. Form requests validate language/account creation, profile/password changes,
+login and supported settings fields.
 
-## Data Flow
+`EnsureTranslator` resolves the package guard's translator. `EnsureAdmin` protects
+privileged routes. `BaseController::scopeLanguages()` restricts listings, and every
+per-row translation endpoint uses `resolveTranslation()` to verify both assignment
+and row ownership. Notification queries use the authenticated notifiable relation.
 
-1. Filesystem language files are imported into DB.
-2. Translators edit/approve translations in UI.
-3. Exports write approved DB values back to filesystem.
-4. Optional multi-host sync runs after exports.
+## Browser modules and JSON endpoints
 
-## Queue Usage
+Vite builds vanilla ES modules. Flowbite utility classes and its CSS plugin remain;
+its JavaScript runtime is not loaded. Native dialogs provide modal focus handling.
 
-- Package jobs are dispatched to configured queue/batch names.
-- Batch progress is surfaced to UI (`BatchExecution` component).
-- Queue and batch tables must exist in runtime DB.
+- `modal.js`: fetches a row's modal data and optional OpenAI suggestion. Suggestions
+  never save automatically and edited drafts require explicit replacement.
+- `batch-progress.js`: recovers the running batch rendered with the page or tracks
+  a new batch ID flashed by a POST action. Stops on completion/cancellation.
+- `notifications.js`: polls unread notifications and marks owned messages read.
+- `polling.js`: cancels in-flight polls and timers while the tab is hidden.
+- `filters.js` and `search.js`: submit ordinary GET forms and per-field settings POSTs.
+- `toast.js`: accepts message, type (`SUCCESS`, `DELETED`, `INFO`, `WARNING`) and
+  duration from session flash or browser events; displays escaped, dismissible text.
 
-## Caching
+JSON is limited to `batch/progress`, notifications, `{language}/{id}/modal` and
+`{language}/{id}/suggest`, beneath the configured prefix and translations segment.
+Row updates, approvals, requests and restores use forms. The modal saves its
+`translatedValue` textarea by POST and keeps table filters in the action URL.
 
-- Settings are cached using key prefix `languages_cache`.
-- DB loader behavior also caches a settings-dependent switch.
+## Services, jobs and data
+
+Import/export, missing translations and OpenAI services remain independent of the UI.
+Controllers dispatch Laravel batches using configured queue and batch names. The
+shared `Services/Traits/ChecksForRunningJobs` supports both controllers (session
+flash) and console commands (terminal messages). All translation mutations are
+subject to this guard; modal reads and draft suggestions do not write data.
+
+Translations are imported from PHP/JSON files or configured models into DB records.
+Approved translations are served by the default database loader, or exported in file
+mode. Model exports remain available in either mode. Multi-host propagation is opt-in
+and the inter-host API contract is unchanged.
+
+Settings cache refreshes update loader selection. Translation caches use a shared
+version and targeted invalidation. Bulk writes bypassing model events call
+`Translation::invalidateCacheAfterWrite()` so invalidation happens after commit.

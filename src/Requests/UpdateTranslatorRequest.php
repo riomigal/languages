@@ -5,6 +5,8 @@ namespace Riomigal\Languages\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Unique;
+use Illuminate\Validation\Rules\Exists;
+use Riomigal\Languages\Models\Language;
 use Riomigal\Languages\Models\Translator;
 
 class UpdateTranslatorRequest extends FormRequest
@@ -22,7 +24,7 @@ class UpdateTranslatorRequest extends FormRequest
     /**
      * Ignore only the translator bound to the {translator} route parameter.
      *
-     * @return array<string, string|list<string|Unique>>
+     * @return array<string, string|list<string|Unique|Exists>>
      */
     public function rules(): array
     {
@@ -42,7 +44,8 @@ class UpdateTranslatorRequest extends FormRequest
             'admin' => 'nullable|bool',
             'first_name' => 'required|string|min:2',
             'last_name' => 'required|string|min:2',
-            'languages' => $this->boolean('admin') ? 'nullable|array' : 'required|array',
+            'languages' => $this->boolean('admin') ? 'nullable|array' : 'required|array|min:1',
+            'languages.*' => ['integer', 'distinct', Rule::exists(Language::class, 'id')],
         ];
     }
 
@@ -55,6 +58,7 @@ class UpdateTranslatorRequest extends FormRequest
     {
         /** @var array{email: string, phone?: string|null, first_name: string, last_name: string, admin?: bool|0|1|'0'|'1'|null} $attributes Validated profile fields. */
         $attributes = $this->safe()->only(['email', 'phone', 'first_name', 'last_name', 'admin']);
+        $attributes['admin'] = $this->boolean('admin');
         return $attributes;
     }
 }

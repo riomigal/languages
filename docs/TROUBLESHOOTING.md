@@ -85,12 +85,17 @@ Checks:
 - `domains` list in settings uses full scheme (`http://` or `https://`)
 - network/firewall allows requests
 
-## Livewire Event Issues
+## UI Controls or Polling Do Not Work
 
-This package requires Livewire 3 and uses `dispatch()` directly. Custom components
-should pass named parameters: `message`, `type` and `duration` for `showToast`,
-`id` for `startBatchProgress`, and `duration` for `closeToastMessage`.
-The `showTranslationModal` and `hideTranslationModal` events have no parameters.
+Build and republish `languages-public`, then clear overridden templates that use the
+old component UI. Navigation, search and filters use GET page loads; mutations use
+POST forms with CSRF tokens. A 419 response requires refreshing the session.
+Settings save one field per page reload. Save Domains before enabling multi-host.
+
+Only batch progress, notifications, modal data and AI suggestions use JSON requests.
+Polling pauses in hidden tabs; batch polling ends on completion or cancellation.
+The modal's AI result is a draft until explicitly saved. When a draft has been edited,
+use the separate suggestion preview to replace it.
 
 ## NPM Audit / Composer Audit Failures
 

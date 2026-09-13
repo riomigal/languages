@@ -1,13 +1,12 @@
 <?php
 
-namespace Riomigal\Languages\Livewire;
+namespace Riomigal\Languages\Controllers;
 
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
-use Livewire\Component;
 
-class Manual extends Component
+class ManualController extends BaseController
 {
     public string $manualHtml = '';
     /**
@@ -15,7 +14,7 @@ class Manual extends Component
      */
     public array $manualSections = [];
 
-    public function mount(): void
+    private function loadManual(): void
     {
         $path = dirname(__DIR__, 2) . '/docs/APPLICATION_MANUAL.md';
 
@@ -81,13 +80,12 @@ class Manual extends Component
         return $updatedHtml;
     }
 
-    public function render(): View
+    public function index(): View
     {
-        /** @phpstan-var view-string $viewName */
-        $viewName = 'languages::manual';
-        $view = view($viewName);
-        $view->layout('languages::layouts.app');
-
-        return $view;
+        $this->loadManual();
+        return view('languages::manual', [
+            'manualHtml' => $this->manualHtml,
+            'manualSections' => $this->manualSections,
+        ]);
     }
 }

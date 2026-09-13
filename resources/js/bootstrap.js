@@ -1,40 +1,35 @@
-/**
- * We'll load the axios HTTP library which allows us to easily issue requests
- * to our Laravel back-end. This library automatically handles sending the
- * CSRF token as a header based on the value of the "XSRF" token cookie.
- */
+import { initToasts } from './modules/toast';
+import { initModal } from './modules/modal';
+import { initBatchProgress } from './modules/batch-progress';
+import { initNotifications } from './modules/notifications';
+import { initFilters } from './modules/filters';
+import { initSearch } from './modules/search';
 
-// import axios from 'axios';
+initToasts();
+initFilters();
+initSearch();
+initModal();
+initBatchProgress();
+initNotifications();
 
-// window.axios = axios;
+document.getElementById('theme-toggle')?.addEventListener('click', () => {
+    const dark = !document.documentElement.classList.contains('dark');
+    document.documentElement.classList.toggle('dark', dark);
+    const theme = dark ? 'dark' : 'light';
+    document.documentElement.dataset.theme = theme;
+    try { localStorage.setItem('color-theme', theme); } catch (_) {}
+});
 
-// Alpine is NOT imported here. Livewire 3 bundles and starts its own Alpine.
-// Importing a second copy made it win the race for window.Alpine and process
-// x-data before Livewire was ready, so every @entangle expression threw
-// "Cannot read properties of undefined (reading 'entangle')" and every
-// Alpine-driven control on the page was dead.
-
-// window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
-
-import 'flowbite';
-
-/**
- * Echo exposes an expressive API for subscribing to channels and listening
- * for events that are broadcast by Laravel. Echo and event broadcasting
- * allows your team to easily build robust real-time web applications.
- */
-
-// import Echo from 'laravel-echo';
-
-// import Pusher from 'pusher-js';
-// window.Pusher = Pusher;
-
-// window.Echo = new Echo({
-//     broadcaster: 'pusher',
-//     key: import.meta.env.VITE_PUSHER_APP_KEY,
-//     wsHost: import.meta.env.VITE_PUSHER_HOST ? import.meta.env.VITE_PUSHER_HOST : `ws-${import.meta.env.VITE_PUSHER_APP_CLUSTER}.pusher.com`,
-//     wsPort: import.meta.env.VITE_PUSHER_PORT ?? 80,
-//     wssPort: import.meta.env.VITE_PUSHER_PORT ?? 443,
-//     forceTLS: (import.meta.env.VITE_PUSHER_SCHEME ?? 'https') === 'https',
-//     enabledTransports: ['ws', 'wss'],
-// });
+document.querySelectorAll('form[method="POST"]').forEach(form => {
+    form.addEventListener('submit', event => {
+        if (form.dataset.submitting) { event.preventDefault(); return; }
+        form.dataset.submitting = 'true';
+        if (event.submitter) event.submitter.setAttribute('aria-busy', 'true');
+        // Keep successful controls enabled until the browser has captured them.
+        // This also preserves a submitter's formaction (the translate-all action).
+        setTimeout(() => form.querySelectorAll('button[type="submit"]').forEach(button => { button.disabled = true; }), 0);
+    });
+});
+window.addEventListener('pageshow', event => {
+    if (event.persisted) location.reload();
+});

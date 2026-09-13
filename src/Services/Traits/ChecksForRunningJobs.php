@@ -1,13 +1,12 @@
 <?php
 
-namespace Riomigal\Languages\Livewire\Traits;
+namespace Riomigal\Languages\Services\Traits;
 
 use Illuminate\Http\Client\Pool;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
-use Livewire\Component;
-use Riomigal\Languages\Livewire\LanguagesToastMessage;
+use Riomigal\Languages\Services\Toast;
 use Riomigal\Languages\Models\Setting;
 
 trait ChecksForRunningJobs
@@ -75,14 +74,14 @@ trait ChecksForRunningJobs
             }
         } else {
             if ($isRunning) {
-                $this->emitToast(
+                Toast::flash(
                     __('languages::global.import.processing_no_action'),
-                    LanguagesToastMessage::MESSAGE_TYPES['WARNING']
+                    'WARNING'
                 );
             } else {
-                $this->emitToast(
+                Toast::flash(
                     __('languages::global.import.start_message'),
-                    LanguagesToastMessage::MESSAGE_TYPES['SUCCESS'],
+                    'SUCCESS',
                     6000
                 );
             }
@@ -99,10 +98,4 @@ trait ChecksForRunningJobs
         }
     }
 
-    private function emitToast(string $message, string $type, int $duration = 3000): void
-    {
-        if ($this instanceof Component) {
-            $this->dispatch('showToast', message: $message, type: $type, duration: $duration);
-        }
-    }
 }

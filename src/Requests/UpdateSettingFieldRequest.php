@@ -12,7 +12,7 @@ class UpdateSettingFieldRequest extends FormRequest
      * @var array<string, string>
      */
     private const FIELD_RULES = [
-        'domains' => 'nullable|required_if:enable_multi_host,true',
+        'domains' => 'nullable|string|required_if:enable_multi_host,true',
         'enable_multi_host' => 'boolean',
         'db_loader' => 'boolean',
         'import_vendor' => 'boolean',
@@ -58,13 +58,19 @@ class UpdateSettingFieldRequest extends FormRequest
     {
         $field = $this->field();
 
-        $rules = [$field => self::FIELD_RULES[$field]];
+        $rules = [$field => 'present|' . self::FIELD_RULES[$field]];
 
         if ($field === 'enable_multi_host') {
             $rules['domains'] = self::FIELD_RULES['domains'];
         }
 
         return $rules;
+    }
+
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        return ['domains.required_if' => 'Domains are required when multi-host coordination is enabled.'];
     }
 
     /**

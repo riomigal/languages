@@ -5,7 +5,6 @@ namespace Riomigal\Languages\Tests;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\File;
-use Livewire\LivewireServiceProvider;
 use Orchestra\Testbench\TestCase;
 use Riomigal\Languages\LanguagesServiceProvider;
 use Riomigal\Languages\Tests\Traits\CreateLanguages;
@@ -21,6 +20,12 @@ class BaseTestCase extends TestCase
      * @var bool
      */
     protected $enablesPackageDiscoveries = true;
+
+    /** @return list<string> */
+    public function ignorePackageDiscoveriesFrom(): array
+    {
+        return ['livewire/livewire', 'danharrin/livewire-rate-limiting'];
+    }
 
     /**
      * Setup the test environment.
@@ -53,8 +58,7 @@ class BaseTestCase extends TestCase
     protected function getPackageProviders($app)
     {
         return [
-            LanguagesServiceProvider::class,
-            LivewireServiceProvider::class
+            LanguagesServiceProvider::class
         ];
     }
 
@@ -74,6 +78,8 @@ class BaseTestCase extends TestCase
             'prefix' => '',
         ]);
         $app['config']->set('queue.default', 'sync');
+        $app['config']->set('queue.batching.database', 'testbench');
+        $app['config']->set('queue.failed.database', 'testbench');
         $app['config']->set('languages.enabled', true);
         $app['config']->set('languages.db_connection', 'testbench');
     }

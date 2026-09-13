@@ -8,6 +8,12 @@ providers:
   - Riomigal\Languages\LanguagesServiceProvider
   - Riomigal\Languages\LanguagesTranslatorServiceProvider
 
+# Existing local vendor directories may still contain the removed UI packages.
+# Keep verification independent of their automatic provider registration.
+dont-discover:
+  - livewire/livewire
+  - danharrin/livewire-rate-limiting
+
 migrations: true
 
 seeders: false

@@ -28,9 +28,8 @@ export function resetDatabase() {
     }
 }
 
-// These controls currently put their id on the surrounding field, and their
-// visual labels are not associated with the input. Scope by that stable id,
-// then use the native role/type; do not depend on framework bindings or classes.
+// Keep using the stable wrapper IDs, then native roles/types. Labels are also
+// associated with the real input; selectors do not depend on framework state.
 export function formField(page, id) {
     return page.locator(`[id="${id}"]`).locator('input');
 }

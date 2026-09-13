@@ -57,8 +57,7 @@ test.describe('translations', () => {
         await expectKeys(page, KEYS);
     });
 
-    // BUG-E2E-02: Typing in search leaves every translation row visible.
-    test.fixme('search filters by key and content and clearing it restores all rows', async ({ page }) => {
+    test('search filters by key and content and clearing it restores all rows', async ({ page }) => {
         await expectKeys(page, KEYS);
         await page.getByRole('searchbox').fill('checkout');
         await expectKeys(page, ['checkout']);
@@ -74,10 +73,7 @@ test.describe('translations', () => {
         const nonMatches = KEYS.filter(key => !matches.includes(key));
 
         test(`${label} opens a bookmarked filter and keeps its rows after reload`, async ({ page }) => {
-            // BUG-E2E-06: is_vendor is ignored when opening or reloading its URL.
-            test.fixme(query === 'is_vendor', 'BUG-E2E-06: Vendor filter URLs show all rows.');
-            // The address bar is a public entry point independent of the filter
-            // dropdown. Keep covering saved URLs when a control has a known bug.
+            // Bookmarks and reloads must reconstruct the same filter state.
             const url = new URL(page.url());
             for (const [value, keys] of [['true', matches], ['false', nonMatches], [null, KEYS]]) {
                 if (value === null) {
@@ -93,8 +89,7 @@ test.describe('translations', () => {
             }
         });
 
-        // BUG-E2E-03: Clicking State Filters exposes no visible state buttons.
-        test.fixme(`${label} cycles from all to matching to non-matching and back to all`, async ({ page }) => {
+        test(`${label} cycles from all to matching to non-matching and back to all`, async ({ page }) => {
             await expectKeys(page, KEYS);
             await page.getByRole('button', { name: 'State Filters', exact: true }).click();
             const filter = page.getByRole('button', { name: label, exact: true });
@@ -107,9 +102,7 @@ test.describe('translations', () => {
             await expectKeys(page, KEYS);
         });
 
-        // BUG-E2E-03: The hidden state buttons also block saving filter selections.
-        // BUG-E2E-06 additionally prevents restoring the vendor state from its URL.
-        test.fixme(`${label} preserves each filter state in the URL across reloads`, async ({ page }) => {
+        test(`${label} preserves each filter state in the URL across reloads`, async ({ page }) => {
             await page.getByRole('button', { name: 'State Filters', exact: true }).click();
             const filter = page.getByRole('button', { name: label, exact: true });
             await expect(filter).toBeVisible();

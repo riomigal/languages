@@ -4,7 +4,7 @@ This file is for humans and coding agents working in this package.
 
 ## Scope
 
-This package provides a Laravel translation UI with Livewire components, testbench tests, and front-end assets built with Vite.
+This package provides a Laravel translation UI with controllers, server-rendered Blade, and vanilla JavaScript, testbench tests, and front-end assets built with Vite.
 
 Main documentation entrypoint:
 
@@ -42,8 +42,12 @@ Main documentation entrypoint:
   which PHPUnit 12 removes.
 - Keep docs/manual synchronized with code:
   - Update `docs/APPLICATION_MANUAL.md` and related docs for every feature addition, behavior change, or UI update.
-- Livewire 2 is no longer supported (`livewire/livewire: ^3.0`); use direct
-  `dispatch()` calls with named event parameters.
+- Use full page GET navigation for search, filters and pagination, and POST forms
+  with redirects for mutations. Settings save independently per field.
+- JSON/fetch is limited to progress, notifications, modal data and AI suggestions.
+  Polling must pause in hidden tabs and batch polling must stop on completion.
+- Resolve every translation row through BaseController::resolveTranslation();
+  privileged actions require the languages.admin middleware.
 - If dependencies are changed, re-run:
   - `composer audit`
   - `npm audit`
@@ -53,7 +57,7 @@ Main documentation entrypoint:
 ## Where To Start
 
 - Package service providers: `src/LanguagesServiceProvider.php`, `src/LanguagesTranslatorServiceProvider.php`
-- Livewire components: `src/Livewire/*`
+- UI controllers: `src/Controllers/*`; browser modules: `resources/js/modules/*`
 - Test base setup: `tests/BaseTestCase.php`
 - Package config: `config/languages.php`
-- Build config: `vite.config.js`
+- Build config: `vite.config.mjs`
