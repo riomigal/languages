@@ -8,11 +8,11 @@
 
 // window.axios = axios;
 
-import Alpine from 'alpinejs';
-
-window.Alpine = Alpine;
-
-Alpine.start();
+// Alpine is NOT imported here. Livewire 3 bundles and starts its own Alpine.
+// Importing a second copy made it win the race for window.Alpine and process
+// x-data before Livewire was ready, so every @entangle expression threw
+// "Cannot read properties of undefined (reading 'entangle')" and every
+// Alpine-driven control on the page was dead.
 
 // window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 

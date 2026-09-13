@@ -4,7 +4,7 @@
         x-data="{showMessage: @entangle('showMessage')}"
         class="flex justify-center"
         x-init="() => {
-        window.livewire.on('closeToastMessage', (duration) => {
+        window.Livewire.on('closeToastMessage', (duration) => {
             if (typeof window.toastTimeout !== 'undefined') {
                 clearTimeout(window.toastTimeout)
             }
