@@ -188,10 +188,11 @@ trait CanCreateTranslation
             if ($e::class == MassCreateTranslationsException::class) {
                 throw $e;
             } else {
+                $relativePath = $type == 'json' ? $languageCode : $languageCode . '/' . $group;
                 if($isVendor) {
-                    $relativePathname = App::langPath('vendor/' . $namespace . '/' . $languageCode . '/' . $group . '.' . $type);
+                    $relativePathname = App::langPath('vendor/' . $namespace . '/' . $relativePath . '.' . $type);
                 } else {
-                    $relativePathname = App::langPath('vendor/' . $namespace . '/' . $languageCode . '/' . $group . '.' . $type);
+                    $relativePathname = App::langPath($relativePath . '.' . $type);
                 }
                 Log::error('Something went wrong while mass creating translations.', ['relativePathname' => $relativePathname, 'array' => $translationsArray]);
                 throw new MassCreateTranslationsException($e->getMessage(), __('languages::exceptions.mass_create_fails', ['relativePathname' => $relativePathname]));
@@ -221,9 +222,9 @@ trait CanCreateTranslation
                         $translation['shared_identifier'],
                         $translation['type'],
                         $translation['key'],
-                        $translation['value'] ?? throw new \TypeError('Translation value must be a string, null given.'),
-                        $translation['namespace'] ?? throw new \TypeError('Translation namespace must be a string, null given.'),
-                        $translation['group'] ?? throw new \TypeError('Translation group must be a string, null given.'),
+                        $translation['value'] ?? throw new \DomainException('Cannot copy translation with a null value.'),
+                        $translation['namespace'] ?? throw new \DomainException('Cannot copy translation with a null namespace; use an empty string for application translations.'),
+                        $translation['group'] ?? throw new \DomainException('Cannot copy translation with a null group; use an empty string for JSON translations.'),
                         $translation['is_vendor'],
                         false,
                         true
@@ -402,10 +403,6 @@ trait CanCreateTranslation
 
 
     /**
-     * The value type is carried through unchanged: translateArray() can return
-     * non-string JSON values, which this insertion method does not validate.
-     *
-     * @template TValue
      * @param array<int|string, array{
      *     language_id: int,
      *     language_code: string,
@@ -415,7 +412,7 @@ trait CanCreateTranslation
      *     is_vendor: bool,
      *     group: string,
      *     key: string,
-     *     value: TValue,
+     *     value: string,
      *     approved: bool,
      *     needs_translation: bool,
      *     updated_translation: bool,
@@ -434,7 +431,8 @@ trait CanCreateTranslation
             }
         } catch (\Exception $e) {
             $errorId = Str::random();
-            $languageCode = $translations[0]['language_code'];
+            $firstTranslation = reset($translations);
+            $languageCode = $firstTranslation === false ? '' : $firstTranslation['language_code'];
             Log::error('Couldn\'t mass insert translations language: ' . $languageCode, [
                 'error_id' => $errorId,
                 'shared_identifier' => collect($translations)->pluck('shared_identifier')->all()

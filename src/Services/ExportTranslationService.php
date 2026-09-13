@@ -138,8 +138,8 @@ class ExportTranslationService
                 ->orderBy('group')
                 ->chunk(200, function ($translations) use ($language) {
                     foreach ($translations as $translation) {
-                        $namespace = $translation->namespace ?? throw new \TypeError('Translation namespace must be a string, null given.');
-                        $group = $translation->group ?? throw new \TypeError('Translation group must be a string, null given.');
+                        $namespace = $translation->namespace ?? throw new \DomainException('Cannot export translation with a null namespace; use an empty string for application translations.');
+                        $group = $translation->group ?? throw new \DomainException('Cannot export translation with a null group; use an empty string for JSON translations.');
                         if ($this->batch) {
                             $this->updateTranslation($translation->type, $language->code, $translation->is_vendor, $namespace, $group, $this->forceExportAll);
 

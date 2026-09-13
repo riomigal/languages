@@ -57,12 +57,10 @@ class ExportTranslations extends Command
                 $this->info('Exporting translations...');
                 Language::query()->each(function (Language $language) use ($exportTranslationService, $forceExport) {
                     if($forceExport) {
-                        /** @var Setting $setting The singleton row required by setJobsRunning() above. */
-                        $setting = Setting::first();
+                        $setting = Setting::getCached();
                         $exportTranslationService->forceExportTranslationForLanguage($language, null, $setting->db_loader);
                     } else {
-                        /** @var Setting $setting The singleton row required by setJobsRunning() above. */
-                        $setting = Setting::first();
+                        $setting = Setting::getCached();
                         $exportTranslationService->exportTranslationForLanguage($language, null, $setting->db_loader);
                     }
                 });

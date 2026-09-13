@@ -78,10 +78,8 @@ class LanguagesTranslatorServiceProvider extends TranslationServiceProvider
             if (!Schema::connection($connection)->hasTable($table)) {
                 return false;
             }
-            /** @var \stdClass $setting The singleton row seeded when the settings table is created. */
             $setting = DB::connection($connection)->table($table)->first();
-            // Preserve the boolean result of the original hasTable() && db_loader expression.
-            return (bool) $setting->db_loader;
+            return (bool) ($setting->db_loader ?? false);
         });
         if($hasDBLoaderOn) {
             $this->app->singleton('translation.loader', function (Application $app) {

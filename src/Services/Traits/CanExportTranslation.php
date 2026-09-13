@@ -3,6 +3,8 @@
 namespace Riomigal\Languages\Services\Traits;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
@@ -123,7 +125,15 @@ trait CanExportTranslation
         }
 
         foreach ($translations as $key => $value) {
-            $content[$key] = $value;
+            if ($type == 'php') {
+                // Remove flat keys left by older exports before writing Laravel's nested format.
+                if (str_contains((string) $key, '.')) {
+                    unset($content[$key]);
+                }
+                Arr::set($content, (string) $key, $value);
+            } else {
+                $content[$key] = $value;
+            }
         }
 
         if ($type == 'php') {
@@ -154,23 +164,31 @@ trait CanExportTranslation
 
     protected function updateModelTranslation(Translation $translation, string $languageCode): void
     {
-        $modelInstance = app($translation->namespace);
+        $namespace = $translation->namespace;
+        $column = $translation->group;
+        if ($namespace === null || $namespace === '' || $column === null || $column === '') {
+            throw new \DomainException('Model translation requires a model namespace and column group.');
+        }
+        $modelInstance = app($namespace);
         if (!$modelInstance instanceof Model) {
-            throw new \TypeError('Translation namespace must resolve to an Eloquent model.');
+            throw new \DomainException('Translation namespace must resolve to an Eloquent model.');
         }
         $tableId = $modelInstance->getKeyName();
         $modelQuery = DB::table($modelInstance->getTable())->where($tableId, $translation->key);
         $model = $modelQuery->first();
-        $column = $translation->group;
-        // A null property name was coerced to an empty string by PHP.
-        $data = $model->{$column ?? ''};
+        if ($model === null) {
+            throw (new ModelNotFoundException())->setModel($modelInstance::class, [$translation->key]);
+        }
+        if (!property_exists($model, $column)) {
+            throw new \DomainException('Model translation column does not exist: ' . $column . '.');
+        }
+        $data = $model->$column;
         if (is_string($data)) $data = json_decode($data, true);
         if (is_object($data)) $data = (array)$data;
         if ($data !== null && $data !== false && !is_array($data)) {
-            throw new \TypeError('Model translation data must be an array, false or null.');
+            throw new \DomainException('Model translation data must be an array, false or null.');
         }
-        // PHP already promotes null and false to an array on offset assignment.
-        if ($data === false) {
+        if ($data === null || $data === false) {
             $data = [];
         }
         $data[$languageCode] = $translation->value;

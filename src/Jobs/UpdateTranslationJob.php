@@ -2,7 +2,6 @@
 
 namespace Riomigal\Languages\Jobs;
 
-use Illuminate\Support\Collection;
 use Riomigal\Languages\Jobs\Job\BaseJob;
 use Riomigal\Languages\Models\Language;
 use Riomigal\Languages\Models\Translation;
@@ -14,7 +13,7 @@ class UpdateTranslationJob extends BaseJob
 
 
     /**
-     * @param Translator $authUser The acting translator required to attribute the update.
+     * @param Translator|null $authUser Validated before applying the update.
      */
     public function __construct(
         protected Language $rootLanguage,
@@ -32,6 +31,7 @@ class UpdateTranslationJob extends BaseJob
      */
     public function handle(): void
     {
+        $authUser = $this->authUser ?? throw new \DomainException('Updating a translation requires an acting translator.');
         $this->translation->exported = false;
         $this->translation->needs_translation = false;
         if(!$this->translation->updated_translation) {
@@ -40,8 +40,6 @@ class UpdateTranslationJob extends BaseJob
             $this->translation->old_value = $this->translation->value;
         }
         $this->translation->approved_by = null;
-        /** @var Translator $authUser Required by the constructor contract; null remains unsupported at runtime. */
-        $authUser = $this->authUser;
         $this->translation->updated_by = $authUser->id;
         $this->translation->updated_translation = true;
         $this->translation->value =  resolve(OpenAITranslationService::class)->translateString($this->rootLanguage, $this->translation->language, $this->translatedValue);

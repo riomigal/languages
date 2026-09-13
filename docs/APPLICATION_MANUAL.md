@@ -111,6 +111,19 @@ cannot overwrite exported translations; model translation exports still run. Fil
 remains supported: disable the toggle when you need exported `lang/` files for version
 control or a static deployment, then export approved translations.
 
+PHP file exports write dotted translation keys as nested arrays. For example,
+`a.b` becomes `['a' => ['b' => 'text']]`, so Laravel's file loader and subsequent
+imports read the same translation. This changes the exported PHP format for
+existing installations. Matching literal dotted keys from older exports are removed
+when those translations are exported again; other entries are preserved. JSON files
+continue to use literal keys. In file mode, use a forced export to rewrite approved
+translations that were already marked exported.
+
+If the settings table exists but its row is missing, loader registration uses
+Laravel's file loader. Package operations that require settings raise a clear
+`MissingSettingsException`; restore the saved row before retrying. The package does
+not recreate it or replace saved preferences with defaults.
+
 **The database is a hard dependency for rendering web requests in DB mode.**
 `LanguagesTranslatorServiceProvider::registerLoader()` catches database failures and
 falls back to Laravel's file loader only when `runningInConsole()` is true, during
@@ -159,6 +172,10 @@ enable the toggle; save those URLs in Domains and enable coordination if needed.
 
 - Optional feature (requires `openai-php/laravel` and valid API configuration).
 - Used in translation modal for automatic translation suggestions.
+- Responses must contain exactly the requested keys, all with string values.
+  Malformed, incomplete or unexpected responses preserve the entire original input.
+  Missing source/target languages or a null text value also preserve the input
+  without sending a request. Empty strings and `"0"` remain in array requests.
 
 ## Daily Operations
 
@@ -181,3 +198,7 @@ enable the toggle; save those URLs in Domains and enable coordination if needed.
 - Missing new language in UI: run import languages and refresh page.
 - Export not writing files: this is expected with `db_loader` enabled; in file mode, verify filesystem permissions and package export settings.
 - Database outage in DB mode: restore database connectivity; web requests do not automatically fall back to language files.
+- Missing settings row: restore the saved row in the configured settings table.
+- Missing export record: deleted translations or target models produce a model-not-found exception and are not marked exported.
+- Invalid translation metadata: null source values, namespaces or groups produce a descriptive creation/export exception. Application translations use an empty namespace; JSON translations use an empty group. Model translations require a model class and an existing column.
+- Failed bulk inserts: logs retain the database error context even for rows indexed by strings, and creation failures identify the application or vendor source path correctly.

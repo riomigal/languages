@@ -3,6 +3,7 @@
 namespace Riomigal\Languages\Tests\Feature;
 
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use OpenAI\Laravel\Facades\OpenAI;
@@ -142,6 +143,82 @@ class OpenAITranslationServiceTest extends BaseTestCase
         $result = $this->service->translateString($this->sourceLanguage, $this->targetLanguage, 'Hello world');
 
         $this->assertSame('Hello world', $result);
+    }
+
+    #[Test]
+    #[DataProvider('invalidArrayResponses')]
+    public function malformed_array_responses_preserve_all_original_keys_and_values(string $response): void
+    {
+        $this->fakeContent($response);
+        $payload = ['title' => 'Hello', 'body' => 'World'];
+
+        $this->assertSame($payload, $this->service->translateArray($this->sourceLanguage, $this->targetLanguage, $payload));
+    }
+
+    public static function invalidArrayResponses(): array
+    {
+        return [
+            'missing key' => ['{"title":"Hallo"}'],
+            'extra key' => ['{"title":"Hallo","body":"Welt","extra":"Unexpected"}'],
+            'renamed key' => ['{"title":"Hallo","other":"Welt"}'],
+            'null value' => ['{"title":"Hallo","body":null}'],
+            'boolean value' => ['{"title":"Hallo","body":false}'],
+            'numeric value' => ['{"title":"Hallo","body":123}'],
+            'array value' => ['{"title":"Hallo","body":["Welt"]}'],
+            'object value' => ['{"title":"Hallo","body":{"text":"Welt"}}'],
+            'list' => ['["Hallo","Welt"]'],
+            'empty object' => ['{}'],
+            'scalar' => ['"Hallo"'],
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('invalidStringResponses')]
+    public function malformed_string_responses_preserve_the_original_text(string $response): void
+    {
+        $this->fakeContent($response);
+
+        $this->assertSame('Hello', $this->service->translateString($this->sourceLanguage, $this->targetLanguage, 'Hello'));
+    }
+
+    public static function invalidStringResponses(): array
+    {
+        return [
+            'missing key' => ['{}'],
+            'extra key' => ['{"t_00":"Hallo","extra":"Unexpected"}'],
+            'null value' => ['{"t_00":null}'],
+            'boolean value' => ['{"t_00":false}'],
+            'numeric value' => ['{"t_00":123}'],
+            'array value' => ['{"t_00":["Hallo"]}'],
+            'object value' => ['{"t_00":{"text":"Hallo"}}'],
+            'list' => ['["Hallo"]'],
+        ];
+    }
+
+    #[Test]
+    public function valid_responses_preserve_key_order_and_send_empty_and_zero_strings(): void
+    {
+        $this->fakeContent('{"zero":"0","empty":"","title":"Hallo"}');
+        $payload = ['title' => 'Hello', 'empty' => '', 'zero' => '0'];
+
+        $this->assertSame(['title' => 'Hallo', 'empty' => '', 'zero' => '0'], $this->service->translateArray($this->sourceLanguage, $this->targetLanguage, $payload));
+        OpenAI::chat()->assertSent(function (string $method, array $parameters) use ($payload): bool {
+            return json_decode($parameters['messages'][3]['content'], true) === $payload;
+        });
+    }
+
+    private function fakeContent(string $content): void
+    {
+        $this->setOpenAiEnabled(true);
+        OpenAI::fake([
+            CreateResponse::fake([
+                'choices' => [[
+                    'index' => 0,
+                    'message' => ['role' => 'assistant', 'content' => $content, 'function_call' => null, 'tool_calls' => []],
+                    'finish_reason' => 'stop',
+                ]],
+            ]),
+        ]);
     }
 
     private function setOpenAiEnabled(bool $enabled): void

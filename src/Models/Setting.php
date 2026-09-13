@@ -5,6 +5,7 @@ namespace Riomigal\Languages\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
+use Riomigal\Languages\Exceptions\MissingSettingsException;
 
 /**
  * @property int $id
@@ -89,11 +90,9 @@ class Setting extends Model
         if (!is_string($cachePrefix)) {
             throw new \TypeError('languages.cache_key must be a string.');
         }
-        $setting = Cache::rememberForever($cachePrefix . '_settings', function() {
-            return Setting::first();
+        return Cache::rememberForever($cachePrefix . '_settings', function(): Setting {
+            return Setting::first() ?? throw new MissingSettingsException();
         });
-        // The declared return type already rejects an absent settings row.
-        return $setting ?? throw new \TypeError('Cached settings must be a Setting, null given.');
     }
 
     /**
@@ -114,10 +113,7 @@ class Setting extends Model
 
     public static function setJobsRunning(bool $value = true): Setting
     {
-        $setting = Setting::first();
-        if ($setting === null) {
-            throw new \Error('Attempt to assign property "process_running" on null');
-        }
+        $setting = Setting::first() ?? throw new MissingSettingsException();
         $setting->process_running = $value;
         $setting->save();
         return $setting;
