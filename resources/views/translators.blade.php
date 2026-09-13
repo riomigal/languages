@@ -2,7 +2,7 @@
 @section('content')
 @include('languages::component.table-h1-heading', ['title' => __('languages::navbar.translators')])
 @if($showForm && !$showUpdatePasswordForm)
-    <form id="createOrUpdateForm" method="POST" action="{{ $translator ? route('languages.translators.update', $translator) : route('languages.translators.store') }}" class="pb-4">
+    <form id="createOrUpdateForm" method="POST" action="{{ $translator ? route('languages.translators.update', $translator) : route('languages.translators.store') }}" class="card card-body bg-base-100 shadow-md mb-4">
         @csrf
         <div class="grid md:grid-cols-2 gap-6">
             @foreach(['email' => 'email', 'phone' => 'tel', 'first_name' => 'text', 'last_name' => 'text'] as $field => $inputType)
@@ -18,28 +18,32 @@
             @include('languages::component.select-checkbox-multiple', ['id' => 'translator-permissions', 'name' => 'languages', 'text' => __('languages::translators.form.label.languages'), 'options' => $availableLanguages->pluck('name', 'id')->all(), 'selected' => old('languages', $translator?->languages->pluck('id')->all() ?? [])])
             @include('languages::component.switch', ['name' => 'admin', 'label' => __('languages::translators.form.label.admin'), 'checked' => $translator?->admin ?? false])
         </div>
-        @include('languages::component.button', ['text' => __('languages::translators.form.button.' . ($translator ? 'update' : 'create'))])
-        <a role="button" href="{{ route('languages.translators') }}" class="inline-block p-2">{{ __('languages::translators.form.button.close') }}</a>
-        @if($translator)
-            <a role="button" href="{{ route('languages.translators.edit', ['translator' => $translator, 'password' => 1]) }}" class="inline-block p-2">{{ __('languages::translators.form.button.update_password') }}</a>
-        @endif
+        <div class="card-actions">
+            @include('languages::component.button', ['text' => __('languages::translators.form.button.' . ($translator ? 'update' : 'create'))])
+            <a role="button" href="{{ route('languages.translators') }}" class="btn btn-ghost">{{ __('languages::translators.form.button.close') }}</a>
+            @if($translator)
+                <a role="button" href="{{ route('languages.translators.edit', ['translator' => $translator, 'password' => 1]) }}" class="btn btn-ghost">{{ __('languages::translators.form.button.update_password') }}</a>
+            @endif
+        </div>
     </form>
     @if($translator && \Riomigal\Languages\Models\Setting::getCached()->enable_pending_notifications)
         @include('languages::partials.action-form', ['url' => route('languages.translators.notify', $translator), 'text' => __('languages::translators.form.button.pending_translations_notification'), 'fields' => []])
     @endif
 @endif
 @if($showUpdatePasswordForm)
-    <form method="POST" action="{{ route('languages.translators.password', $translator) }}">
+    <form method="POST" action="{{ route('languages.translators.password', $translator) }}" class="card card-body bg-base-100 shadow-md mb-4">
         @csrf
         <h2 class="mb-4">{{ __('languages::translators.form.update_password_title', ['email' => $translator->email]) }}</h2>
         @foreach(['new_password', 'new_password_confirmation'] as $field)
             @include('languages::component.input', ['name' => $field, 'label' => __('languages::translators.form.label.' . substr($field, 4)), 'type' => 'password', 'required' => true])
         @endforeach
-        @include('languages::component.button', ['text' => __('languages::translators.form.button.update_password')])
-        <a role="button" href="{{ route('languages.translators.edit', $translator) }}" class="inline-block p-2">{{ __('languages::translators.form.button.close') }}</a>
+        <div class="card-actions">
+            @include('languages::component.button', ['text' => __('languages::translators.form.button.update_password')])
+            <a role="button" href="{{ route('languages.translators.edit', $translator) }}" class="btn btn-ghost">{{ __('languages::translators.form.button.close') }}</a>
+        </div>
     </form>
 @endif
-<div class="bg-white dark:bg-gray-800 relative shadow-md sm:rounded-lg">
+<div class="card bg-base-100 shadow-md">
     <div class="flex flex-wrap items-center justify-between gap-4 p-4">
         @include('languages::component.search')
         <form method="GET" action="{{ route('languages.translators') }}">

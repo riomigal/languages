@@ -125,7 +125,7 @@ export function initModal() {
     modal.querySelector('[data-modal-close]').addEventListener('click', () => modal.close());
     modal.addEventListener('click', event => {
         if (event.target !== modal) return;
-        const box = modal.getBoundingClientRect();
+        const box = modal.querySelector('.modal-box').getBoundingClientRect();
         if (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom) modal.close();
     });
     modal.addEventListener('close', () => {

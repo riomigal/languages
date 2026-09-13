@@ -14,6 +14,7 @@ export function initNotifications() {
         list.replaceChildren();
         data.notifications.forEach(notification => {
             const item = document.createElement('li');
+            item.className = 'card card-body bg-base-200 p-3 gap-2';
             const message = document.createElement('p');
             message.textContent = notification.message;
             const time = document.createElement('small');
@@ -21,7 +22,7 @@ export function initNotifications() {
             const button = document.createElement('button');
             button.type = 'button';
             button.textContent = 'Mark as read';
-            button.className = 'block text-blue-700 dark:text-blue-300 p-2';
+            button.className = 'btn btn-ghost btn-sm text-primary self-start';
             button.addEventListener('click', () => read(notification.read_url, button));
             item.append(message, time, button);
             list.append(item);

@@ -2,6 +2,6 @@
     @include('languages::partials.query-fields', ['except' => ['search', 'page', 'create', 'password']])
     <label for="search" class="sr-only">Search</label>
     <input type="search" id="search" name="search" value="{{ $search ?? '' }}" placeholder="Search" autocomplete="off"
-           class="block w-full p-2 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-    <button type="submit" class="p-2 text-blue-700 dark:text-blue-300">Search</button>
+           class="input input-bordered w-full">
+    <button type="submit" class="btn btn-ghost btn-sm text-primary">Search</button>
 </form>

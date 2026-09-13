@@ -2,23 +2,25 @@
 @section('content')
 @include('languages::component.table-h1-heading', ['title' => __('languages::navbar.languages')])
 @if(!$hasImportedLanguages && $isAdministrator)
-    <p role="alert" class="p-4 text-blue-800 bg-blue-50 rounded-lg">{{ __('languages::languages.info_fallback_language', ['language' => config('app.locale')]) }}</p>
+    <p role="alert" class="alert alert-info">{{ __('languages::languages.info_fallback_language', ['language' => config('app.locale')]) }}</p>
 @endif
 @if($showForm)
-    <form method="POST" action="{{ route('languages.languages.store') }}" class="py-4">
+    <form method="POST" action="{{ route('languages.languages.store') }}" class="card card-body bg-base-100 shadow-md mb-4">
         @csrf
         <label for="language" class="sr-only">Language</label>
-        <select id="language" name="language" required class="max-w-sm mb-4 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+        <select id="language" name="language" required class="max-w-sm mb-4 select select-bordered w-full">
             <option value="">{{ __('languages::languages.form.select.placeholder') }}</option>
             @foreach($languages as $option)<option value="{{ $option['code'] }}" @selected(old('language') === $option['code'])>{{ $option['name'] }}</option>@endforeach
         </select>
-        <p class="text-sm text-gray-500 dark:text-gray-300 pb-3">{{ __('languages::languages.form.info') }}</p>
+        <p class="text-sm text-base-content/70 pb-3">{{ __('languages::languages.form.info') }}</p>
         @include('languages::component.error', ['field' => 'language'])
-        @include('languages::component.button', ['text' => __('languages::languages.form.button.add')])
-        <a role="button" href="{{ route('languages.languages') }}" class="inline-block p-2">{{ __('languages::languages.form.button.close') }}</a>
+        <div class="card-actions">
+            @include('languages::component.button', ['text' => __('languages::languages.form.button.add')])
+            <a role="button" href="{{ route('languages.languages') }}" class="btn btn-ghost">{{ __('languages::languages.form.button.close') }}</a>
+        </div>
     </form>
 @endif
-<div class="bg-white dark:bg-gray-800 relative shadow-md sm:rounded-lg">
+<div class="card bg-base-100 shadow-md">
     <div class="flex flex-wrap items-center justify-between gap-4 p-4">
         @include('languages::component.search')
         @if($isAdministrator)

@@ -1,11 +1,11 @@
 <div class="relative overflow-x-auto">
-<table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-    <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+<table class="table table-zebra w-full">
+    <thead class="bg-base-200">
         <tr>@foreach($thead as $heading)<th scope="col" class="px-4 py-3">{{ $heading }}</th>@endforeach<th scope="col" class="px-4 py-3">{{ __('languages::table.actions') }}</th></tr>
     </thead>
     <tbody>
         @foreach($data as $item)
-            <tr class="border-b dark:border-gray-700">
+            <tr class="hover:bg-base-200">
                 @foreach($tbody as $field)
                     <td class="px-4 py-3 break-words">
                         @if($field === 'languages')
@@ -20,17 +20,17 @@
                 <td class="px-4 py-3">
                     <div class="flex flex-wrap items-center justify-end gap-2">
                         @if($kind === 'languages')
-                            <a href="{{ route('languages.translations', $item) }}" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-600">{{ __('languages::table.view') }}</a>
+                            <a href="{{ route('languages.translations', $item) }}" class="btn btn-ghost btn-sm">{{ __('languages::table.view') }}</a>
                             @if($isAdministrator && \Riomigal\Languages\Models\Setting::getCached()->allow_deleting_languages)
                                 @include('languages::partials.action-form', ['url' => route('languages.languages.delete', $item), 'text' => __('languages::table.delete'), 'fields' => []])
                             @endif
                         @elseif($kind === 'translators')
-                            <a href="{{ route('languages.translators.edit', $item) }}" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-600">{{ __('languages::table.edit') }}</a>
+                            <a href="{{ route('languages.translators.edit', $item) }}" class="btn btn-ghost btn-sm">{{ __('languages::table.edit') }}</a>
                             @if($item->id !== 1)
                                 @include('languages::partials.action-form', ['url' => route('languages.translators.delete', $item), 'text' => __('languages::table.delete'), 'fields' => []])
                             @endif
                         @else
-                            <button type="button" data-translation-url="{{ route('languages.translations.modal', ['language' => $language, 'id' => $item->id]) }}" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-600">{{ __('languages::translations.table.action.translate') }}</button>
+                            <button type="button" data-translation-url="{{ route('languages.translations.modal', ['language' => $language, 'id' => $item->id]) }}" class="btn btn-ghost btn-sm">{{ __('languages::translations.table.action.translate') }}</button>
                             @if($isAdministrator)
                                 @php($parameters = ['language' => $language, 'id' => $item->id] + request()->query())
                                 @if(!$item->approved && $item->value !== null && $item->value !== '')

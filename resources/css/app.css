@@ -1,10 +1,13 @@
 @import "tailwindcss";
-@config "../../tailwind.config.js";
+@plugin "daisyui" {
+    themes: light --default, dark --prefersdark;
+}
+@plugin "@tailwindcss/typography";
 @custom-variant dark (&:where(.dark, .dark *));
 @source "../views/**/*.blade.php";
 @source "../js/**/*.js";
-@source "../../node_modules/flowbite/**/*.js";
 
+/* Existing toggle handlers own visibility, including dropdown-open containers. */
 [hidden] { display: none !important; }
 
 button[aria-busy="true"]::before {

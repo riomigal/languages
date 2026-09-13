@@ -323,6 +323,8 @@ All privileged endpoints enforce administrator authorization on the server. Ever
 
 Navigation includes Languages and Manual for signed-in translators, with Translators and Settings added for admins. Open the compact navigation menu on small screens. The theme button switches light/dark mode and stores the preference in the browser; before a choice is saved it follows the system preference.
 
+The interface uses DaisyUI components with light and dark themes across forms, tables, menus, notifications, and the translation editor. Settings use visible checkbox switches, and the editor retains its close button, Escape key, and outside-click dismissal.
+
 The notification button shows the unread count. Open it to read messages, close the panel without marking them read, dismiss one message to mark it read, or use **Mark all as read**. Notifications refresh every five seconds while the tab is visible and pause in hidden tabs. Immediate toasts are separate: success, deleted, info, or warning, with a dismissal button and timer. The theme retains `localStorage["color-theme"]` and updates both the document's `.dark` class and `data-theme` attribute.
 
 ## CLI Reference
